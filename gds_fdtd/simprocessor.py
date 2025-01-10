@@ -532,7 +532,7 @@ def from_gdsfactory(c: 'gf.Component', tech: dict, z_span: float = 4.) -> 'compo
     ports = []
 
     # for each layer in the device
-    for idx, layer in enumerate(c.get_layers()):
+    for idx, layer in enumerate(c.get_polygons()):
         l = c.extract(layers={layer})       
 
         for i, s in enumerate(l.get_polygons()):
@@ -540,7 +540,7 @@ def from_gdsfactory(c: 'gf.Component', tech: dict, z_span: float = 4.) -> 'compo
             device_wg.append(
                 structure(
                     name=name,
-                    polygon=s,
+                    polygon=l.get_polygons()[1],
                     z_base=tech["device"][idx]["z_base"],
                     z_span=tech["device"][idx]["z_span"],
                     material=get_material(tech["device"][idx]),
@@ -549,15 +549,15 @@ def from_gdsfactory(c: 'gf.Component', tech: dict, z_span: float = 4.) -> 'compo
             )
 
         # get device ports
-        for name, p in c.ports.items():
+        for p in c.ports:
             if p.layer == layer:
                 z_pos = (
                     tech["device"][idx]["z_base"] + tech["device"][idx]["z_span"] / 2
                 )
                 ports.append(
                     port(
-                        name=name,
-                        center=p.center.tolist() + [z_pos],
+                        name=c.name,
+                        center=list(p.center) + [z_pos],
                         width=p.width,
                         direction=p.orientation,
                     )
@@ -578,7 +578,8 @@ def from_gdsfactory(c: 'gf.Component', tech: dict, z_span: float = 4.) -> 'compo
             return "xy"
 
     # expand the bbox region by 1.3 um (on each side) on the smallest dimension
-    bbox = dilate_1d(c.bbox.tolist(), extension=0, dim=min_dim(c.bbox.tolist()))
+    bbox_poly = [[c.bbox().p1.x, c.bbox().p1.y], [c.bbox().p2.x, c.bbox().p2.y]]
+    bbox = dilate_1d(bbox_poly, extension=0, dim=min_dim(bbox_poly))
     bbox_dilated = dilate(bbox, extension=1.9)
     bounds = region(vertices=bbox_dilated, z_center=z_center, z_span=z_span)
 

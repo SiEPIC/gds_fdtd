@@ -487,11 +487,7 @@ def parse_yaml_tech(file_path):
             "layer": list(device.get("layer")),  # Convert to list
             "z_base": device.get("z_base"),
             "z_span": device.get("z_span"),
-            "material": {
-                "tidy3d_db": {
-                    "model": list(device["material"]["tidy3d_db"].get("model", []))  # Ensure model is a list
-                }
-            },
+            "material": device.get("material"),
             "sidewall_angle": device.get("sidewall_angle"),
         }
         for device in technology.get("device", [])
