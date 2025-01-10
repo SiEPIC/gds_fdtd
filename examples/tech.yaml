@@ -30,10 +30,10 @@ technology:
           model: [cSi, Li1993_293K]
       sidewall_angle: 85
 
-    - layer: [1, 5]
+    - layer: [4, 0]
       z_base: .3
-      z_span: 0.22
+      z_span: 0.4
       material:
         tidy3d_db:
-          model: [Si3N4, Philipp1973Sellmeier]
+          model: [Si3N4, Luke2015PMLStable]
       sidewall_angle: 90
