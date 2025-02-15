@@ -72,5 +72,5 @@ pip install -e .[dev,gdsfactory,prefab]
 If you've installed the `dev` dependencies, you can run the test suite with:
 
 ```bash
-pytest
+pytest --cov=gds_fdtd tests
 ```

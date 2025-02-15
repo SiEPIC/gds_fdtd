@@ -17,7 +17,7 @@ if __name__ == "__main__":
     # Define the path to the GDS file
     file_gds = os.path.join(os.path.dirname(os.path.dirname(__file__)), "devices.gds")
 
-    layout = gtd.lyprocessor.load_layout(file_gds, top_cell='sbend_dontfabme')
+    layout = gtd.lyprocessor.load_layout(file_gds, top_cell='si_sin_escalator_te1550')
 
     simulation = gtd.simprocessor.build_sim_from_tech(
         tech=technology,
