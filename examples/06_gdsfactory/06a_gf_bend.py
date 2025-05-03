@@ -25,7 +25,7 @@ if __name__ == '__main__':
     # %%
     simulation.upload()
     # run the simulation. CHECK THE SIMULATION IN THE UI BEFORE RUNNING!
-    simulation.execute()
+    #simulation.execute()
     #  visualize the results
-    simulation.visualize_results()
-    # %%
+    #simulation.visualize_results()
+# %%
