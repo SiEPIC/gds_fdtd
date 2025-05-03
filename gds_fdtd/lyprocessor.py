@@ -136,12 +136,12 @@ def load_layout(fname: str, top_cell: str = None) -> layout:
     return layout(name, ly, cell)
 
 
-def load_region(layout: layout, layer: list[int, int] = [68, 0], z_center: float = 0., z_span: float = 5., extension: float = 1.3):
+def load_region(cell: pya.Cell, layer: list[int, int] = [68, 0], z_center: float = 0., z_span: float = 5., extension: float = 1.3):
     """
     Get device bounds.
 
     Args:
-        layout (layout): SiEPIC Tidy3d layout type to extract the polygons from.
+        cell (pya.Cell): SiEPIC Tidy3d cell type to extract the polygons from.
         layer (list[int, int]): Layer to detect the devrec object from. Defaults to [68, 0].
         z_center (float): Z-center of the layout in microns. Defaults to 0.
         z_span (float): Z-span of the layout in microns. Defaults to 5.
@@ -152,12 +152,11 @@ def load_region(layout: layout, layer: list[int, int] = [68, 0], z_center: float
     """
 
     def get_kdb_layer(layer):
-        return layout.ly.layer(layer[0], layer[1])
+        return cell.layout().layer(layer[0], layer[1])
 
-    c = layout.cell
-    dbu = layout.dbu
+    dbu = cell.layout().dbu
     layer = get_kdb_layer(layer)
-    iter1 = c.begin_shapes_rec(layer)
+    iter1 = cell.begin_shapes_rec(layer)
     # DevRec must be either a Box or a Polygon:
     if iter1.shape().is_box():
         box = iter1.shape().box.transformed(iter1.itrans())
@@ -178,7 +177,7 @@ def load_region(layout: layout, layer: list[int, int] = [68, 0], z_center: float
     return region(vertices=polygons_vertices, z_center=z_center, z_span=z_span)
 
 
-def load_structure(layout, name, layer, z_base, z_span, material, sidewall_angle=90):
+def load_structure(cell, name, layer, z_base, z_span, material, sidewall_angle=90):
     """
     Extract polygons from a given cell on a given layer.
 
@@ -199,16 +198,13 @@ def load_structure(layout, name, layer, z_base, z_span, material, sidewall_angle
     """
 
     def get_kdb_layer(layer):
-        return layout.ly.layer(layer[0], layer[1])
+        return cell.layout().layer(layer[0], layer[1])
 
-    import klayout.db as pya
-
-    c = layout.cell
-    dbu = layout.dbu
+    dbu = cell.layout().dbu
     layer = get_kdb_layer(layer)
 
     r = pya.Region()
-    s = c.begin_shapes_rec(layer)
+    s = cell.begin_shapes_rec(layer)
     while not (s.at_end()):
         if s.shape().is_polygon() or s.shape().is_box() or s.shape().is_path():
             r.insert(s.shape().polygon.transformed(s.itrans()))
@@ -259,11 +255,11 @@ def load_structure_from_bounds(bounds, name, z_base, z_span, material, extension
     )
 
 
-def load_ports(layout: pya.Layout, layer: list[int, int]=[1, 10]):
-    """Load ports from layout.
+def load_ports(cell: pya.Cell, layer: list[int, int]=[1, 10]):
+    """Load ports from cell.
 
     Args:
-        layout (pya.Layout): Input layout object
+        cell (pya.Cell): Input cell object
         layer (list, optional): Ports layer identifier. Defaults to [1, 10].
 
     Returns:
@@ -272,7 +268,7 @@ def load_ports(layout: pya.Layout, layer: list[int, int]=[1, 10]):
     import klayout.db as pya
 
     def get_kdb_layer(layer):
-        return layout.ly.layer(layer[0], layer[1])
+        return cell.layout().layer(layer[0], layer[1])
 
     def get_direction(path):
         """Determine orientation of a pin path."""
@@ -317,14 +313,14 @@ def load_ports(layout: pya.Layout, layer: list[int, int]=[1, 10]):
             s.next()
 
     ports = []
-    s = layout.cell.begin_shapes_rec(get_kdb_layer(layer))
+    s = cell.begin_shapes_rec(get_kdb_layer(layer))
     while not (s.at_end()):
         if s.shape().is_path():
             width = s.shape().path_dwidth
             direction = get_direction(s.shape().path)
             # initialize Z center with none. Z center is identified in component init
-            center = list(get_center(s.shape().path, layout.ly.dbu)) + [None]
-            name = get_name(layout.cell, center[0], center[1], layout.ly.dbu)
+            center = list(get_center(s.shape().path, cell.layout().dbu)) + [None]
+            name = get_name(cell, center[0], center[1], cell.layout().dbu)
             ports.append(
                 port(
                     name=name,

@@ -53,7 +53,7 @@ def structure_to_lum_poly(
     return poly
 
 
-def to_lumerical(c: component, lum: lumapi.FDTD, buffer: float = 2.0):
+def to_lumerical(c: component, lum: lumapi.FDTD, buffer: float = 2.0) -> list:
     """Add an input component with a given tech to a lumerical instance.
 
     Args:
@@ -114,7 +114,10 @@ def make_sim_lum(
     z_span: float | None = None,
     field_monitor_axis: str | None = None,
     visualize: bool = True,
-):
+) -> dict[str, list[float]]:
+
+    # send component to lumerical instance
+    to_lumerical(c=c, lum=lum)
 
     if z_span == None:
         sim_size = 1e-6 * np.array([c.bounds.x_span, c.bounds.y_span, c.bounds.z_span])
