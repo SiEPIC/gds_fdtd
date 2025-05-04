@@ -1,16 +1,23 @@
 """
-gds_fdtd integration toolbox.
+gds_fdtd simulation toolbox.
 
 Core objects module.
-@author: Mustafa Hammood, 2024
+@author: Mustafa Hammood, 2025
 """
 
-import tidy3d as td
+import pya
 import logging
-import os
+import numpy as np
+import matplotlib.pyplot as plt
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
+import yaml
 
+c0_um = 299792458000000.0  # speed of light in um/s
 
-def is_point_inside_polygon(point, polygon_points):
+def is_point_inside_polygon(
+    point: list[float, float], polygon_points: list[list[float, float]]
+) -> bool:
     """Test if a point inside a polygon using Shapely.
 
     Args:
@@ -20,8 +27,6 @@ def is_point_inside_polygon(point, polygon_points):
     Returns:
         bool: Test result.
     """
-    from shapely.geometry import Point
-    from shapely.geometry.polygon import Polygon
 
     # Create a Shapely Point object for the given coordinate
     point = Point(point)
@@ -34,17 +39,31 @@ def is_point_inside_polygon(point, polygon_points):
 
 
 class layout:
-    def __init__(self, name, ly, cell):
+    def __init__(self, name: str, ly: pya.Layout, cell: pya.Cell):
         self.name = name
         self.ly = ly
         self.cell = cell
 
     @property
-    def dbu(self):
+    def dbu(self) -> float:
         return self.ly.dbu
 
 
-def calculate_polygon_extension(center, width, direction, buffer=4.0):
+def calculate_polygon_extension(
+    center: list[float, float], width: float, direction: float, buffer: float = 4.0
+) -> list[list[float, float]]:
+    """
+    Calculate the polygon extension for a port.
+
+    Args:
+        center (list[float, float]): Center of the port [x, y]. Convention is in microns.
+        width (float): Width of the port. Convention is in microns.
+        direction (float): Direction of the port in degrees. Convention is in degrees.
+        buffer (float): Buffer distance from the port. Convention is in microns.
+
+    Returns:
+        list[list[float, float]]: Polygon extension
+    """
     if direction == 0:
         return [
             [center[0], center[1] + width / 2],
@@ -74,10 +93,38 @@ def calculate_polygon_extension(center, width, direction, buffer=4.0):
             [center[0] + width / 2, center[1]],
         ]
 
+
 class port:
+    """
+    Represents an optical port object in a component.
+
+    A port defines a connection point with properties like position, width, and direction.
+
+    Attributes:
+        name (str): Name of the port, typically containing a numeric identifier.
+        center (list[float, float, float]): 3D coordinates of the port center [x, y, z]. Convention is in microns.
+        width (float): Width of the port. Convention is in microns.
+        direction (float): Direction of the port. Convention is in degrees. Directions supported are 0, 90, 180, 270.
+        height (float): Height of the port, assigned during component initialization. Convention is in microns.
+        material (str): Material of the port, assigned during component initialization.
+    """
+
     def __init__(
-        self, name: str, center: list[float, float], width: float, direction: float
+        self,
+        name: str,
+        center: list[float, float, float],
+        width: float,
+        direction: float,
     ):
+        """
+        Initialize a port object.
+
+        Args:
+            name (str): Name of the port, typically containing a numeric identifier.
+            center (list[float, float, float]): 3D coordinates of the port center [x, y, z].
+            width (float): Width of the port in microns.
+            direction (float): Direction of the port in degrees.
+        """
         self.name = name
         self.center = center
         self.width = width
@@ -88,27 +135,80 @@ class port:
         self.height = None
         self.material = None
 
+        if self.direction not in [0, 90, 180, 270]:
+            raise ValueError(
+                f"Invalid direction: {self.direction}. Supported directions are 0, 90, 180, 270."
+            )
+
     @property
-    def x(self):
+    def x(self) -> float:
+        """
+        Get the x-coordinate of the port center.
+
+        Returns:
+            float: x-coordinate in microns.
+        """
         return self.center[0]
 
     @property
-    def y(self):
+    def y(self) -> float:
+        """
+        Get the y-coordinate of the port center.
+
+        Returns:
+            float: y-coordinate in microns.
+        """
         return self.center[1]
 
     @property
-    def z(self):
+    def z(self) -> float:
+        """
+        Get the z-coordinate of the port center.
+
+        Returns:
+            float: z-coordinate in microns.
+        """
         return self.center[2]
 
     @property
-    def idx(self):
-        """index of the port, extracted from name."""
+    def idx(self) -> int:
+        """
+        Extract the index of the port from its name.
+
+        The index is extracted by taking the digits in the name in reverse order.
+        For example, "port42" would yield an index of 24.
+
+        Returns:
+            int: The extracted port index.
+        """
         return int("".join(char for char in reversed(self.name) if char.isdigit()))
 
-    def polygon_extension(self, buffer: float = 4.0):
-        return calculate_polygon_extension(self.center, self.width, self.direction, buffer)
+    def polygon_extension(self, buffer: float = 4.0) -> list[list[float, float]]:
+        """
+        Calculate the polygon extension for this port.
+
+        This creates a rectangular polygon extending from the port in the direction
+        specified by the port's direction attribute.
+
+        Args:
+            buffer (float, optional): Buffer distance from the port in microns. Defaults to 4.0.
+
+        Returns:
+            list[list[float, float]]: Polygon extension as a list of [x,y] coordinates.
+        """
+        return calculate_polygon_extension(
+            self.center, self.width, self.direction, buffer
+        )
+
 
 class structure:
+    """
+    Represents a physical structure in the component with geometric and material properties.
+
+    This class defines a 3D structure with a 2D polygon base extruded vertically,
+    including material properties and sidewall angle for fabrication realism.
+    """
+
     def __init__(
         self,
         name: str,
@@ -118,6 +218,19 @@ class structure:
         material: str,
         sidewall_angle: float = 90.0,
     ):
+        """
+        Initialize a structure with geometric and material properties.
+
+        Args:
+            name (str): Unique identifier for the structure.
+            polygon (list[list[float, float]]): 2D polygon defining the structure's horizontal cross-section,
+                                               formatted as [[x1,y1], [x2,y2], ...].
+            z_base (float): Base z-coordinate in microns where the structure begins.
+            z_span (float): Vertical height/thickness of the structure in microns.
+            material (str): Material identifier for the structure.
+            sidewall_angle (float, optional): Angle of the sidewalls in degrees, where 90.0 means vertical walls.
+                                             Defaults to 90.0.
+        """
         self.name = name
         self.polygon = polygon  # polygon should be in the form of list of list of 2 pts, i.e. [[0,0],[0,1],[1,1]]
         self.z_base = z_base
@@ -127,82 +240,142 @@ class structure:
 
 
 class region:
-    def __init__(self, vertices, z_center, z_span):
+    """
+    Represents a 3D region defined by a 2D polygon and vertical extent.
+    
+    This class defines a region with vertices in the x-y plane and a vertical
+    extent defined by z_center and z_span.
+    """
+    
+    def __init__(self, vertices: list[list[float]], z_center: float, z_span: float):
+        """
+        Initialize a region with vertices and vertical dimensions.
+        
+        Args:
+            vertices (list[list[float]]): List of [x,y] coordinates defining the region's polygon.
+            z_center (float): Center z-coordinate of the region in microns.
+            z_span (float): Vertical extent/thickness of the region in microns.
+        """
         self.vertices = vertices
         self.z_center = z_center
         self.z_span = z_span
 
     @property
-    def x(self):
+    def x(self) -> list[float]:
+        """
+        Get all x-coordinates of the vertices.
+        
+        Returns:
+            list[float]: List of x-coordinates.
+        """
         return [i[0] for i in self.vertices]
 
     @property
-    def y(self):
+    def y(self) -> list[float]:
+        """
+        Get all y-coordinates of the vertices.
+        
+        Returns:
+            list[float]: List of y-coordinates.
+        """
         return [i[1] for i in self.vertices]
 
     @property
-    def x_span(self):
+    def x_span(self) -> float:
+        """
+        Calculate the span (width) of the region in the x-direction.
+        
+        Returns:
+            float: Width of the region in microns.
+        """
         return abs(min(self.x) - max(self.x))
 
     @property
-    def y_span(self):
+    def y_span(self) -> float:
+        """
+        Calculate the span (height) of the region in the y-direction.
+        
+        Returns:
+            float: Height of the region in microns.
+        """
         return abs(min(self.y) - max(self.y))
 
     @property
-    def x_center(self):
+    def x_center(self) -> float:
+        """
+        Calculate the center x-coordinate of the region.
+        
+        Returns:
+            float: Center x-coordinate in microns.
+        """
         return (min(self.x) + max(self.x)) / 2
 
     @property
-    def y_center(self):
+    def y_center(self) -> float:
+        """
+        Calculate the center y-coordinate of the region.
+        
+        Returns:
+            float: Center y-coordinate in microns.
+        """
         return (min(self.y) + max(self.y)) / 2
 
     @property
-    def x_min(self):
+    def x_min(self) -> float:
+        """
+        Get the minimum x-coordinate of the region.
+        
+        Returns:
+            float: Minimum x-coordinate in microns.
+        """
         return min(self.x)
 
     @property
-    def x_max(self):
+    def x_max(self) -> float:
+        """
+        Get the maximum x-coordinate of the region.
+        
+        Returns:
+            float: Maximum x-coordinate in microns.
+        """
         return max(self.x)
 
     @property
-    def y_min(self):
+    def y_min(self) -> float:
+        """
+        Get the minimum y-coordinate of the region.
+        
+        Returns:
+            float: Minimum y-coordinate in microns.
+        """
         return min(self.y)
 
     @property
-    def y_max(self):
+    def y_max(self) -> float:
+        """
+        Get the maximum y-coordinate of the region.
+        
+        Returns:
+            float: Maximum y-coordinate in microns.
+        """
         return max(self.y)
 
 
-class component:
-    def __init__(self, name, structures, ports, bounds):
-        self.name = name
-        self.structures = structures
-        self.ports = ports
-        self.bounds = bounds
-        self.initialize_ports_z()  # initialize ports z center and z span
 
-    def initialize_ports_z(self):
-        initialize_ports_z(self.ports, self.structures)
-
-    def export_gds(self, export_dir=None):
-        import klayout.db as pya
-
-        layout = pya.Layout()
-        layout.dbu = 0.001  # Set the database unit to 0.001 um
-        top_cell = layout.create_cell(self.name)
-        layer_info = pya.LayerInfo(1, 0)  # You might want to adjust the layer information as needed
-        layer = layout.layer(layer_info)
-
-        for polygon in [s[0].polygon for s in self.structures if isinstance(s, list)]:
-            pya_polygon = pya.Polygon([pya.Point(int(point[0] / layout.dbu), int(point[1] / layout.dbu)) for point in polygon])
-            top_cell.shapes(layer).insert(pya_polygon)
-
-        if export_dir is None:
-            export_dir = os.getcwd()
-        layout.write(os.path.join(export_dir, f"{self.name}.gds"))
-        return
-
-def initialize_ports_z(ports, structures):
+def initialize_ports_z(ports: list["port"], structures: list["structure"]) -> None:
+    """
+    Initialize the z-coordinate, height, and material of ports based on their position within structures.
+    
+    This function checks if each port is located within any structure and sets the port's z-coordinate,
+    height, and material accordingly.
+    
+    Args:
+        ports (list["port"]): List of port objects to initialize.
+        structures (list["structure"]): List of structure objects to check against.
+        
+    Returns:
+        None
+    """
     # iterate through each port
     for p in ports:
         # check if port location is within any structure
@@ -217,150 +390,61 @@ def initialize_ports_z(ports, structures):
         if p.height == None:
             logging.warning(f"Cannot find height for port {p.name}")
     return
+class component:
+    """
+    A component consisting of structures, ports, and boundaries.
+    
+    This class represents a complete photonic component that can be simulated
+    or exported to GDS format.
+    """
+    
+    def __init__(self, name: str, structures: list[structure], ports: list[port], bounds: list[region]):
+        """
+        Initialize a photonic component.
+        
+        Args:
+            name: The name of the component.
+            structures: List of structures (geometries) in the component.
+            ports: List of ports for input/output connections.
+            bounds: Boundaries of the component.
+        """
+        self.name = name
+        self.structures = structures
+        self.ports = ports
+        self.bounds = bounds
+        initialize_ports_z(ports = self.ports, structures = self.structures)  # initialize ports z center and z span
 
+    def export_gds(self, export_dir: str = None, dbu: float = 0.001, layer: list = [1, 0]) -> None:
+        """
+        Export the component to a GDS file.
+        
+        Args:
+            export_dir: Directory to export the GDS file to. Defaults to current working directory.
+            dbu: Database unit in microns. Defaults to 0.001 (1 nm).
+            layer: GDS layer specification as [layer_number, datatype]. Defaults to [1, 0].
+        """
+        import os
+        import klayout.db as pya
 
-class Simulation:
-    def __init__(
-        self, in_port, device, wavl_min=1.45, wavl_max=1.65, wavl_pts=101, sim_jobs=None
-    ):
-        self.in_port = in_port
-        self.device = device
-        self.wavl_min = wavl_min
-        self.wavl_max = wavl_max
-        self.wavl_pts = wavl_pts
-        self.sim_jobs = sim_jobs
-        self.results = None
+        layout = pya.Layout()
+        layout.dbu = dbu  # Set the database unit to 0.001 um
+        top_cell = layout.create_cell(self.name)
+        layer_info = pya.LayerInfo(layer[0], layer[1])
+        layer = layout.layer(layer_info)
 
-    def upload(self):
-        from tidy3d import web
-
-        # divide between job and sim, how to attach them?
-        for sim_job in self.sim_jobs:
-            sim = sim_job["sim"]
-            name = sim_job["name"]
-            sim_job["job"] = web.Job(simulation=sim, task_name=name)
-
-    def execute(self):
-        import numpy as np
-
-        def get_directions(ports):
-            directions = []
-            for p in ports:
-                if p.direction in [0, 90]:
-                    directions.append("+")
-                else:
-                    directions.append("-")
-            return tuple(directions)
-
-        def get_source_direction(port):
-            if port.direction in [0, 90]:
-                return "-"
-            else:
-                return "+"
-
-        def get_port_name(port):
-            return [int(i) for i in port if i.isdigit()][0]
-
-        def measure_transmission(
-            in_port: port, in_mode_idx: int, out_mode_idx: int
-        ):
-            """
-            Constructs a "row" of the scattering matrix.
-            """
-            num_ports = np.size(self.device.ports)
-
-            if isinstance(self.results, list):
-                if len(self.results) == 1:
-                    results = self.results[0]
-                else:
-                    # TBD: Handle the case where self.results is a list with more than one item
-                    logger.warning("Multiple results handler is WIP, using first results entry")
-                    results = self.results[0]
-            else:
-                results = self.results
-
-            input_amp = results[in_port.name].amps.sel(
-                direction=get_source_direction(in_port),
-                mode_index=in_mode_idx,
+        for polygon in [s[0].polygon for s in self.structures if isinstance(s, list)]:
+            pya_polygon = pya.Polygon(
+                [
+                    pya.Point(int(point[0] / layout.dbu), int(point[1] / layout.dbu))
+                    for point in polygon
+                ]
             )
-            amps = np.zeros((num_ports, self.wavl_pts), dtype=complex)
-            directions = get_directions(self.device.ports)
-            for i, (monitor, direction) in enumerate(
-                zip(results.simulation.monitors[:num_ports], directions)
-            ):
-                amp = results[monitor.name].amps.sel(
-                    direction=direction, mode_index=out_mode_idx
-                )
-                amp_normalized = amp / input_amp
-                amps[i] = np.squeeze(amp_normalized.values)
+            top_cell.shapes(layer).insert(pya_polygon)
 
-            return amps
-
-        self.s_parameters = s_parameters()  # initialize empty s parameters
-
-        self.results = []
-        for sim_job in self.sim_jobs:
-            if not os.path.exists(self.device.name):
-                os.makedirs(self.device.name)
-            self.results.append(sim_job["job"].run(
-                path=os.path.join(self.device.name, f"{sim_job['name']}.hdf5")
-            ))
-            for mode in range(sim_job["num_modes"]):
-                amps_arms = measure_transmission(
-                    in_port=sim_job["in_port"],
-                    in_mode_idx=sim_job["source"].mode_index,
-                    out_mode_idx=mode,
-                )
-
-                logging.info("Mode amplitudes in each port: \n")
-                wavl = np.linspace(self.wavl_min, self.wavl_max, self.wavl_pts)
-                for amp, monitor in zip(amps_arms, self.results[-1].simulation.monitors):
-                    logging.info(f'\tmonitor     = "{monitor.name}"')
-                    logging.info(f"\tamplitude^2 = {[abs(i)**2 for i in amp]}")
-                    logging.info(
-                        f"\tphase       = {[np.angle(i)**2 for i in amp]} (rad)\n"
-                    )
-
-                    self.s_parameters.add_param(
-                        sparam(
-                            idx_in=sim_job["in_port"].idx,
-                            idx_out=get_port_name(monitor.name),
-                            mode_in=sim_job["source"].mode_index,
-                            mode_out=mode,
-                            freq=td.C_0 / (wavl),
-                            s=amp,
-                        )
-                    )
-        if isinstance(self.results, list) and len(self.results) == 1:
-            self.results = self.results[0]
-
-    def visualize_results(self):
-        import matplotlib.pyplot as plt
-
-        self.s_parameters.plot()
-
-        try:
-            if isinstance(self.results, list):
-                for job_result in self.results:
-                    fig, ax = plt.subplots(1, 1, figsize=(16, 3))
-                    job_result.plot_field(
-                        "field",
-                        "Ey",
-                        freq=td.C_0 / ((self.wavl_max + self.wavl_min) / 2),
-                        ax=ax,
-                    )
-                    fig.show()
-            else:
-                fig, ax = plt.subplots(1, 1, figsize=(16, 3))
-                self.results.plot_field(
-                    "field",
-                    "Ey",
-                    freq=td.C_0 / ((self.wavl_max + self.wavl_min) / 2),
-                    ax=ax,
-                )
-                fig.show()
-        except:
-            return
+        if export_dir is None:
+            export_dir = os.getcwd()
+        layout.write(os.path.join(export_dir, f"{self.name}.gds"))
+        return 
 
 
 class s_parameters:
@@ -396,9 +480,6 @@ class s_parameters:
         return entries
 
     def plot(self):
-        import matplotlib.pyplot as plt
-        import numpy as np
-
         fig, ax = plt.subplots(1, 1)
         ax.set_xlabel("Wavelength [microns]")
         ax.set_ylabel("Transmission [dB]")
@@ -406,10 +487,10 @@ class s_parameters:
             logging.info("Mode amplitudes in each port: \n")
             mag = [10 * np.log10(abs(i) ** 2) for i in i.s]
             phase = [np.angle(i) ** 2 for i in i.s]
-            ax.plot(1e6 * td.C_0 / i.freq, mag, label=i.label)
+            ax.plot(1e6 * c0_um / i.freq, mag, label=i.label)
         ax.legend()
+        fig.show()
         return fig, ax
-
 
 class sparam:
     def __init__(self, idx_in, idx_out, mode_in, mode_out, freq, s):
@@ -425,17 +506,15 @@ class sparam:
         return f"S{self.idx_out}{self.idx_in}_idx{self.mode_out}{self.mode_in}"
 
     def plot(self):
-        import numpy as np
-        import matplotlib.pyplot as plt
-        plt.plot((1e-6*td.C_0)/np.array(self.freq), 10*np.log10(self.s**2))
-        plt.xlabel('Wavelength [um]')
-        plt.ylabel('Transmission [dB]')
-        plt.title('Frequency vs S')
-        plt.show()
+        fig, ax = plt.subplots(1, 1)
+        ax.plot((1e-6 * c0_um) / np.array(self.freq), 10 * np.log10(self.s**2))
+        ax.set_xlabel("Wavelength [um]")
+        ax.set_ylabel("Transmission [dB]")
+        ax.set_title("Frequency vs S")
+        fig.show()
+        return fig, ax
 
 def parse_yaml_tech(file_path):
-    import yaml
-
     with open(file_path, "r") as file:
         data = yaml.safe_load(file)
 

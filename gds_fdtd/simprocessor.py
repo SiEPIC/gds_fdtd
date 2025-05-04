@@ -1,14 +1,15 @@
 """
-gds_fdtd integration toolbox.
+gds_fdtd simulation toolbox.
 
-Tidy3D simulation processing module.
-@author: Mustafa Hammood, 2024
+Simulation processing module.
+@author: Mustafa Hammood, 2025
 """
 
 import tidy3d as td
 import numpy as np
 import matplotlib.pyplot as plt
-from .core import structure, region, port, component, Simulation
+from .core import structure, region, port, component
+from .t3d_tools import sim_tidy3d
 from .lyprocessor import (
     load_structure,
     load_region,
@@ -241,7 +242,7 @@ def make_field_monitor(device, freqs=2e14, axis="z", z_center=None):
         name=f"{axis}_field",
     )
 
-def make_sim(
+def make_t3d_sim(
     device,
     wavl_min: float = 1.45,
     wavl_max: float = 1.65,
@@ -378,7 +379,7 @@ def make_sim(
             sim_jobs.append(sim)
 
     # initialize the simulation
-    simulation = Simulation(
+    simulation = sim_tidy3d(
         in_port=in_port,
         wavl_max=wavl_max,
         wavl_min=wavl_min,
@@ -437,13 +438,13 @@ def get_material(device: dict):
     return material
 
 
-def load_component_from_tech(ly, tech, z_span=4, z_center=None):
+def load_component_from_tech(cell, tech, z_span=4, z_center=None):
     # load the structures in the device
     device_wg = []
     for idx, d in enumerate(tech["device"]):
         device_wg.append(
             load_structure(
-                ly,
+                cell,
                 name=f"dev_{idx}",
                 layer=d["layer"],
                 z_base=d["z_base"],
@@ -459,10 +460,10 @@ def load_component_from_tech(ly, tech, z_span=4, z_center=None):
         z_center = np.average([d[0].z_base + d[0].z_span / 2 for d in device_wg])
 
     # load all the ports in the device and (optional) initialize each to have a center
-    ports = load_ports(ly, layer=tech["pinrec"][0]["layer"])
+    ports = load_ports(cell, layer=tech["pinrec"][0]["layer"])
     # load the device simulation region
     bounds = load_region(
-        ly, layer=tech["devrec"][0]["layer"], z_center=z_center, z_span=z_span
+        cell, layer=tech["devrec"][0]["layer"], z_center=z_center, z_span=z_span
     )
 
     # make the superstrate and substrate based on device bounds
@@ -484,27 +485,27 @@ def load_component_from_tech(ly, tech, z_span=4, z_center=None):
 
     # create the device by loading the structures
     return component(
-        name=ly.name,
+        name=cell.name,
         structures=[device_sub, device_super] + device_wg,
         ports=ports,
         bounds=bounds,
     )
 
-def build_sim_from_tech(tech: dict, layout, in_port=0, **kwargs):
+def build_sim_from_tech(tech: dict, cell, in_port=0, **kwargs):
 
     z_span = kwargs.pop("z_span", 4)  # Default value 4 if z_span is not provided
 
-    device = load_component_from_tech(ly=layout, tech=tech, z_span=z_span)
+    device = load_component_from_tech(cell=cell, tech=tech, z_span=z_span)
 
     if isinstance(in_port, int):
-        return make_sim(
+        return make_t3d_sim(
             device=device,
             in_port=device.ports[in_port],
             z_span=z_span,
             **kwargs,
         )
     elif in_port == "all":
-        return make_sim(
+        return make_t3d_sim(
             device=device,
             in_port=device.ports[:],
             z_span=z_span,

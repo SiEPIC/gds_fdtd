@@ -1,8 +1,8 @@
 """
-gds_fdtd integration toolbox.
+gds_fdtd simulation toolbox.
 
 Lumerical tools module.
-@author: Mustafa Hammood, 2024
+@author: Mustafa Hammood, 2025
 """
 
 from gds_fdtd.core import structure, component
