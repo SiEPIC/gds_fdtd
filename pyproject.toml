@@ -5,7 +5,7 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "gds_fdtd"
 version = "0.3.0"
-description = "A modernized package for simulating photonics designs."
+description = "A minimalist package for simulating photonics designs."
 authors = [
     {name = "Mustafa Hammood", email = "mustafa@siepic.com"}
 ]
@@ -26,16 +26,16 @@ dependencies = [
     "wheel>=0.38.1",
     "watchdog==2.3.0",
     "twine==1.14.0",
-    "klayout==0.29.10",
-    "tidy3d==2.7.7",
+    "klayout==0.30.1",
+    "tidy3d==2.8.0",
     "docutils<0.21",
     "sphinx-rtd-theme>=1.2.0",
 ]
 
 [project.optional-dependencies]
-gdsfactory = ["gdsfactory>=8.23"]
+gdsfactory = ["gdsfactory>=9.5.0"]
 dev = ["pytest", "coverage"]
-prefab = ["prefab==1.1.4"]
+prefab = ["prefab==1.2.0"]
 
 [tool.pytest.ini_options]
 addopts = "--cov=."
