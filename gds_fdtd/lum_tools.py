@@ -1,12 +1,11 @@
 """
 gds_fdtd simulation toolbox.
 
-Lumerical tools module.
+Lumerical tools interface module.
 @author: Mustafa Hammood, 2025
 """
 
 from gds_fdtd.core import structure, component
-from .core import port
 import logging
 import lumapi
 import numpy as np

@@ -67,7 +67,7 @@ class sim_tidy3d:
                     logging.warning(
                         "Multiple results handler is WIP, using first results entry"
                     )
-                    results = self.results[0]
+                    results = self.results[-1]
             else:
                 results = self.results
 
@@ -130,28 +130,25 @@ class sim_tidy3d:
         if isinstance(self.results, list) and len(self.results) == 1:
             self.results = self.results[0]
 
+    def _plot_any_axis(self, job_result, freq):
+        """Try x/y/z until one works, put axis name in title."""
+        for axis in ("x", "y", "z"):
+            try:
+                fig, ax = plt.subplots(1, 1, figsize=(16, 3))
+                job_result.plot_field(f"{axis}_field", "Ey", freq=freq, ax=ax)
+                ax.set_title(f"**{axis.upper()}‑field**")      # highlight chosen axis
+                fig.show()
+            except Exception:
+                plt.close(fig)
+        # nothing matched → silently skip
+
+
     def visualize_results(self):
         self.s_parameters.plot()
+        freq = td.C_0 / ((self.wavl_max + self.wavl_min) / 2)
 
-        try:
-            if isinstance(self.results, list):
-                for job_result in self.results:
-                    fig, ax = plt.subplots(1, 1, figsize=(16, 3))
-                    job_result.plot_field(
-                        "field",
-                        "Ey",
-                        freq=td.C_0 / ((self.wavl_max + self.wavl_min) / 2),
-                        ax=ax,
-                    )
-                    fig.show()
-            else:
-                fig, ax = plt.subplots(1, 1, figsize=(16, 3))
-                self.results.plot_field(
-                    "field",
-                    "Ey",
-                    freq=td.C_0 / ((self.wavl_max + self.wavl_min) / 2),
-                    ax=ax,
-                )
-                fig.show()
-        except:
-            return
+        if isinstance(self.results, list):
+            for job_result in self.results:
+                self._plot_any_axis(job_result, freq)
+        else:
+            self._plot_any_axis(self.results, freq)

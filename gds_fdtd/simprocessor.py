@@ -47,7 +47,6 @@ def make_source(
     Returns:
         td.ModeSource: Generated source.
     """
-    import tidy3d as td
 
     if port.direction == 0:
         x_buffer = -buffer
@@ -92,9 +91,6 @@ def make_structures(device, buffer: float=4.):
     Returns:
         list: list of structures generated from the device.
     """
-    import tidy3d as td
-    import numpy as np
-
     # TODO find a better way to handle material..
     
     # TODO fix box tox handling here
@@ -214,7 +210,6 @@ def make_field_monitor(device, freqs=2e14, axis="z", z_center=None):
     Returns:
         FieldMonitor: Generated Tidy3D field monitor object
     """
-    import numpy as np
 
     # identify a device field z_center if None
     if z_center is None:
@@ -490,27 +485,6 @@ def load_component_from_tech(cell, tech, z_span=4, z_center=None):
         ports=ports,
         bounds=bounds,
     )
-
-def build_sim_from_tech(tech: dict, cell, in_port=0, **kwargs):
-
-    z_span = kwargs.pop("z_span", 4)  # Default value 4 if z_span is not provided
-
-    device = load_component_from_tech(cell=cell, tech=tech, z_span=z_span)
-
-    if isinstance(in_port, int):
-        return make_t3d_sim(
-            device=device,
-            in_port=device.ports[in_port],
-            z_span=z_span,
-            **kwargs,
-        )
-    elif in_port == "all":
-        return make_t3d_sim(
-            device=device,
-            in_port=device.ports[:],
-            z_span=z_span,
-            **kwargs,
-        )
 
 
 def from_gdsfactory(c: 'gf.Component', tech: dict, z_span: float = 4.) -> 'component':
