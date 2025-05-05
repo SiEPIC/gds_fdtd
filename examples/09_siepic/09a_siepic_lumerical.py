@@ -12,7 +12,7 @@ from pya import Layout
 from lumapi import FDTD
 
 if __name__ == "__main__":
-    tech_path = os.path.join(os.path.dirname(__file__), "tech.yaml")
+    tech_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "tech_lumerical.yaml")
     technology = parse_yaml_tech(tech_path)
 
     # load cell from siepic_ebeam_pdk
