@@ -1,3 +1,8 @@
+#%%
+"""
+Simulation of a halfring device using lumerical.
+@author: Mustafa Hammood
+"""
 import os
 from gds_fdtd.simprocessor import load_component_from_tech
 from gds_fdtd.core import parse_yaml_tech
@@ -13,9 +18,9 @@ if __name__ == "__main__":
     # load cell from siepic_ebeam_pdk
     ly = Layout()
     ly.technology_name = pdk.tech.name
-    cell = ly.create_cell("ebeam_taper_te1550", "EBeam", {})
+    cell = ly.create_cell("ebeam_dc_halfring_straight", "EBeam", {})
 
-    component = load_component_from_tech(ly=cell, tech=technology)
+    component = load_component_from_tech(cell=cell, tech=technology)
 
     # simulate with lumerical
     make_sim_lum(
@@ -32,3 +37,5 @@ if __name__ == "__main__":
         boundary="pml",
         mesh=3,
         run_time_factor=50,)
+
+# %%
