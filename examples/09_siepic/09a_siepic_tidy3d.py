@@ -36,7 +36,7 @@ if __name__ == "__main__":
             0,
         ),  # ensure structure is symmetric across symmetry axis before triggering this!
         z_span=3,
-        field_monitor_axis="y",
+        field_monitor_axis="z",
     )
 
     simulation.upload()
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     #  visualize the results
     simulation.visualize_results()
 
-    s_parameters = simulation.s_parameters()
-    s21 = s_parameters._entries[1]
-    s21.plot()
+    s_parameters = simulation.s_parameters
+    s32 = s_parameters._entries[3]
+    s32.plot()
 # %%
