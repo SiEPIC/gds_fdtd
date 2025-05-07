@@ -200,7 +200,7 @@ def make_sim_lum(
     lum.save(f"{c.name}.fsp")
     lum.addsweep(3)
     lum.setsweep("s-parameter sweep", "name", "sparams")
-    input("Press Enter to continue...")
+    #input("Press Enter to continue...")
     if gpu:
         lum.runsweep("sparams", "GPU")
     else:
