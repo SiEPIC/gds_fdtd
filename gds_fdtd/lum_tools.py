@@ -113,6 +113,7 @@ def make_sim_lum(
     z_span: float | None = None,
     field_monitor_axis: str | None = None,
     visualize: bool = True,
+    export_plot_file: str = 'sparam.png', 
     gpu: bool = False,
 ) -> dict[str, list[float]]:
 
@@ -217,7 +218,7 @@ def make_sim_lum(
             key = f"S{ports.index(p1) + 1}{ports.index(p2) + 1}"  # Generates keys like "s11", "s12", "s21", "s22"
             sparams[f"s{ports.index(p1) + 1}_{ports.index(p2) + 1}"] = sparams_sweep[key]  # Maps to corresponding S-parameter value
     
-    if visualize:
+    if visualize or export_plot_file:
         import matplotlib.pyplot as plt
         plt.figure(figsize=(10, 6))
         for param, values in sparams.items():
@@ -234,6 +235,9 @@ def make_sim_lum(
         plt.grid(True)
         plt.legend(loc="best")
         plt.tight_layout()
-        plt.show()
+        if export_plot_file:
+            plt.savefig(export_plot_file) # Saves the plot 
+        if visualize:
+            plt.show()
 
     return sparams
