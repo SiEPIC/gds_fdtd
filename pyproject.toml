@@ -28,6 +28,7 @@ dependencies = [
     "twine==1.14.0",
     "klayout==0.30.1",
     "tidy3d==2.8.0",
+    "xarray<2024",
     "docutils<0.21",
     "sphinx-rtd-theme>=1.2.0",
 ]
