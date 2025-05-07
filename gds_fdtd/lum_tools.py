@@ -113,6 +113,7 @@ def make_sim_lum(
     z_span: float | None = None,
     field_monitor_axis: str | None = None,
     visualize: bool = True,
+    gpu: bool = False,
 ) -> dict[str, list[float]]:
 
     # send component to lumerical instance
@@ -141,6 +142,13 @@ def make_sim_lum(
         y_max_bc=boundary,
         z_max_bc=boundary,
     )
+
+    if gpu:
+        lum.setnamed("FDTD", "express mode", True)  # for GPU acceleration
+        lum.run("FDTD", "GPU")
+    else:
+        lum.setnamed("FDTD", "express mode", False)
+        lum.run()
 
     lum.setglobalsource("wavelength start", wavl_min*1e-6)
     lum.setglobalsource("wavelength stop", wavl_max*1e-6)
