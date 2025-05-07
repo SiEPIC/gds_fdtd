@@ -22,6 +22,7 @@ classifiers = [
 
 dependencies = [
     "pip>=23.3",
+    "matplotlib",
     "bump2version==0.5.11",
     "wheel>=0.38.1",
     "watchdog==2.3.0",
