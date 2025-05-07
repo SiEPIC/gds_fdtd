@@ -159,28 +159,51 @@ def make_sim_lum(
     else:
         raise ValueError(f"Polarization {pol} not supported")
 
+    buffer = 1e-6
     for p in c.ports:
-        if p.direction in [180, 90]:
-            direction = "Forward"
-            buffer = -1e-6
-        else:
-            direction = "Backward"
-            buffer = 1e-6
         port = lum.addport()
         lum.set("name", p.name)
-        lum.set("x", p.center[0]*1e-6 + buffer)
-        lum.set("y", p.center[1]*1e-6)
-        lum.set("z", p.center[2]*1e-6)
-        lum.set("y span", width_ports*1e-6)
-        lum.set("z span", depth_ports*1e-6)
-        lum.set("direction", direction)
+
+        if p.direction in [90, 270]:
+            if p.direction == 90:
+                lum.set("y", p.center[1]*1e-6 + buffer)
+                lum.set("direction", "Backward")
+            else:
+                lum.set("y", p.center[1]*1e-6 - buffer)
+                lum.set("direction", "Forward")
+
+            lum.set("z", p.center[2]*1e-6)
+            lum.set("x", p.center[0]*1e-6)
+            lum.set("injection axis", "y-axis")
+            lum.set("x span", width_ports*1e-6)
+            lum.set("z span", depth_ports*1e-6)
+        elif p.direction in [180, 0]:
+            if p.direction == 180:
+                lum.set("x", p.center[0]*1e-6 - buffer)
+                lum.set("direction", "Forward")
+            else:
+                lum.set("x", p.center[0]*1e-6 + buffer)
+                lum.set("direction", "Backward")
+
+            lum.set("y", p.center[1]*1e-6)
+            lum.set("z", p.center[2]*1e-6)
+            lum.set("injection axis", "x-axis")
+            lum.set("y span", width_ports*1e-6)
+            lum.set("z span", depth_ports*1e-6)
+        else:
+            raise ValueError(f"Port direction {p.direction} not supported")
+
         lum.set("mode selection", polarization)
         lum.set("number of field profile samples", num_modes)
 
     lum.save(f"{c.name}.fsp")
     lum.addsweep(3)
     lum.setsweep("s-parameter sweep", "name", "sparams")
-    lum.runsweep("sparams", "GPU")
+    input("Press Enter to continue...")
+    if gpu:
+        lum.runsweep("sparams", "GPU")
+    else:
+        lum.runsweep("sparams")
 
     lum.exportsweep("sparams", f"{c.name}.dat")
     sparams_sweep = lum.getsweepresult("sparams", "S parameters")
