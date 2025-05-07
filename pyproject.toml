@@ -4,15 +4,15 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "gds_fdtd"
-version = "0.3.0"
+version = "0.3.1"
 description = "A minimalist package for simulating photonics designs."
 authors = [
     {name = "Mustafa Hammood", email = "mustafa@siepic.com"}
 ]
 license = {text = "MIT"}
 readme = "README.md"
-homepage = "https://github.com/mustafacc/gds_fdtd"
-repository = "https://github.com/mustafacc/gds_fdtd"
+homepage = "https://github.com/SiEPIC/gds_fdtd"
+repository = "https://github.com/SiEPIC/gds_fdtd"
 keywords = ["photonics", "fdtd", "simulation", "gds", "silicon-photonics", "optics", "simulation"]
 classifiers = [
     "Programming Language :: Python :: 3",
