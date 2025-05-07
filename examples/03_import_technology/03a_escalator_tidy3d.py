@@ -6,8 +6,9 @@ Example defining a tidy3d simulation by importing a GDS with an associated techn
 """
 import os
 from gds_fdtd.core import parse_yaml_tech
-from gds_fdtd.simprocessor import load_component_from_tech, make_t3d_sim
+from gds_fdtd.simprocessor import load_component_from_tech
 from gds_fdtd.lyprocessor import load_cell
+from gds_fdtd.t3d_tools import make_t3d_sim
 
 if __name__ == "__main__":
 
@@ -17,7 +18,7 @@ if __name__ == "__main__":
     # Define the path to the GDS file
     file_gds = os.path.join(os.path.dirname(os.path.dirname(__file__)), "devices.gds")
 
-    cell = load_cell(file_gds, top_cell="si_sin_escalator_te1550")
+    cell, layout = load_cell(file_gds, top_cell="si_sin_escalator_te1550")
 
     device = load_component_from_tech(cell=cell, tech=technology, z_span=5)
 
