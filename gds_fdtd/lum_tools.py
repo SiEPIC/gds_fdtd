@@ -145,10 +145,8 @@ def make_sim_lum(
 
     if gpu:
         lum.setnamed("FDTD", "express mode", True)  # for GPU acceleration
-        lum.run("FDTD", "GPU")
     else:
         lum.setnamed("FDTD", "express mode", False)
-        lum.run()
 
     lum.setglobalsource("wavelength start", wavl_min*1e-6)
     lum.setglobalsource("wavelength stop", wavl_max*1e-6)
@@ -182,7 +180,7 @@ def make_sim_lum(
     lum.save(f"{c.name}.fsp")
     lum.addsweep(3)
     lum.setsweep("s-parameter sweep", "name", "sparams")
-    lum.runsweep("sparams")
+    lum.runsweep("sparams", "GPU")
 
     lum.exportsweep("sparams", f"{c.name}.dat")
     sparams_sweep = lum.getsweepresult("sparams", "S parameters")
