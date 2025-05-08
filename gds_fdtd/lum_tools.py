@@ -243,7 +243,7 @@ def make_sim_lum(
 
     return sparams
 
-def def Update_ring_CML(device,CML,sparam_file,gap,rad,width,thickness,CoupleLength):
+def Update_ring_CML(device,CML,sparam_file,gap,rad,width,thickness,CoupleLength):
     """
     Moves the halfring sparam_file to the local EBeam CML folder found by querying interconnect. 
 
