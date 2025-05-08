@@ -243,7 +243,7 @@ def make_sim_lum(
 
     return sparams
 
-def Update_ring_CML(device,CML,sparam_file,gap,rad,width,thickness,CoupleLength):
+def Update_halfring_CML(device,CML,sparam_file,gap,rad,width,thickness,CoupleLength):
     """
     Moves the halfring sparam_file to the local EBeam CML folder found by querying interconnect. 
 
@@ -258,7 +258,7 @@ def Update_ring_CML(device,CML,sparam_file,gap,rad,width,thickness,CoupleLength)
      CoupleLength (int): The halfring coupler length in microns
 
     Example: 
-    Update_ring_CML("ebeam_dc_halfring_straight","EBeam","sparams.dat",gap=2,rad=20,width=2,thickness=220,CoupleLength=2)
+    Update_halfring_CML("ebeam_dc_halfring_straight","EBeam","sparams.dat",gap=2,rad=20,width=2,thickness=220,CoupleLength=2)
     """
     
     # Ensure sparam_file contains .dat
