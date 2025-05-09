@@ -1,12 +1,13 @@
-# %%!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# %%
 """
-@author: Mustafa Hammood
 Example defining a tidy3d simulation from manually defined geometry.
+@author: Mustafa Hammood
 """
-import tidy3d as td
-import gds_fdtd as gtd
 import os
+import tidy3d as td
+from gds_fdtd.lyprocessor import load_cell, load_ports, load_region, load_structure, load_structure_from_bounds
+from gds_fdtd.core import component
+from gds_fdtd.t3d_tools import make_t3d_sim
 
 # Define the path to the GDS file
 file_gds = os.path.join(os.path.dirname(os.path.dirname(__file__)), "devices.gds")
@@ -36,40 +37,40 @@ wavl_pts = 101   # Number of wavelength points
 symmetry = (0, 0, 1)
 
 # Load and process the layout file
-layout = gtd.lyprocessor.load_layout(file_gds, top_cell='directional_coupler_te1550')
+cell, layout = load_cell(fname=file_gds, top_cell='directional_coupler_te1550')
 
 # Load all the ports in the device and (optional) initialize each to have a center
-ports_si = gtd.lyprocessor.load_ports(layout, layer=[1, 10])
+ports_si = load_ports(cell=cell, layer=[1, 10])
 
 # Load the device simulation region
-bounds = gtd.lyprocessor.load_region(
-    layout, layer=[68, 0], z_center=thickness_si / 2, z_span=z_span
+bounds = load_region(
+    cell=cell, layer=[68, 0], z_center=thickness_si / 2, z_span=z_span
 )
 
 # Load the silicon structures in the device in layer (1,0)
-device_si = gtd.lyprocessor.load_structure(
-    layout, name="Si", layer=[1, 0], z_base=0, z_span=thickness_si, material=mat_si
+device_si = load_structure(
+    cell=cell, name="Si", layer=[1, 0], z_base=0, z_span=thickness_si, material=mat_si
 )
 
 # Make the superstrate and substrate based on device bounds
 # This information isn't typically captured in a 2D layer stack
-device_super = gtd.lyprocessor.load_structure_from_bounds(
-    bounds, name="Superstrate", z_base=0, z_span=thickness_super, material=mat_super
+device_super = load_structure_from_bounds(
+    bounds=bounds, name="Superstrate", z_base=0, z_span=thickness_super, material=mat_super
 )
-device_sub = gtd.lyprocessor.load_structure_from_bounds(
-    bounds, name="Substrate", z_base=0, z_span=-thickness_sub, material=mat_sub
+device_sub = load_structure_from_bounds(
+    bounds=bounds, name="Substrate", z_base=0, z_span=-thickness_sub, material=mat_sub
 )
 
 # Create the device by loading the structures
-device = gtd.core.component(
-    name=layout.name,
+device = component(
+    name=cell.name,
     structures=[device_sub, device_super, device_si],
     ports=ports_si,
     bounds=bounds,
 )
 
 # Create the simulation object
-simulation = gtd.simprocessor.make_sim(
+simulation = make_t3d_sim(
     device=device,
     wavl_min=wavl_min,
     wavl_max=wavl_max,

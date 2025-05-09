@@ -1,7 +1,6 @@
 # %%
 """
 Example defining a tidy3d simulation by importing a GDS with an associated technology file.
-
 @author: Mustafa Hammood
 """
 import os
