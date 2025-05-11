@@ -9,7 +9,8 @@
 
 ## Features
 
-- **Automated FDTD Setup:** Easily set up Tidy3D simulations for devices designed in GDS.
+- **Automated FDTD Setup:** Easily set up Lumerical and Tidy3D simulations for devices designed in GDS.
+- **Integration with SiEPIC:** Generate FDTD simulations directly from components defined in [SiEPIC](https://github.com/SiEPIC/SiEPIC-Tools) EDA and it's associated PDKs (e.g., [SiEPIC-EBeam-PDK](https://github.com/SiEPIC/SiEPIC_EBeam_PDK)).
 - **Integration with gdsfactory:** Generate Tidy3D simulations directly from [gdsfactory](https://github.com/gdsfactory/gdsfactory) designs by identifying ports and simulation regions from an input technology stack.
 - **S-Parameter Extraction:** Automatically generate and export S-parameters of your photonic devices in standard formats.
 - **Multimode/Dual Polarization Simulations:** Set up simulations that support multimode or dual polarization configurations for advanced device analysis.
@@ -18,17 +19,23 @@
 
 You can install `gds_fdtd` using the following options:
 
-### Option 1: Basic Installation
+### Quick install (PyPI)
+
+```bash
+pip install gds_fdtd
+```
+
+### Option: Basic Installation from source
 
 To install the core functionality of `gds_fdtd`, clone the repository and install using `pip`:
 
 ```bash
 git clone git@github.com:mustafacc/gds_fdtd.git
 cd gds_fdtd
-pip install .
+pip install -e .
 ```
 
-### Option 2: Development Installation
+### Option: Development Installation
 
 For contributing to the development or if you need testing utilities, install with the dev dependencies:
 
@@ -40,31 +47,25 @@ pip install -e .[dev]
 
 This will install additional tools like `pytest` and `coverage` for testing.
 
-### Optional Dependencies
-
-If your workflow includes specific dependencies such as gdsfactory or prefab, you can install those optional extras:
-
-with [gdsfactory](https://github.com/gdsfactory/gdsfactory):
+### Editable + dev tools
 
 ```bash
-pip install -e .[gdsfactory]
+pip install -e .[dev]
 ```
 
-Refer to [gdsfactory example](/examples/06_gdsfactory/06a_gf_bend.py) for usage.
+### Optional extras
 
-with [prefab](https://github.com/PreFab-Photonics/PreFab):
+| extra      | purpose                        | install command                             |
+|------------|--------------------------------|---------------------------------------------|
+| tidy3d     | Tidy3D simulation support      | `pip install -e .[tidy3d]`                  |
+| gdsfactory | layout automation & PDK access | `pip install -e .[gdsfactory]`              |
+| prefab     | parameter‑sweep utilities      | `pip install -e .[prefab]`                  |
+| everything | dev tools + both extras        | `pip install -e .[dev,tidy3d,gdsfactory,prefab]`   |
 
-```bash
-pip install -e .[prefab]
-```
+### Requirements
 
-Refer to [prefab example](/examples/08_prefab/08a_bragg_prefab.py) for usage.
-
-If you want everything installed for both development and optional features, run the following command:
-
-```bash
-pip install -e .[dev,gdsfactory,prefab]
-```
+- Python ≥ 3.11  
+- Runtime deps: numpy, matplotlib, shapely, PyYAML, klayout
 
 
 ### Running tests

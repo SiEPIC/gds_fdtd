@@ -1,40 +1,70 @@
+# pyproject.toml ─ gds_fdtd
+
+
 [build-system]
-requires = ["flit_core >=3.2,<4"]
+requires = ["flit_core>=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
+# ────────────────────────── project meta ─────────────────────────
 [project]
-name = "gds_fdtd"
-version = "0.3.6"
-description = "A minimalist package for simulating photonics designs."
-authors = [{name = "Mustafa Hammood", email = "mustafa@siepic.com"}]
-license = {text = "MIT"}
-readme = "README.md"
-homepage = "https://github.com/SiEPIC/gds_fdtd"
-repository = "https://github.com/SiEPIC/gds_fdtd"
-keywords = ["photonics", "fdtd", "simulation", "gds", "silicon-photonics", "optics", "simulation"]
+name            = "gds_fdtd"
+version         = "0.3.6"
+description     = "Minimalist utilities for photonic FDTD workflows."
+authors         = [{ name = "Mustafa Hammood", email = "mustafa@siepic.com" }]
+license         = { text = "MIT" }
+readme          = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.11,<3.14"
+keywords        = [
+  "python", "photonics", "fdtd", "simulation", "optics",
+  "eda", "electromagnetics", "gds", "silicon-photonics"
+]
+
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Operating System :: OS Independent",
+  "License :: OSI Approved :: MIT License",
 ]
 
+# ─────────────── core runtime (always installed) ───────────────
 dependencies = [
-    "pip>=23.3",
-    "bump2version>=0.5.11",
-    "wheel>=0.38.1",
-    "watchdog>=2.3.0",
-    "twine>=1.14.0",
-    "klayout>=0.30.1",
-    "docutils<0.21",
-    "sphinx-rtd-theme>=1.2.0",
+  "numpy>=1.25",
+  "klayout>=0.30.1",
+  "matplotlib>=3.8",
+  "shapely>=2.0",
+  "PyYAML>=6.0"
 ]
 
+# ──────────────── optional feature / tool sets ────────────────
 [project.optional-dependencies]
-tidy3d = ["tidy3d>=2.8.0"]  # now optional
-gdsfactory = ["gdsfactory>=9.5.0"]
-dev = ["pytest", "coverage"]
-prefab = ["prefab>=1.2.0"]
 
+tidy3d      = ["tidy3d>=2.8.3,<2.9"]           # enables gds_fdtd.t3d_tools
+gdsfactory  = ["gdsfactory>=9.5.7,<10"]
+prefab      = ["prefab>=1.2.0"]
+
+dev = [
+  "pip>=23.3",
+  "wheel>=0.42.0",
+  "twine>=4.0.2",
+  "bump2version>=1.0.1",
+  "watchdog>=3.0.0",
+  "pytest>=8.1",
+  "pytest-cov>=5.0",
+  "coverage",
+  "ruff>=0.4.3",
+  "sphinx>=7.0",
+  "sphinx-rtd-theme>=1.2.0",
+  "docutils<0.21"
+]
+
+# ───────────────────────── project links ────────────────────────
+[project.urls]
+Homepage    = "https://github.com/SiEPIC/gds_fdtd"
+Repository  = "https://github.com/SiEPIC/gds_fdtd"
+"Bug Tracker" = "https://github.com/SiEPIC/gds_fdtd/issues"
+
+# ─────────────────────────── tooling ────────────────────────────
 [tool.pytest.ini_options]
 addopts = "--cov=."
 

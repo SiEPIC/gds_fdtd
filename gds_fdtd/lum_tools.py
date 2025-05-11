@@ -6,7 +6,6 @@ Lumerical tools interface module.
 """
 
 from gds_fdtd.core import structure, component
-import logging
 import lumapi
 import numpy as np
 import os

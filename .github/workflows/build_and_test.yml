@@ -15,33 +15,35 @@ jobs:
     steps:
     # Step 1: Check out the repository
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     # Step 2: Set up Python
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: '3.11'
 
     # Step 3: Install Flit, pytest, pytest-cov, and Coverage
     - name: Install Flit, pytest, pytest-cov, and Coverage
       run: |
-        pip install flit pytest pytest-cov coverage
+        pip install flit pytest pytest-cov coverage[toml]
     
     # Step 4: Install dependencies (including dev dependencies)
-    - name: Install dependencies
+    - name: Install package (dev extras)
+      env: 
+        FLIT_ROOT_INSTALL: "1"
       run: |
-        export FLIT_ROOT_INSTALL=1
-        flit install --deps=develop --extras=dev  # Install dev dependencies
+        flit install --deps develop --extras dev
 
     # Step 5: Run tests with coverage
-    - name: Run tests
+    - name: Run tests with coverage
       run: |
-        coverage run --source=gds_fdtd -m pytest
-        coverage report
+        pytest --cov=gds_fdtd --cov-branch --cov-report=xml
 
     # Step 6: Upload coverage reports to Codecov
     - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+        files: coverage.xml
+        flags: unittests
