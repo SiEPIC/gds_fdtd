@@ -57,10 +57,11 @@ pip install -e .[dev]
 
 | extra      | purpose                        | install command                             |
 |------------|--------------------------------|---------------------------------------------|
+| siepic     | SiEPIC EDA support            | `pip install -e .[siepic]`                  |
 | tidy3d     | Tidy3D simulation support      | `pip install -e .[tidy3d]`                  |
-| gdsfactory | layout automation & PDK access | `pip install -e .[gdsfactory]`              |
+| gdsfactory | GDSfactory EDA support         | `pip install -e .[gdsfactory]`              |
 | prefab     | parameter‑sweep utilities      | `pip install -e .[prefab]`                  |
-| everything | dev tools + both extras        | `pip install -e .[dev,tidy3d,gdsfactory,prefab]`   |
+| everything | dev tools + all plugins        | `pip install -e .[dev,tidy3d,gdsfactory,prefab,siepic]`   |
 
 ### Requirements
 
