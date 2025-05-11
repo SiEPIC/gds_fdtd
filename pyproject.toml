@@ -8,12 +8,12 @@ build-backend = "flit_core.buildapi"
 # ────────────────────────── project meta ─────────────────────────
 [project]
 name            = "gds_fdtd"
-version         = "0.3.8"
+version         = "0.3.9"
 description     = "Minimalist utilities for photonic FDTD workflows."
 authors         = [{ name = "Mustafa Hammood", email = "mustafa@siepic.com" }]
 license         = { text = "MIT" }
 readme          = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.10,<3.14"
 keywords        = [
   "python", "photonics", "fdtd", "simulation", "optics",
   "eda", "electromagnetics", "gds", "silicon-photonics"
