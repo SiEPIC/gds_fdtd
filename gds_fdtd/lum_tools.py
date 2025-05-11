@@ -298,13 +298,16 @@ def Update_halfring_CML(device,CML,sparam_file,gap,rad,width,thickness,CoupleLen
     destination = os.path.join(path_halfring, filename)
     print(destination)
 
+    '''
     # Get the source data file
     dir_path = os.path.dirname(os.path.realpath(__file__))
     print(dir_path)
     source = os.path.join(dir_path, sparam_file)
+    '''
                             
     # copy the file
-    shutil.copyfile(source, destination)
+    print(f'Source: {sparam_file}, Destination: {destination}')
+    shutil.copyfile(sparam_file, destination)
     return
 
 
