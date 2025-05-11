@@ -251,13 +251,13 @@ def Update_halfring_CML(device,CML,sparam_file,gap,rad,width,thickness,CoupleLen
      CML (str): The CML library to add the sparam file to. ex: EBeam
      sparam_file (str): The name/path of the sparam file you are adding to the CML
      gap (int): The halfring coupling gap in nanometers
-     rad (int): The halfring radius in microns
+     rad (int): The halfring radius in nanometers
      width (int): The halfring waveguide width in nanometers
      thickness (int): The halfring waveguide thickness in nanometers
-     CoupleLength (int): The halfring coupler length in microns
+     CoupleLength (int): The halfring coupler length in nanometers
 
     Example: 
-    Update_halfring_CML("ebeam_dc_halfring_straight","EBeam","sparams.dat",gap=2,rad=20,width=2,thickness=220,CoupleLength=2)
+    Update_halfring_CML("ebeam_dc_halfring_straight","EBeam","sparams.dat",gap=2,rad=20000,width=2,thickness=220,CoupleLength=2000)
     """
     
     # Ensure sparam_file contains .dat
@@ -268,11 +268,7 @@ def Update_halfring_CML(device,CML,sparam_file,gap,rad,width,thickness,CoupleLen
 
     for prm in to_check:
         if not isinstance(prm, int):
-            if prm in [rad,CoupleLength]:
-                raise TypeError(f"Parameter '{prm}' must be an integer (in microns), got {type(prm).__name__}.")
-            else:
-                if prm in [rad,CoupleLength]:
-                    raise TypeError(f"Parameter '{prm}' must be an integer (in nanometers), got {type(prm).__name__}.")
+                raise TypeError(f"Parameter '{prm}' must be an integer (in nanometers), got {type(prm).__name__}.")
     
     # Query Lumerical INTERCONNECT to find the path for the specific design kit
     intc = lumapi.open('interconnect')
@@ -298,7 +294,7 @@ def Update_halfring_CML(device,CML,sparam_file,gap,rad,width,thickness,CoupleLen
     CML_path = lumapi.getVar(intc, "path")
     
     path_halfring = os.path.join(CML_path, 'source_data/' + device)
-    filename = f"te_ebeam_dc_halfring_straight_gap={gap}nm_radius={rad}um_width={width}nm_thickness={thickness}nm_CoupleLength={CoupleLength}um.dat"
+    filename = f"te_ebeam_dc_halfring_straight_gap={gap}nm_radius={rad}nm_width={width}nm_thickness={thickness}nm_CoupleLength={CoupleLength}nm.dat"
     destination = os.path.join(path_halfring, filename)
     print(destination)
 
