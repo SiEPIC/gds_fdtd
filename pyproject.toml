@@ -8,7 +8,7 @@ build-backend = "flit_core.buildapi"
 # ────────────────────────── project meta ─────────────────────────
 [project]
 name            = "gds_fdtd"
-version         = "0.3.7"
+version         = "0.3.8"
 description     = "Minimalist utilities for photonic FDTD workflows."
 authors         = [{ name = "Mustafa Hammood", email = "mustafa@siepic.com" }]
 license         = { text = "MIT" }
