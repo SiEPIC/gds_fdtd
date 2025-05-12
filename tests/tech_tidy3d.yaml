@@ -1,0 +1,39 @@
+technology:
+  name: "EBeam"
+
+  substrate:
+      z_base: 0.0
+      z_span: -2
+      material:
+        tidy3d_db:
+          nk: 1.48
+
+  superstrate:
+      z_base: 0.0
+      z_span: 3
+      material:
+        tidy3d_db:
+          nk: 1.48
+  
+  pinrec:
+    - layer: [1, 10]
+
+  devrec:
+    - layer: [68, 0]
+
+  device:
+    - layer: [1, 0]
+      z_base: 0.0
+      z_span: 0.22
+      material:
+        tidy3d_db:
+          model: [cSi, Li1993_293K]
+      sidewall_angle: 85
+
+    - layer: [4, 0]
+      z_base: .3
+      z_span: 0.4
+      material:
+        tidy3d_db:
+          model: [Si3N4, Luke2015PMLStable]
+      sidewall_angle: 90

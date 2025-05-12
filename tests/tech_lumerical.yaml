@@ -5,15 +5,15 @@ technology:
       z_base: 0.0
       z_span: -2
       material:
-        tidy3d_db:
-          nk: 1.48
+        lum_db:
+          model: SiO2 (Glass) - Palik
 
   superstrate:
       z_base: 0.0
       z_span: 3
       material:
-        tidy3d_db:
-          nk: 1.48
+        lum_db:
+          model: SiO2 (Glass) - Palik
   
   pinrec:
     - layer: [1, 10]
@@ -26,14 +26,14 @@ technology:
       z_base: 0.0
       z_span: 0.22
       material:
-        tidy3d_db:
-          model: [cSi, Li1993_293K]
+        lum_db:
+          model: Si (Silicon) - Palik
       sidewall_angle: 85
 
-    - layer: [1, 5]
+    - layer: [4, 0]
       z_base: .3
-      z_span: 0.22
+      z_span: 0.4
       material:
-        tidy3d_db:
-          model: [Si3N4, Philipp1973Sellmeier]
-      sidewall_angle: 80
+        lum_db:
+          model: Si3N4 (Silicon Nitride) - Luke
+      sidewall_angle: 83
