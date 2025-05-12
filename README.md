@@ -2,8 +2,11 @@
 
 ![alternative text](/docs/banner.png)
 
-![codecov](https://codecov.io/gh/mustafacc/gds_fdtd/branch/main/graph/badge.svg)
-![build](https://github.com/mustafacc/gds_fdtd/actions/workflows/main.yml/badge.svg)
+![codecov](https://codecov.io/gh/siepic/gds_fdtd/branch/main/graph/badge.svg)
+![build](https://github.com/siepic/gds_fdtd/actions/workflows/build_and_test.yml/badge.svg)
+![docs](https://github.com/siepic/gds_fdtd/actions/workflows/build_docs.yml/badge.svg)
+![jekyll](https://github.com/siepic/gds_fdtd/actions/workflows/jekyll-gh-pages.yml/badge.svg)
+![pypi](https://github.com/siepic/gds_fdtd/actions/workflows/python-publish.yml/badge.svg)
 
 **gds_fdtd** is a minimal Python module to assist in setting up FDTD simulations for planar nanophotonic devices using FDTD solvers such as Tidy3D.
 
@@ -57,10 +60,10 @@ pip install -e .[dev]
 
 | extra      | purpose                        | install command                             |
 |------------|--------------------------------|---------------------------------------------|
-| siepic     | SiEPIC EDA support            | `pip install -e .[siepic]`                  |
-| tidy3d     | Tidy3D simulation support      | `pip install -e .[tidy3d]`                  |
-| gdsfactory | GDSfactory EDA support         | `pip install -e .[gdsfactory]`              |
-| prefab     | PreFab lithography prediction support      | `pip install -e .[prefab]`                  |
+| siepic     | [SiEPIC](https://github.com/SiEPIC/SiEPIC-Tools) EDA support            | `pip install -e .[siepic]`                  |
+| tidy3d     | [Tidy3D](https://github.com/flexcompute/tidy3d) simulation support      | `pip install -e .[tidy3d]`                  |
+| gdsfactory | [GDSFactory](https://github.com/gdsfactory/gdsfactory) EDA support         | `pip install -e .[gdsfactory]`              |
+| prefab     | [PreFab](https://github.com/PreFab-Photonics/PreFab) lithography prediction support      | `pip install -e .[prefab]`                  |
 | everything | dev tools + all plugins        | `pip install -e .[dev,tidy3d,gdsfactory,prefab,siepic]`   |
 
 ### Requirements

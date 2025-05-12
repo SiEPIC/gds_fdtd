@@ -1,0 +1,30 @@
+# .github/dependabot.yml
+version: 2
+
+updates:
+  #######################################################################
+  # 1. Python – looks at   pyproject.toml & requirements*.txt files
+  #######################################################################
+  - package-ecosystem: "pip"          # Dependabot’s “pip” parser handles PEP‑621/pyproject projects
+    directory: "/"                    # root of the repo
+    schedule:
+      interval: "weekly"              # ┐ every Monday, 04:00 UTC
+      day: "monday"                   # │  (change to daily/monthly if you like)
+      time: "04:00"                   # ┘
+    open-pull-requests-limit: 10      # keep the noise reasonable
+    commit-message:
+      prefix: "build(pip)"            # nice conventional‑commit prefix
+    labels: ["dependencies", "python"]
+
+  #######################################################################
+  # 2. GitHub Actions – keeps action versions in .github/workflows/*.yml up‑to‑date
+  #######################################################################
+  - package-ecosystem: "github-actions"
+    directory: "/"                    # workflows are in the repo root’s .github/workflows/
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+    commit-message:
+      prefix: "ci"
+    labels: ["dependencies", "github-actions"]
