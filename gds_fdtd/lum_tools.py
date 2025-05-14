@@ -115,6 +115,7 @@ def make_sim_lum(
     visualize: bool = True,
     export_plot_file: str = 'sparam.png', 
     gpu: bool = False,
+    buffer = 1e-6,
 ) -> dict[str, list[float]]:
 
     # send component to lumerical instance
@@ -160,7 +161,6 @@ def make_sim_lum(
     else:
         raise ValueError(f"Polarization {pol} not supported")
 
-    buffer = 1e-6
     for p in c.ports:
         port = lum.addport()
         lum.set("name", p.name)
@@ -308,6 +308,9 @@ def Update_halfring_CML(device,CML,sparam_file,gap,rad,width,thickness,CoupleLen
     # copy the file
     print(f'Source: {sparam_file}, Destination: {destination}')
     shutil.copyfile(sparam_file, destination)
-    return
-
+    
+    # close INTERCONNECT
+    intc.close()
+    
+    
 
