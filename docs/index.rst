@@ -8,6 +8,8 @@ Welcome to gds_fdtd's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   architecture
+   examples
    modules
 
 

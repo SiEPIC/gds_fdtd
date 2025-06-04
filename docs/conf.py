@@ -5,16 +5,19 @@ sys.path.insert(0, os.path.abspath('../'))
 # Project details
 project = 'gds_fdtd'
 author = 'Mustafa Hammood'
-release = '0.3.9'
+release = '0.3.10'
 
 # Extensions
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',  # Google-style docstrings
     'sphinx.ext.viewcode',
     'sphinx_toggleprompt',  # For interactive prompts
     'sphinx_copybutton',    # Adds copy buttons to code blocks
 ]
+
+autosummary_generate = True
 
 # Theme
 html_theme = 'furo'

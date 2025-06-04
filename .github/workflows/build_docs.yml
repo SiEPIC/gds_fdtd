@@ -25,7 +25,7 @@ jobs:
       # Step 3: Install dependencies
       - name: Install dependencies
         run: |
-          pip install sphinx furo sphinx-toggleprompt sphinx-copybutton
+          pip install .[dev]
 
       # Step 4: Build the docs
       - name: Build the docs
@@ -36,5 +36,5 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
-          personal_token: ${{ secrets.GH_PAT }}  # Use the personal access token
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/_build/html
