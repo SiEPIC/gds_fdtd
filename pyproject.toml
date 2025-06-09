@@ -56,7 +56,8 @@ dev = [
   "ruff>=0.4.3",
   "sphinx>=7.0",
   "sphinx-rtd-theme>=1.2.0",
-  "docutils<0.22"
+  "docutils<0.22",
+  "sphinx-toggleprompt>=0.1.0"
 ]
 
 # ───────────────────────── project links ────────────────────────
