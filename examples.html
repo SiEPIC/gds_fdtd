@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Architecture Overview" href="architecture.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="API Reference" href="modules.html" /><link rel="prev" title="Architecture Overview" href="architecture.html" />
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>gds_fdtd 0.3.10 documentation</title>
+        <title>Examples - gds_fdtd 0.3.10 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -173,7 +173,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="#"><div class="brand">gds_fdtd 0.3.10 documentation</div></a>
+      <a href="index.html"><div class="brand">gds_fdtd 0.3.10 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -194,7 +194,7 @@
   <aside class="sidebar-drawer">
     <div class="sidebar-container">
       
-      <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
   <span class="sidebar-brand-text">gds_fdtd 0.3.10 documentation</span>
@@ -206,9 +206,9 @@
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Examples</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="modules.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API Reference</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/gds_fdtd.core.html">gds_fdtd.core</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/gds_fdtd.lyprocessor.html">gds_fdtd.lyprocessor</a></li>
@@ -235,7 +235,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="_sources/index.rst.txt" title="View this page">
+  <a class="muted-link" href="_sources/examples.rst.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -255,29 +255,56 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="welcome-to-gds-fdtd-s-documentation">
-<h1>Welcome to gds_fdtd’s documentation!<a class="headerlink" href="#welcome-to-gds-fdtd-s-documentation" title="Link to this heading">¶</a></h1>
-<div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="_autosummary/gds_fdtd.core.html">gds_fdtd.core</a></li>
-<li class="toctree-l2"><a class="reference internal" href="_autosummary/gds_fdtd.lyprocessor.html">gds_fdtd.lyprocessor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="_autosummary/gds_fdtd.simprocessor.html">gds_fdtd.simprocessor</a></li>
-</ul>
-</li>
-</ul>
+          <section id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Link to this heading">¶</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">examples</span></code> directory contains a variety of small scripts that
+show how to use the library with different simulation engines and
+workflows.  Each script can be executed directly with Python once the
+package and optional dependencies are installed.</p>
+<div class="table-wrapper docutils container" id="id1">
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Available examples</span><a class="headerlink" href="#id1" title="Link to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Directory</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">01_basics</span></code></p></td>
+<td><p>Simple directional coupler and crossing simulations using
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">tidy3d</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">02_multilayer_device</span></code></p></td>
+<td><p>Multilayer structures and more complex port definitions.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">03_import_technology</span></code></p></td>
+<td><p>Importing technology YAML files and performing convergence
+studies.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">04_dual_polarization</span></code></p></td>
+<td><p>Running a Bragg grating with both TE and TM polarisations.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">05_gdsfactory</span></code></p></td>
+<td><p>Integration with <code class="xref py py-mod docutils literal notranslate"><span class="pre">gdsfactory</span></code> component definitions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">06_lumerical</span></code></p></td>
+<td><p>Exporting structures to Lumerical’s FDTD solver.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">07_prefab</span></code></p></td>
+<td><p>Example workflow with the PreFab lithography package.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">08_siepic</span></code></p></td>
+<td><p>Utilities for the SiEPIC ecosystem.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
-</section>
-<section id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading">¶</a></h1>
-<ul class="simple">
-<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
-<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
-<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
-</ul>
+<p>To run an example simply execute for instance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">examples</span><span class="o">/</span><span class="mi">01</span><span class="n">_basics</span><span class="o">/</span><span class="mi">01</span><span class="n">a_directional_coupler_tidy3d</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>Each script is well commented and mirrors the high level API provided by
+<code class="docutils literal notranslate"><span class="pre">gds_fdtd</span></code>.</p>
 </section>
 
         </article>
@@ -285,16 +312,26 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="architecture.html">
+          <a class="next-page" href="modules.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Architecture Overview</div>
+                <div class="title">API Reference</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          
+          <a class="prev-page" href="architecture.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Architecture Overview</div>
+                
+              </div>
+            </a>
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
