@@ -76,7 +76,7 @@ simulation = make_t3d_sim(
     wavl_max=wavl_max,
     wavl_pts=wavl_pts,
     symmetry=symmetry,
-    in_port=device.ports[1],
+    in_port=device.ports[1],  # input on port opt3
     z_span=z_span,
     field_monitor_axis='z',
 )
@@ -91,4 +91,21 @@ simulation.execute()
 # Visualize the results
 simulation.visualize_results()
 
+# %% working with s-parameters
+import matplotlib.pyplot as plt
+import numpy as np
+c = 299792458
+sparams = simulation.s_parameters
+s32 = sparams.entries_in_ports(idx_in=3, idx_out=2)
+s31 = sparams.entries_in_ports(idx_in=3, idx_out=1)
+fig, ax = plt.subplots(1, 1)
+ax.plot(1e6*c/np.array(s32.freq), 10*np.log10(np.abs(s32.s)**2))
+ax.plot(1e6*c/np.array(s31.freq), 10*np.log10(np.abs(s31.s)**2))
+ax.legend(["S32", "S31"])
+ax.set_xlabel("Wavelength (um)")
+ax.set_ylabel("Transmission (dB)")
+ax.set_ylim(-10, 0)
+ax.set_xlim(1.5, 1.6)
+# %%
+simulation.visualize_results()
 # %%

@@ -477,6 +477,8 @@ class s_parameters:
         for s in input_entries:
             if s.idx_in == idx_in and s.idx_out == idx_out:
                 entries.append(s)
+        if len(entries) == 1:
+            entries = entries[0]
         return entries
 
     def plot(self):
@@ -487,7 +489,7 @@ class s_parameters:
             logging.info("Mode amplitudes in each port: \n")
             mag = [10 * np.log10(abs(i) ** 2) for i in i.s]
             phase = [np.angle(i) ** 2 for i in i.s]
-            ax.plot(1e6 * c0_um / i.freq, mag, label=i.label)
+            ax.plot(c0_um / i.freq, mag, label=i.label)
         ax.legend()
         fig.show()
         return fig, ax
@@ -507,7 +509,7 @@ class sparam:
 
     def plot(self):
         fig, ax = plt.subplots(1, 1)
-        ax.plot((1e-6 * c0_um) / np.array(self.freq), 10 * np.log10(self.s**2))
+        ax.plot((c0_um) / np.array(self.freq), 10 * np.log10(self.s**2))
         ax.set_xlabel("Wavelength [um]")
         ax.set_ylabel("Transmission [dB]")
         ax.set_title("Frequency vs S")
