@@ -24,4 +24,5 @@
       s_parameters
       sparam
       structure
+      technology
    

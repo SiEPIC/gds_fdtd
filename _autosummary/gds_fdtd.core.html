@@ -267,13 +267,13 @@
 <td><p>Calculate the polygon extension for a port.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">initialize_ports_z</span></code>(ports, structures)</p></td>
-<td><p>Initialize the z-coordinate, height, and material of ports based on their position within structures.</p></td>
+<td><p>Initialize the z-coordinate, height, material, and layer of ports based on their position within structures.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_point_inside_polygon</span></code>(point, polygon_points)</p></td>
 <td><p>Test if a point inside a polygon using Shapely.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_yaml_tech</span></code>(file_path)</p></td>
-<td><p></p></td>
+<td><p>Legacy function for parsing YAML technology files.</p></td>
 </tr>
 </tbody>
 </table>
@@ -302,6 +302,9 @@
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">structure</span></code>(name, polygon, z_base, z_span, ...)</p></td>
 <td><p>Represents a physical structure in the component with geometric and material properties.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">technology</span></code>([name])</p></td>
+<td><p>Technology class for managing fabrication process definitions.</p></td>
 </tr>
 </tbody>
 </table>
