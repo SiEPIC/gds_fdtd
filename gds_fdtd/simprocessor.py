@@ -37,9 +37,15 @@ def get_material(device: dict):
 
 
 def load_component_from_tech(cell, tech, z_span=4, z_center=None):
+    # Convert technology object to dict if needed (for backward compatibility)
+    if hasattr(tech, 'to_dict'):
+        tech_dict = tech.to_dict()
+    else:
+        tech_dict = tech
+    
     # load the structures in the device
     device_wg = []
-    for idx, d in enumerate(tech["device"]):
+    for idx, d in enumerate(tech_dict["device"]):
         device_wg.append(
             load_structure(
                 cell,
@@ -58,10 +64,10 @@ def load_component_from_tech(cell, tech, z_span=4, z_center=None):
         z_center = np.average([d[0].z_base + d[0].z_span / 2 for d in device_wg])
 
     # load all the ports in the device and (optional) initialize each to have a center
-    ports = load_ports(cell, layer=tech["pinrec"][0]["layer"])
+    ports = load_ports(cell, layer=tech_dict["pinrec"][0]["layer"])
     # load the device simulation region
     bounds = load_region(
-        cell, layer=tech["devrec"][0]["layer"], z_center=z_center, z_span=z_span
+        cell, layer=tech_dict["devrec"][0]["layer"], z_center=z_center, z_span=z_span
     )
 
     # make the superstrate and substrate based on device bounds
@@ -69,16 +75,18 @@ def load_component_from_tech(cell, tech, z_span=4, z_center=None):
     device_super = load_structure_from_bounds(
         bounds,
         name="Superstrate",
-        z_base=tech["superstrate"][0]["z_base"],
-        z_span=tech["superstrate"][0]["z_span"],
-        material=get_material(tech["superstrate"][0]),
+        z_base=tech_dict["superstrate"][0]["z_base"],
+        z_span=tech_dict["superstrate"][0]["z_span"],
+        material=get_material(tech_dict["superstrate"][0]),
+        layer=[999, 1],  # Use a special layer for superstrate
     )
     device_sub = load_structure_from_bounds(
         bounds,
         name="Subtrate",
-        z_base=tech["substrate"][0]["z_base"],
-        z_span=tech["substrate"][0]["z_span"],
-        material=get_material(tech["substrate"][0]),
+        z_base=tech_dict["substrate"][0]["z_base"],
+        z_span=tech_dict["substrate"][0]["z_span"],
+        material=get_material(tech_dict["substrate"][0]),
+        layer=[999, 0],  # Use a special layer for substrate
     )
 
     # create the device by loading the structures
@@ -106,6 +114,12 @@ def from_gdsfactory(c: 'gf.Component', tech: dict, z_span: float = 4.) -> 'compo
     except ImportError:
         raise ImportError("gdsfactory is not installed. Please install it using 'pip install .[gdsfactory]'")
 
+    # Convert technology object to dict if needed (for backward compatibility)
+    if hasattr(tech, 'to_dict'):
+        tech_dict = tech.to_dict()
+    else:
+        tech_dict = tech
+
     device_wg = []
     ports = []
 
@@ -119,10 +133,11 @@ def from_gdsfactory(c: 'gf.Component', tech: dict, z_span: float = 4.) -> 'compo
                 structure(
                     name=name,
                     polygon=l.get_polygons()[1],
-                    z_base=tech["device"][idx]["z_base"],
-                    z_span=tech["device"][idx]["z_span"],
-                    material=get_material(tech["device"][idx]),
-                    sidewall_angle=tech["device"][idx]["sidewall_angle"],
+                    z_base=tech_dict["device"][idx]["z_base"],
+                    z_span=tech_dict["device"][idx]["z_span"],
+                    material=get_material(tech_dict["device"][idx]),
+                    sidewall_angle=tech_dict["device"][idx]["sidewall_angle"],
+                    layer=list(layer),  # Convert layer tuple to list for GDS export
                 )
             )
 
@@ -130,7 +145,7 @@ def from_gdsfactory(c: 'gf.Component', tech: dict, z_span: float = 4.) -> 'compo
         for p in c.ports:
             if p.layer == layer:
                 z_pos = (
-                    tech["device"][idx]["z_base"] + tech["device"][idx]["z_span"] / 2
+                    tech_dict["device"][idx]["z_base"] + tech_dict["device"][idx]["z_span"] / 2
                 )
                 ports.append(
                     port(
@@ -166,16 +181,18 @@ def from_gdsfactory(c: 'gf.Component', tech: dict, z_span: float = 4.) -> 'compo
     device_super = load_structure_from_bounds(
         bounds,
         name="Superstrate",
-        z_base=tech["superstrate"][0]["z_base"],
-        z_span=tech["superstrate"][0]["z_span"],
-        material=get_material(tech["superstrate"][0]),
+        z_base=tech_dict["superstrate"][0]["z_base"],
+        z_span=tech_dict["superstrate"][0]["z_span"],
+        material=get_material(tech_dict["superstrate"][0]),
+        layer=[999, 1],  # Use a special layer for superstrate
     )
     device_sub = load_structure_from_bounds(
         bounds,
         name="Subtrate",
-        z_base=tech["substrate"][0]["z_base"],
-        z_span=tech["substrate"][0]["z_span"],
-        material=get_material(tech["substrate"][0]),
+        z_base=tech_dict["substrate"][0]["z_base"],
+        z_span=tech_dict["substrate"][0]["z_span"],
+        material=get_material(tech_dict["substrate"][0]),
+        layer=[999, 0],  # Use a special layer for substrate
     )
 
     # create the device by loading the structures

@@ -10,7 +10,7 @@ import logging
 import klayout.db as pya
 
 
-def dilate(vertices, extension=1.3):
+def dilate(vertices, extension=1.0):
     """grow or shrink a rectangle defined as [[x1,y1],[x2,y2]]
 
     Args:
@@ -168,7 +168,7 @@ def load_region(
     layer: list[int, int] = [68, 0],
     z_center: float = 0.0,
     z_span: float = 5.0,
-    extension: float = 1.3,
+    extension: float = 0.0,
 ):
     """
     Get device bounds.
@@ -228,10 +228,10 @@ def load_structure(cell, name, layer, z_base, z_span, material, sidewall_angle=9
     """
 
     dbu = cell.layout().dbu
-    layer = cell.layout().layer(layer[0], layer[1])
+    layer_idx = cell.layout().layer(layer[0], layer[1])
 
     r = pya.Region()
-    s = cell.begin_shapes_rec(layer)
+    s = cell.begin_shapes_rec(layer_idx)
     while not (s.at_end()):
         if s.shape().is_polygon() or s.shape().is_box() or s.shape().is_path():
             r.insert(s.shape().polygon.transformed(s.itrans()))
@@ -245,21 +245,22 @@ def load_structure(cell, name, layer, z_base, z_span, material, sidewall_angle=9
     ]
     structures = []
     for idx, s in enumerate(polygons_vertices):
-        name = f"{name}_{idx}"
+        structure_name = f"{name}_{idx}"
         structures.append(
             structure(
-                name=name,
+                name=structure_name,
                 polygon=s,
                 z_base=z_base,
                 z_span=z_span,
                 material=material,
                 sidewall_angle=sidewall_angle,
+                layer=layer,  # Pass the layer information to the structure
             )
         )
     return structures
 
 
-def load_structure_from_bounds(bounds, name, z_base, z_span, material, extension=2.0):
+def load_structure_from_bounds(bounds, name, z_base, z_span, material, extension=0.0, layer=[1, 0]):
     """Load a structure from a region definition
 
     Args:
@@ -269,6 +270,7 @@ def load_structure_from_bounds(bounds, name, z_base, z_span, material, extension
         z_span (float): Z span (thickness) of structure, can be negative for downward growth.
         material (tidy3d.Medium): Material of structure
         extension (float, optional): Growth (or shrinkage), in um, of structure defintion relative to bounds. Defaults to 2 um.
+        layer (list[int], optional): GDS layer specification as [layer_number, datatype]. Defaults to [1, 0].
 
     Returns:
         core.structure: Structure generated from input region.
@@ -279,6 +281,7 @@ def load_structure_from_bounds(bounds, name, z_base, z_span, material, extension
         z_base=z_base,
         z_span=z_span,
         material=material,
+        layer=layer,
     )
 
 
