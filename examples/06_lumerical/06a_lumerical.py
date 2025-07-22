@@ -28,17 +28,18 @@ if __name__ == "__main__":
         wavelength_start=1.5,
         wavelength_end=1.6,
         wavelength_points=100,
-        mesh=12,
-        boundary=["PML", "PML", "PML"],
-        symmetry=[0, 0, 0],
+        mesh=6,
+        boundary=["PML", "PML", "Metal"],
+        symmetry=[0, 1, 1],
         z_min=-1.0,
         z_max=1.11,
         width_ports=2.0,
         depth_ports=1.5,
         buffer=1.0,
-        modes=[1],
+        modes=[1,3],
         run_time_factor=3,
         field_monitors=["z"],
     )
     input('Proceed to terminate the GUI?')
+
 # %%

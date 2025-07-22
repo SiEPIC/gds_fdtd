@@ -406,10 +406,90 @@ class fdtd_solver_lumerical(fdtd_solver):
         self._setup_s_parameters_sweep()
 
     def _setup_s_parameters_sweep(self) -> None:
-        """Setup the s-parameters sweep."""
+        """
+        Setup the s-parameters sweep with automatic port and mode configuration.
+        
+        This method:
+        1. Creates an S-parameter sweep
+        2. Automatically generates port-mode combinations based on fdtd_ports and modes
+        3. Sets active only the ports that should be excited
+        
+        Args:
+            active_ports (list, optional): List of port names to activate. If None, activates all ports.
+        """
+        # Create S-parameter sweep
         self.fdtd.addsweep(3)  # 3 is s-parameter sweep
         self.fdtd.setsweep("s-parameter sweep", "name", "sparams")
-        self.fdtd.setsweep("sparams", "Excite all ports", 0)
+        self.fdtd.setsweep("sparams", "Excite all ports", 0)  # We'll manually set active ports
+        
+        # Determine which ports should be active
+        # active_ports should be a list of component port objects (type: port from component.ports)
+        if self.port_input is None:
+            # Default: activate all ports for full S-parameter matrix
+            active_port_names = [fdtd_port.name for fdtd_port in self.fdtd_ports]
+        elif isinstance(self.port_input, list):
+            # List of component port objects
+            active_port_names = []
+            for component_port in self.port_input:
+                if hasattr(component_port, 'name'):
+                    active_port_names.append(component_port.name)
+                else:
+                    raise ValueError(f"Invalid port object in active_ports list: {component_port}")
+        else:
+            # Single component port object (user fed in 1 active port)
+            if hasattr(self.port_input, 'name'):
+                active_port_names = [self.port_input.name]
+            else:
+                raise ValueError(f"Invalid single port object: {self.port_input}. Expected component port object with 'name' attribute.")
+
+        # Automatically generate indices based on sorted fdtd_ports and modes
+        indices = []
+        
+        for i, fdtd_port in enumerate(self.fdtd_ports):
+            port_name = fdtd_port.name
+            
+            # Determine if this port should be active
+            is_active = fdtd_port.name in active_port_names
+            
+            for mode_idx in self.modes:
+                mode_name = f"mode {mode_idx}"  # Lumerical uses "mode 1", "mode 2", etc.
+                
+                indices.append({
+                    "Port": port_name,
+                    "Mode": mode_name, 
+                    "Active": 1 if is_active else 0
+                })
+        
+        # before adding entries to the sweep, we need to remove all existing entries
+        # Add all port-mode combinations to the sweep
+        while True:
+            try:
+                self.fdtd.removesweepparameter("sparams", 1)
+                pass  # Continue removing parameters
+            except Exception as e:
+                print(f"Done removing sweep parameters")
+                break
+        
+        # Add all port-mode combinations to the sweep
+        for idx in indices:
+            self.fdtd.addsweepparameter("sparams", idx)
+
+                
+        # Print summary of S-parameter sweep configuration
+        active_combinations = [idx for idx in indices if idx["Active"] == 1]
+        total_combinations = len(indices)
+        print(f"S-parameter sweep configured:")
+        print(f"  Total port-mode combinations: {total_combinations}")
+        print(f"  Active combinations: {len(active_combinations)}")
+        print(f"  Active ports: {active_port_names}")
+        print(f"  Modes: {self.modes}")
+        
+        if len(active_combinations) > 0:
+            print("  Active combinations:")
+            for combo in active_combinations:
+                print(f"    {combo['Port']} - {combo['Mode']}")
+        else:
+            print("  Warning: No active port-mode combinations found!")
 
     def _setup_layer_builder(self, gds_filename: str) -> None:
         """
