@@ -59,6 +59,7 @@ class fdtd_field_monitor:
     """
     Represents a field monitor in an FDTD simulation.
     """
+
     def __init__(self, name: str, monitor_type: str):
         self.name = name
         self.monitor_type = monitor_type
@@ -159,7 +160,7 @@ class fdtd_solver:
 
         # Auto-calculate center and span from component geometry
         self._calculate_simulation_domain()
-        
+
         # Convert component ports to fdtd_port objects for modular solver implementation
         self.fdtd_ports: list[fdtd_port] = self._convert_component_ports_to_fdtd_ports()
 
@@ -171,7 +172,11 @@ class fdtd_solver:
         # Assuming component has a bounding box method or similar geometry information
         try:
             c = self.component
-            self.center = [c.bounds.x_center, c.bounds.y_center, (self.z_max + self.z_min) / 2]
+            self.center = [
+                c.bounds.x_center,
+                c.bounds.y_center,
+                (self.z_max + self.z_min) / 2,
+            ]
             self.span = [
                 c.bounds.x_span + 2 * self.buffer,
                 c.bounds.y_span + 2 * self.buffer,
@@ -188,124 +193,138 @@ class fdtd_solver:
     def _convert_component_ports_to_fdtd_ports(self) -> list[fdtd_port]:
         """
         Convert component ports to fdtd_port objects for modular solver implementation.
-        
+
         This method creates a solver-agnostic representation of ports that can be used
         by different FDTD solver implementations (Lumerical, Tidy3D, etc.).
-        
+
         Ports are sorted by their index (extracted from port names) to ensure consistent ordering.
-        
+
         Returns:
             list[fdtd_port]: List of fdtd_port objects with standardized attributes, sorted by port index.
         """
         fdtd_ports = []
-        
+
         # Sort ports by their index to ensure consistent ordering
         # This uses the port.idx property which extracts the numeric part from port names
         sorted_ports = sorted(self.component.ports, key=lambda p: p.idx)
-        
+
         for p in sorted_ports:
             # Map component port direction (degrees) to FDTD injection configuration
             if p.direction in [90, 270]:
                 # Port facing north (90°) or south (270°) - injection along y-axis
                 direction = "backward" if p.direction == 90 else "forward"
-                span = [self.width_ports, None, self.depth_ports]  # x_span, y_span=None (injection axis), z_span
-                
+                span = [
+                    self.width_ports,
+                    None,
+                    self.depth_ports,
+                ]  # x_span, y_span=None (injection axis), z_span
+
             elif p.direction in [180, 0]:
                 # Port facing west (180°) or east (0°) - injection along x-axis
                 direction = "forward" if p.direction == 180 else "backward"
-                span = [None, self.width_ports, self.depth_ports]  # x_span=None (injection axis), y_span, z_span
-                
+                span = [
+                    None,
+                    self.width_ports,
+                    self.depth_ports,
+                ]  # x_span=None (injection axis), y_span, z_span
+
             else:
-                raise ValueError(f"Port direction {p.direction}° not supported. Supported directions: 0°, 90°, 180°, 270°")
-            
+                raise ValueError(
+                    f"Port direction {p.direction}° not supported. Supported directions: 0°, 90°, 180°, 270°"
+                )
+
             # Create standardized fdtd_port object
             fdtd_port_obj = fdtd_port(
                 name=p.name,
                 position=[p.center[0], p.center[1], p.center[2]],
                 span=span,
                 direction=direction,
-                modes=self.modes  # Use solver's mode configuration
+                modes=self.modes,  # Use solver's mode configuration
             )
-            
+
             fdtd_ports.append(fdtd_port_obj)
-        
+
         return fdtd_ports
 
     def get_port_info(self) -> dict:
         """
         Get information about the FDTD ports for debugging or visualization.
-        
+
         Returns:
             dict: Dictionary containing port information with port names as keys.
         """
         port_info = {}
         for port in self.fdtd_ports:
             port_info[port.name] = {
-                'position': port.position,
-                'span': port.span,
-                'direction': port.direction,
-                'modes': port.modes
+                "position": port.position,
+                "span": port.span,
+                "direction": port.direction,
+                "modes": port.modes,
             }
         return port_info
 
     def get_port_index(self, port_name: str) -> int:
         """
         Get the port index from the port name in the sorted FDTD ports list.
-        
+
         This function looks at the sorted fdtd_ports and finds the matching port name,
         returning the index of that port in the sorted ports list.
-        
+
         Args:
             port_name (str): Name of the port (e.g., "opt1", "opt2", "optA", etc.)
-            
+
         Returns:
             int: Index of the port in the sorted fdtd_ports list
-            
+
         Raises:
             ValueError: If port name is not found
         """
         for idx, fdtd_port in enumerate(self.fdtd_ports):
             if fdtd_port.name == port_name:
                 return idx
-        
+
         # If not found, raise an error with available port names
         available_ports = [p.name for p in self.fdtd_ports]
-        raise ValueError(f"Port '{port_name}' not found. Available ports: {available_ports}")
+        raise ValueError(
+            f"Port '{port_name}' not found. Available ports: {available_ports}"
+        )
 
     def get_component_port_index(self, port_name: str) -> int:
         """
         Get the port index from the port name in the original component.ports list.
-        
+
         This function looks at the original component ports and finds the matching port name,
         returning the index of that port in the original unsorted ports list.
-        
+
         Args:
             port_name (str): Name of the port (e.g., "opt1", "opt2", "optA", etc.)
-            
+
         Returns:
             int: Index of the port in the original component.ports list
-            
+
         Raises:
             ValueError: If port name is not found
         """
         for idx, port in enumerate(self.component.ports):
             if port.name == port_name:
                 return idx
-        
+
         # If not found, raise an error with available port names
         available_ports = [p.name for p in self.component.ports]
-        raise ValueError(f"Port '{port_name}' not found. Available ports: {available_ports}")
+        raise ValueError(
+            f"Port '{port_name}' not found. Available ports: {available_ports}"
+        )
 
     def get_port_by_name(self, port_name: str) -> port:
         """
         Get the port object by name from the original component ports.
-        
+
         Args:
             port_name (str): Name of the port
-            
+
         Returns:
             port: The port object from component.ports
-            
+
         Raises:
             ValueError: If port name is not found
         """
@@ -315,28 +334,30 @@ class fdtd_solver:
     def get_fdtd_port_by_name(self, port_name: str) -> fdtd_port:
         """
         Get the fdtd_port object by name.
-        
+
         Args:
             port_name (str): Name of the port
-            
+
         Returns:
             fdtd_port: The fdtd_port object
-            
+
         Raises:
             ValueError: If port name is not found
         """
         for fdtd_port_obj in self.fdtd_ports:
             if fdtd_port_obj.name == port_name:
                 return fdtd_port_obj
-        
+
         # If not found, raise an error with available port names
         available_ports = [p.name for p in self.fdtd_ports]
-        raise ValueError(f"FDTD port '{port_name}' not found. Available ports: {available_ports}")
+        raise ValueError(
+            f"FDTD port '{port_name}' not found. Available ports: {available_ports}"
+        )
 
     def list_ports(self) -> list[str]:
         """
         Get a list of all port names in the component.
-        
+
         Returns:
             list[str]: List of port names
         """
@@ -369,6 +390,7 @@ class fdtd_solver:
 
 
 from lumapi import FDTD
+
 
 class fdtd_solver_lumerical(fdtd_solver):
     """
@@ -408,20 +430,22 @@ class fdtd_solver_lumerical(fdtd_solver):
     def _setup_s_parameters_sweep(self) -> None:
         """
         Setup the s-parameters sweep with automatic port and mode configuration.
-        
+
         This method:
         1. Creates an S-parameter sweep
         2. Automatically generates port-mode combinations based on fdtd_ports and modes
         3. Sets active only the ports that should be excited
-        
+
         Args:
             active_ports (list, optional): List of port names to activate. If None, activates all ports.
         """
         # Create S-parameter sweep
         self.fdtd.addsweep(3)  # 3 is s-parameter sweep
         self.fdtd.setsweep("s-parameter sweep", "name", "sparams")
-        self.fdtd.setsweep("sparams", "Excite all ports", 0)  # We'll manually set active ports
-        
+        self.fdtd.setsweep(
+            "sparams", "Excite all ports", 0
+        )  # We'll manually set active ports
+
         # Determine which ports should be active
         # active_ports should be a list of component port objects (type: port from component.ports)
         if self.port_input is None:
@@ -431,35 +455,43 @@ class fdtd_solver_lumerical(fdtd_solver):
             # List of component port objects
             active_port_names = []
             for component_port in self.port_input:
-                if hasattr(component_port, 'name'):
+                if hasattr(component_port, "name"):
                     active_port_names.append(component_port.name)
                 else:
-                    raise ValueError(f"Invalid port object in active_ports list: {component_port}")
+                    raise ValueError(
+                        f"Invalid port object in active_ports list: {component_port}"
+                    )
         else:
             # Single component port object (user fed in 1 active port)
-            if hasattr(self.port_input, 'name'):
+            if hasattr(self.port_input, "name"):
                 active_port_names = [self.port_input.name]
             else:
-                raise ValueError(f"Invalid single port object: {self.port_input}. Expected component port object with 'name' attribute.")
+                raise ValueError(
+                    f"Invalid single port object: {self.port_input}. Expected component port object with 'name' attribute."
+                )
 
         # Automatically generate indices based on sorted fdtd_ports and modes
         indices = []
-        
+
         for i, fdtd_port in enumerate(self.fdtd_ports):
             port_name = fdtd_port.name
-            
+
             # Determine if this port should be active
             is_active = fdtd_port.name in active_port_names
-            
+
             for mode_idx in self.modes:
-                mode_name = f"mode {mode_idx}"  # Lumerical uses "mode 1", "mode 2", etc.
-                
-                indices.append({
-                    "Port": port_name,
-                    "Mode": mode_name, 
-                    "Active": 1 if is_active else 0
-                })
-        
+                mode_name = (
+                    f"mode {mode_idx}"  # Lumerical uses "mode 1", "mode 2", etc.
+                )
+
+                indices.append(
+                    {
+                        "Port": port_name,
+                        "Mode": mode_name,
+                        "Active": 1 if is_active else 0,
+                    }
+                )
+
         # before adding entries to the sweep, we need to remove all existing entries
         # Add all port-mode combinations to the sweep
         while True:
@@ -469,12 +501,11 @@ class fdtd_solver_lumerical(fdtd_solver):
             except Exception as e:
                 print(f"Done removing sweep parameters")
                 break
-        
+
         # Add all port-mode combinations to the sweep
         for idx in indices:
             self.fdtd.addsweepparameter("sparams", idx)
 
-                
         # Print summary of S-parameter sweep configuration
         active_combinations = [idx for idx in indices if idx["Active"] == 1]
         total_combinations = len(indices)
@@ -483,7 +514,7 @@ class fdtd_solver_lumerical(fdtd_solver):
         print(f"  Active combinations: {len(active_combinations)}")
         print(f"  Active ports: {active_port_names}")
         print(f"  Modes: {self.modes}")
-        
+
         if len(active_combinations) > 0:
             print("  Active combinations:")
             for combo in active_combinations:
@@ -690,7 +721,9 @@ class fdtd_solver_lumerical(fdtd_solver):
                 self.fdtd.set("z", self.center[2] * 1e-6)
                 self.fdtd.set("x span", self.span[0] * 1e-6)
                 self.fdtd.set("y span", self.span[1] * 1e-6)
-                field_monitors.append(fdtd_field_monitor(name="profile_z", monitor_type="z"))
+                field_monitors.append(
+                    fdtd_field_monitor(name="profile_z", monitor_type="z")
+                )
             if m == "x":
                 self.fdtd.addprofile(
                     name="profile_x",
@@ -701,7 +734,9 @@ class fdtd_solver_lumerical(fdtd_solver):
                 self.fdtd.set("z", self.center[2] * 1e-6)
                 self.fdtd.set("y span", self.span[1] * 1e-6)
                 self.fdtd.set("z span", self.span[2] * 1e-6)
-                field_monitors.append(fdtd_field_monitor(name="profile_x", monitor_type="x"))
+                field_monitors.append(
+                    fdtd_field_monitor(name="profile_x", monitor_type="x")
+                )
             if m == "y":
                 self.fdtd.addprofile(
                     name="profile_y",
@@ -712,31 +747,33 @@ class fdtd_solver_lumerical(fdtd_solver):
                 self.fdtd.set("z", self.center[2] * 1e-6)
                 self.fdtd.set("x span", self.span[0] * 1e-6)
                 self.fdtd.set("z span", self.span[2] * 1e-6)
-                field_monitors.append(fdtd_field_monitor(name="profile_y", monitor_type="y"))
+                field_monitors.append(
+                    fdtd_field_monitor(name="profile_y", monitor_type="y")
+                )
 
         self.field_monitors = field_monitors
 
     def _setup_ports(self) -> None:
         """
         Setup ports in Lumerical FDTD using the standardized fdtd_port objects.
-        
-        This method translates the solver-agnostic fdtd_port objects into 
+
+        This method translates the solver-agnostic fdtd_port objects into
         Lumerical-specific port configurations.
         """
         # Setup each port in Lumerical using the pre-converted fdtd_ports
         for fdtd_port_obj in self.fdtd_ports:
             port = self.fdtd.addport()
             self.fdtd.set("name", fdtd_port_obj.name)
-            
+
             # Set position
             self.fdtd.set("x", fdtd_port_obj.position[0] * 1e-6)
             self.fdtd.set("y", fdtd_port_obj.position[1] * 1e-6)
             self.fdtd.set("z", fdtd_port_obj.position[2] * 1e-6)
-            
+
             # Set direction
             direction_map = {"forward": "Forward", "backward": "Backward"}
             self.fdtd.set("direction", direction_map[fdtd_port_obj.direction])
-            
+
             # Determine injection axis and spans based on which span element is None
             # The None element indicates the injection axis direction
             if fdtd_port_obj.span[1] is None:  # y_span is None -> y-axis injection
@@ -748,8 +785,10 @@ class fdtd_solver_lumerical(fdtd_solver):
                 self.fdtd.set("y span", fdtd_port_obj.span[1] * 1e-6)  # width_ports
                 self.fdtd.set("z span", fdtd_port_obj.span[2] * 1e-6)  # depth_ports
             else:
-                raise ValueError(f"Invalid span configuration for port {fdtd_port_obj.name}: {fdtd_port_obj.span}. "
-                               f"Exactly one span element must be None to indicate injection axis.")
+                raise ValueError(
+                    f"Invalid span configuration for port {fdtd_port_obj.name}: {fdtd_port_obj.span}. "
+                    f"Exactly one span element must be None to indicate injection axis."
+                )
 
             # set the port modes
             self.fdtd.set("mode selection", "user select")
@@ -758,9 +797,11 @@ class fdtd_solver_lumerical(fdtd_solver):
 
     def _setup_time(self) -> None:
         """Setup the appropriate simulation time span."""
-        c = 299792458 # speed of light in m/s
+        c = 299792458  # speed of light in m/s
         # get the maximum time span from the component using the maximum span in the x, y, and z directions
-        max_span = max(self.span[0], self.span[1], self.span[2]) * 1e-6 # convert to meters
+        max_span = (
+            max(self.span[0], self.span[1], self.span[2]) * 1e-6
+        )  # convert to meters
         # assume the maximum group index is 4.5
         # TODO: get the maximum group index from the component based on the material properties and center wavelength of the simulation
         max_group_index = 4.5
@@ -788,19 +829,21 @@ class fdtd_solver_lumerical(fdtd_solver):
 
         # map user input for mesh cells per wavelength to the closest mesh option based on possible_meshes dictionary
         # e.g. if self.mesh = 11, then mesh_option = 2 (10 mesh cells per wavelength is closest available option)
-        
+
         # Find the closest mesh option
-        min_diff = float('inf')
+        min_diff = float("inf")
         mesh_option = 2  # default to mid-low
-        
+
         for option, cells_per_wavelength in possible_meshes.items():
             diff = abs(self.mesh - cells_per_wavelength)
             if diff < min_diff:
                 min_diff = diff
                 mesh_option = option
-        
-        print(f"User requested {self.mesh} mesh cells per wavelength, using mesh option {mesh_option} ({possible_meshes[mesh_option]} cells per wavelength)")
-        
+
+        print(
+            f"User requested {self.mesh} mesh cells per wavelength, using mesh option {mesh_option} ({possible_meshes[mesh_option]} cells per wavelength)"
+        )
+
         self.fdtd.setnamed("FDTD", "mesh accuracy", mesh_option)
 
     def _setup_boundary_symmetry(self) -> None:
