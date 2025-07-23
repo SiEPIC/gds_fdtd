@@ -50,14 +50,24 @@ class s:
 
     @property
     def idn_ports(self):
-        in_idn = "".join(char for char in self.in_port if char.isdigit())
-        out_idn = "".join(char for char in self.out_port if char.isdigit())
+        # Extract port indices from port names (e.g., "opt1" -> "1")
+        in_idn = "".join(char for char in str(self.in_port) if char.isdigit())
+        out_idn = "".join(char for char in str(self.out_port) if char.isdigit())
         return f"{out_idn}{in_idn}"
 
     @property
     def idn_modes(self):
-        in_idn = "".join(char for char in self.in_modeid if char.isdigit())
-        out_idn = "".join(char for char in self.out_modeid if char.isdigit())
+        # Handle both string and integer mode IDs
+        if isinstance(self.in_modeid, str):
+            in_idn = "".join(char for char in self.in_modeid if char.isdigit())
+        else:
+            in_idn = str(self.in_modeid)
+        
+        if isinstance(self.out_modeid, str):
+            out_idn = "".join(char for char in self.out_modeid if char.isdigit())
+        else:
+            out_idn = str(self.out_modeid)
+        
         return f"{out_idn}{in_idn}"
 
     @property
@@ -175,6 +185,13 @@ class sparameters:
         )
         self.data.append(data)
 
+    @property
+    def wavelength(self):
+        c = 299792458
+        # fetch wavelength from first available s parameter
+        for d in self.data:
+            return 1e6 * c / np.array(d.f) # convert to microns
+
     def S(
         self,
         in_port: int = 1,
@@ -234,6 +251,178 @@ class sparameters:
         else:
             logging.error("No valid data to visualize")
 
+    def analyze_excitations(self, threshold: float = 1e-10, verbose: bool = True):
+        """
+        Analyze S-parameter data to identify zero vs non-zero entries.
+        
+        Parameters
+        ----------
+        threshold : float, optional
+            Magnitude threshold below which entries are considered zero. Default is 1e-10.
+        verbose : bool, optional
+            Whether to print detailed analysis. Default is True.
+            
+        Returns
+        -------
+        dict
+            Dictionary containing analysis results with keys:
+            'zero_entries', 'non_zero_entries', 'input_port_summary'
+        """
+        zero_entries = []
+        non_zero_entries = []
+        input_port_groups = {}
+        
+        # Categorize entries
+        for data in self.data:
+            # Group by input port
+            if data.in_port not in input_port_groups:
+                input_port_groups[data.in_port] = {'zero': [], 'non_zero': []}
+            
+            # Check if entry is effectively zero
+            max_mag = max(abs(mag) for mag in data.s_mag) if data.s_mag else 0
+            is_zero = max_mag < threshold
+            
+            if is_zero:
+                zero_entries.append(data)
+                input_port_groups[data.in_port]['zero'].append(data)
+            else:
+                non_zero_entries.append(data) 
+                input_port_groups[data.in_port]['non_zero'].append(data)
+        
+        if verbose:
+            print(f"=== S-Parameter Excitation Analysis for {self.name} ===")
+            print(f"Total entries: {len(self.data)}")
+            print(f"Non-zero entries: {len(non_zero_entries)}")
+            print(f"Zero entries: {len(zero_entries)}")
+            
+            print(f"\nBy Input Port:")
+            for input_port in sorted(input_port_groups.keys()):
+                zero_count = len(input_port_groups[input_port]['zero'])
+                non_zero_count = len(input_port_groups[input_port]['non_zero'])
+                total_count = zero_count + non_zero_count
+                
+                print(f"  {input_port}: {total_count} total ({non_zero_count} non-zero, {zero_count} zero)")
+                
+                if zero_count > 0:
+                    zero_idns = [d.idn for d in input_port_groups[input_port]['zero']]
+                    print(f"    ⚠️  WARNING: {zero_count} zero entries found for input port {input_port}")
+                    if zero_count <= 8:  # Show all if not too many
+                        print(f"         Zero IDNs: {sorted(zero_idns)}")
+                    else:  # Show sample if many
+                        print(f"         Sample zero IDNs: {sorted(zero_idns)[:8]}...")
+        
+        return {
+            'zero_entries': zero_entries,
+            'non_zero_entries': non_zero_entries,
+            'input_port_summary': input_port_groups
+        }
+    
+    def get_expected_excitations(self, excited_ports: list, excited_modes: list):
+        """
+        Get the expected S-parameter IDNs if only specific ports and modes were excited.
+        
+        Parameters
+        ----------
+        excited_ports : list
+            List of port names that should be excited (e.g., ['opt1'])
+        excited_modes : list  
+            List of mode IDs that should be excited (e.g., [1, 2])
+            
+        Returns
+        -------
+        list
+            List of expected S-parameter IDNs
+        """
+        expected_idns = []
+        
+        # Get all unique output ports from the data
+        output_ports = sorted(set(data.out_port for data in self.data))
+        # Get all unique output modes from the data  
+        output_modes = sorted(set(data.out_modeid for data in self.data))
+        
+        for excited_port in excited_ports:
+            for excited_mode in excited_modes:
+                for output_port in output_ports:
+                    for output_mode in output_modes:
+                        # Extract port numbers for IDN
+                        in_port_num = "".join(char for char in str(excited_port) if char.isdigit())
+                        out_port_num = "".join(char for char in str(output_port) if char.isdigit())
+                        idn = f"{out_port_num}{in_port_num}_{output_mode}{excited_mode}"
+                        expected_idns.append(idn)
+        
+        return expected_idns
+    
+    def validate_excitations(self, expected_excited_ports: list, expected_excited_modes: list, 
+                           threshold: float = 1e-10, verbose: bool = True):
+        """
+        Validate which ports and modes were actually excited vs expected.
+        
+        Parameters
+        ----------
+        expected_excited_ports : list
+            List of port names that should have been excited (e.g., ['opt1'])
+        expected_excited_modes : list
+            List of mode IDs that should have been excited (e.g., [1, 2])
+        threshold : float, optional
+            Magnitude threshold for considering entries as zero. Default is 1e-10.
+        verbose : bool, optional
+            Whether to print detailed validation results. Default is True.
+            
+        Returns
+        -------
+        dict
+            Validation results dictionary
+        """
+        analysis = self.analyze_excitations(threshold=threshold, verbose=False)
+        expected_idns = self.get_expected_excitations(expected_excited_ports, expected_excited_modes)
+        
+        actual_non_zero_idns = [data.idn for data in analysis['non_zero_entries']]
+        actual_zero_idns = [data.idn for data in analysis['zero_entries']]
+        
+        # Categorize results
+        expected_and_found = [idn for idn in expected_idns if idn in actual_non_zero_idns]
+        expected_but_zero = [idn for idn in expected_idns if idn in actual_zero_idns]
+        unexpected_non_zero = [idn for idn in actual_non_zero_idns if idn not in expected_idns]
+        
+        if verbose:
+            print(f"=== Excitation Validation for {self.name} ===")
+            print(f"Expected excitations: {expected_excited_ports} with modes {expected_excited_modes}")
+            print(f"Expected IDNs: {len(expected_idns)}")
+            print(f"Actual non-zero IDNs: {len(actual_non_zero_idns)}")
+            
+            print(f"\n✅ Expected and found non-zero: {len(expected_and_found)}")
+            if expected_and_found and len(expected_and_found) <= 16:
+                print(f"   {sorted(expected_and_found)}")
+            elif expected_and_found:
+                print(f"   Sample: {sorted(expected_and_found)[:8]}...")
+                
+            print(f"\n❌ Expected non-zero but found zero: {len(expected_but_zero)}")
+            if expected_but_zero and len(expected_but_zero) <= 16:
+                print(f"   {sorted(expected_but_zero)}")
+            elif expected_but_zero:
+                print(f"   Sample: {sorted(expected_but_zero)[:8]}...")
+                
+            print(f"\n⚠️  Unexpected non-zero entries: {len(unexpected_non_zero)}")
+            if unexpected_non_zero and len(unexpected_non_zero) <= 16:
+                print(f"   {sorted(unexpected_non_zero)}")
+            elif unexpected_non_zero:
+                print(f"   Sample: {sorted(unexpected_non_zero)[:8]}...")
+            
+            if unexpected_non_zero:
+                print(f"\n⚠️  WARNING: Found excitations at unexpected ports/modes!")
+                print(f"   This suggests the simulation included more inputs than expected.")
+            else:
+                print(f"\n✅ All non-zero entries match expected excitations.")
+        
+        return {
+            'expected_idns': expected_idns,
+            'expected_and_found': expected_and_found,
+            'expected_but_zero': expected_but_zero,
+            'unexpected_non_zero': unexpected_non_zero,
+            'total_expected': len(expected_idns),
+            'total_actual_non_zero': len(actual_non_zero_idns)
+        }
+
 
 def process_dat(file_path: str, name: str | None = None, verbose: bool = True):
     """
@@ -256,7 +445,7 @@ def process_dat(file_path: str, name: str | None = None, verbose: bool = True):
         name = os.path.basename(file_path)
     spar = sparameters(name=name)
     port_pattern = re.compile(r'\["(.*?)","(.*?)"\]')
-    data_pattern = re.compile(r'\("(.*?)","(.*?)",(\d+),"(.+?)",(\d+),"(.+?)",?(.*?)\)')
+    data_pattern = re.compile(r'\("(.*?)","(.*?)",(\d+),"(.+?)",(\d+),"(.+?)"\)')
 
     with open(file_path, "r") as f:
         lines = f.readlines()
@@ -273,25 +462,21 @@ def process_dat(file_path: str, name: str | None = None, verbose: bool = True):
                 spar.add_port(port_name, port_direction)
             elif data_match:
                 # parse an S-parameter dataset header
+                # Format: ("output_port", "output_mode_name", output_mode_id, "input_port", input_mode_id, "data_type")
                 (
-                    out_port,
-                    mode_label,
-                    out_modeid,
-                    in_port,
-                    in_modeid,
-                    data_type,
-                    group_delay,
+                    output_port,       # Port where measurement is taken
+                    output_mode_name,  # Mode name at output port (e.g., "mode 1")
+                    output_modeid,     # Mode ID at output port
+                    input_port,        # Port where excitation is applied  
+                    input_modeid,      # Mode ID at input port
+                    data_type,         # Data type (e.g., "transmission")
                 ) = data_match.groups()
-                
-                # Handle missing group_delay
-                if not group_delay:
-                    group_delay = "0.0"
                 
                 if verbose:
                     logger.debug(
-                        f"Found S-param dataset: out_port={out_port}, mode_label={mode_label}, "
-                        f"out_modeid={out_modeid}, in_port={in_port}, in_modeid={in_modeid}, "
-                        f"data_type={data_type}, group_delay={float(group_delay):.2e}"
+                        f"Found S-param dataset: output_port={output_port}, output_mode_name={output_mode_name}, "
+                        f"output_modeid={output_modeid}, input_port={input_port}, input_modeid={input_modeid}, "
+                        f"data_type={data_type}"
                     )
 
                 # parse the data set
@@ -308,13 +493,13 @@ def process_dat(file_path: str, name: str | None = None, verbose: bool = True):
                 s_phase = [i[2] for i in freq_data]  # third column in dat
                 
                 spar.add_data(
-                    in_port,
-                    out_port,
-                    mode_label,
-                    in_modeid,
-                    out_modeid,
+                    input_port,          # Input port (excitation)
+                    output_port,         # Output port (measurement)
+                    output_mode_name,    # Mode label
+                    int(input_modeid),   # Convert to integer
+                    int(output_modeid),  # Convert to integer
                     data_type,
-                    group_delay,
+                    0.0,                 # Group delay set to 0.0 (not provided in this format)
                     f,
                     s_mag,
                     s_phase,

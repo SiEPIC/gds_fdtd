@@ -1,5 +1,5 @@
 """gds_fdtd Top-level package imports."""
-from . import core, lyprocessor, simprocessor
+from . import core, lyprocessor, simprocessor, sparams
 from .core import technology
 
 __author__ = """Mustafa Hammood"""
