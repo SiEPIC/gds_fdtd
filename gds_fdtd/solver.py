@@ -64,9 +64,10 @@ class fdtd_field_monitor:
         self.name = name
         self.monitor_type = monitor_type
 
+
     def visualize(self):
         """Visualize the field monitor."""
-        pass
+        raise NotImplementedError("Visualization not implemented for this field monitor type")
 
 
 class fdtd_solver:
@@ -246,122 +247,6 @@ class fdtd_solver:
 
         return fdtd_ports
 
-    def get_port_info(self) -> dict:
-        """
-        Get information about the FDTD ports for debugging or visualization.
-
-        Returns:
-            dict: Dictionary containing port information with port names as keys.
-        """
-        port_info = {}
-        for port in self.fdtd_ports:
-            port_info[port.name] = {
-                "position": port.position,
-                "span": port.span,
-                "direction": port.direction,
-                "modes": port.modes,
-            }
-        return port_info
-
-    def get_port_index(self, port_name: str) -> int:
-        """
-        Get the port index from the port name in the sorted FDTD ports list.
-
-        This function looks at the sorted fdtd_ports and finds the matching port name,
-        returning the index of that port in the sorted ports list.
-
-        Args:
-            port_name (str): Name of the port (e.g., "opt1", "opt2", "optA", etc.)
-
-        Returns:
-            int: Index of the port in the sorted fdtd_ports list
-
-        Raises:
-            ValueError: If port name is not found
-        """
-        for idx, fdtd_port in enumerate(self.fdtd_ports):
-            if fdtd_port.name == port_name:
-                return idx
-
-        # If not found, raise an error with available port names
-        available_ports = [p.name for p in self.fdtd_ports]
-        raise ValueError(
-            f"Port '{port_name}' not found. Available ports: {available_ports}"
-        )
-
-    def get_component_port_index(self, port_name: str) -> int:
-        """
-        Get the port index from the port name in the original component.ports list.
-
-        This function looks at the original component ports and finds the matching port name,
-        returning the index of that port in the original unsorted ports list.
-
-        Args:
-            port_name (str): Name of the port (e.g., "opt1", "opt2", "optA", etc.)
-
-        Returns:
-            int: Index of the port in the original component.ports list
-
-        Raises:
-            ValueError: If port name is not found
-        """
-        for idx, port in enumerate(self.component.ports):
-            if port.name == port_name:
-                return idx
-
-        # If not found, raise an error with available port names
-        available_ports = [p.name for p in self.component.ports]
-        raise ValueError(
-            f"Port '{port_name}' not found. Available ports: {available_ports}"
-        )
-
-    def get_port_by_name(self, port_name: str) -> port:
-        """
-        Get the port object by name from the original component ports.
-
-        Args:
-            port_name (str): Name of the port
-
-        Returns:
-            port: The port object from component.ports
-
-        Raises:
-            ValueError: If port name is not found
-        """
-        idx = self.get_component_port_index(port_name)
-        return self.component.ports[idx]
-
-    def get_fdtd_port_by_name(self, port_name: str) -> fdtd_port:
-        """
-        Get the fdtd_port object by name.
-
-        Args:
-            port_name (str): Name of the port
-
-        Returns:
-            fdtd_port: The fdtd_port object
-
-        Raises:
-            ValueError: If port name is not found
-        """
-        for fdtd_port_obj in self.fdtd_ports:
-            if fdtd_port_obj.name == port_name:
-                return fdtd_port_obj
-
-        # If not found, raise an error with available port names
-        available_ports = [p.name for p in self.fdtd_ports]
-        raise ValueError(
-            f"FDTD port '{port_name}' not found. Available ports: {available_ports}"
-        )
-
-    def list_ports(self) -> list[str]:
-        """
-        Get a list of all port names in the component.
-
-        Returns:
-            list[str]: List of port names
-        """
-        return [port.name for port in self.component.ports]
 
     @abstractmethod
     def setup(self) -> None:
@@ -426,6 +311,38 @@ class fdtd_solver_lumerical(fdtd_solver):
 
         # Setup the s-parameters sweep
         self._setup_s_parameters_sweep()
+
+        # Get the resources used by the simulation
+        self.get_resources()
+
+    def get_resources(self) -> None:
+        """Get the resources used by the simulation."""
+        # TODO: I don't think this will work for Lumerical 2025 with GPU
+        # ref: https://optics.ansys.com/hc/en-us/articles/4403937981715-runsystemcheck-Script-command
+        self.fdtd.eval("reqs = runsystemcheck;")
+
+        reqs = self.fdtd.getv("reqs")
+
+        memory = reqs['Memory_Recommended']  # in Bytes
+        nodes = reqs['Total_FDTD_Yee_Nodes']  # in MNodes
+        print(f"Memory: {memory/1e9} GB")
+        print(f"Nodes: {nodes} MNodes")
+
+    def run(self) -> None:
+        """Run the simulation."""
+        if self.gpu:
+            self.fdtd.runsweep("sparams", "GPU")
+        else:
+            self.fdtd.runsweep("sparams")
+
+        self.get_results()
+
+    def get_results(self) -> None:
+        """Get the results of the simulation."""
+        self.fdtd.exportsweep("sparams", f"{self.component.name}.dat")
+        sparams_sweep = self.fdtd.getsweepresult("sparams", "S parameters")
+
+        sparams = {}
 
     def _setup_s_parameters_sweep(self) -> None:
         """
@@ -493,11 +410,9 @@ class fdtd_solver_lumerical(fdtd_solver):
                 )
 
         # before adding entries to the sweep, we need to remove all existing entries
-        # Add all port-mode combinations to the sweep
         while True:
             try:
                 self.fdtd.removesweepparameter("sparams", 1)
-                pass  # Continue removing parameters
             except Exception as e:
                 print(f"Done removing sweep parameters")
                 break
@@ -702,10 +617,16 @@ class fdtd_solver_lumerical(fdtd_solver):
         else:
             self.fdtd.setnamed("FDTD", "express mode", False)
 
+        self._setup_wavelength()
         self._setup_boundary_symmetry()
         self._setup_mesh()
         self._setup_time()
         self._setup_ports()
+
+    def _setup_wavelength(self) -> None:
+        self.fdtd.setglobalsource("wavelength start", self.wavelength_start*1e-6)
+        self.fdtd.setglobalsource("wavelength stop", self.wavelength_end*1e-6)
+        self.fdtd.setglobalmonitor("frequency points", self.wavelength_points)
 
     def _setup_field_monitors(self) -> None:
         """Setup the field monitors."""
