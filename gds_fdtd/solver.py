@@ -4,7 +4,8 @@ gds_fdtd simulation toolbox.
 FDTD solver module.
 @author: Mustafa Hammood, 2025
 """
-
+import os
+from pathlib import Path
 from gds_fdtd.core import component, port, technology
 from abc import abstractmethod
 
@@ -93,6 +94,8 @@ class fdtd_solver:
         mode_freq_pts (int): Number of frequency points for mode calculation.
         run_time_factor (float): Multiplier for simulation runtime.
         field_monitors (list of str): List of field monitoring directions.
+        working_dir (str): Base directory where a component-specific subdirectory will be created for FDTD project files.
+        component_working_dir (str): Same as working_dir, the component-specific directory path.
         fdtd_ports (list of fdtd_port): List of converted FDTD port objects.
     """
 
@@ -116,6 +119,7 @@ class fdtd_solver:
         mode_freq_pts: int = 3,
         run_time_factor: float = 3,
         field_monitors: list[str] = ["z"],
+        working_dir: str = "./",
     ):
         """
         Initialize the FDTD solver with simulation configuration.
@@ -139,6 +143,7 @@ class fdtd_solver:
             mode_freq_pts (int): Number of frequency points for mode calculation.
             run_time_factor (float): Factor to adjust simulation runtime.
             field_monitors (list of fdtd_field_monitor): Field monitors.
+            working_dir (str): Base directory where a component-specific subdirectory will be created for FDTD project files.
         """
         self.component = component
         self.tech = tech
@@ -158,6 +163,15 @@ class fdtd_solver:
         self.mode_freq_pts = mode_freq_pts
         self.run_time_factor = run_time_factor
         self.field_monitors = field_monitors
+        self.working_dir = working_dir
+
+        # Create component-specific working directory under the base working directory
+        self.component_working_dir = os.path.join(self.working_dir, self.component.name)
+        Path(self.component_working_dir).mkdir(parents=True, exist_ok=True)
+        print(f"FDTD working directory: {os.path.abspath(self.component_working_dir)}")
+        
+        # Update working_dir to point to the component-specific directory for file operations
+        self.working_dir = self.component_working_dir
 
         # Auto-calculate center and span from component geometry
         self._calculate_simulation_domain()
@@ -165,7 +179,7 @@ class fdtd_solver:
         # Convert component ports to fdtd_port objects for modular solver implementation
         self.fdtd_ports: list[fdtd_port] = self._convert_component_ports_to_fdtd_ports()
 
-        self.field_monitors = []
+        self.field_monitors_objs = []
 
     def _calculate_simulation_domain(self):
         """Calculate the simulation domain center and span from the component geometry."""
@@ -293,15 +307,16 @@ class fdtd_solver_lumerical(fdtd_solver):
 
     def setup(self) -> None:
         """Setup the Lumerical simulation."""
-        # Export GDS with port extensions
+        # Export GDS with port extensions to working directory
         gds_filename = f"{self.component.name}.gds"
-        self.component.export_gds(buffer=2 * self.buffer)
+        gds_filepath = os.path.join(self.working_dir, gds_filename)
+        self.component.export_gds(export_dir=self.working_dir, buffer=2 * self.buffer)
 
         # Initialize FDTD
         self.fdtd = FDTD()
 
         # Setup the layer builder with technology information
-        self._setup_layer_builder(gds_filename)
+        self._setup_layer_builder(gds_filepath)
 
         # Setup the FDTD simulation
         self._setup_fdtd()
@@ -311,6 +326,11 @@ class fdtd_solver_lumerical(fdtd_solver):
 
         # Setup the s-parameters sweep
         self._setup_s_parameters_sweep()
+
+        # Save the Lumerical FDTD project to working directory
+        project_filepath = os.path.join(self.working_dir, f"{self.component.name}.fsp")
+        self.fdtd.save(project_filepath)
+        print(f"FDTD project saved: {project_filepath}")
 
         # Get the resources used by the simulation
         self.get_resources()
@@ -339,7 +359,8 @@ class fdtd_solver_lumerical(fdtd_solver):
 
     def get_results(self) -> None:
         """Get the results of the simulation."""
-        self.fdtd.exportsweep("sparams", f"{self.component.name}.dat")
+        results_filepath = os.path.join(self.working_dir, f"{self.component.name}.dat")
+        self.fdtd.exportsweep("sparams", results_filepath)
         sparams_sweep = self.fdtd.getsweepresult("sparams", "S parameters")
 
         sparams = {}
@@ -442,7 +463,7 @@ class fdtd_solver_lumerical(fdtd_solver):
         Setup the Lumerical layer builder with technology information.
 
         Args:
-            gds_filename (str): Name of the GDS file that was loaded.
+            gds_filename (str): Full path to the GDS file to be loaded.
         """
         self.fdtd.addlayerbuilder()
 
@@ -672,7 +693,7 @@ class fdtd_solver_lumerical(fdtd_solver):
                     fdtd_field_monitor(name="profile_y", monitor_type="y")
                 )
 
-        self.field_monitors = field_monitors
+        self.field_monitors_objs = field_monitors
 
     def _setup_ports(self) -> None:
         """
