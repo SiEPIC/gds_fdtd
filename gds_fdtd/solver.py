@@ -7,6 +7,7 @@ FDTD solver module.
 import os
 from pathlib import Path
 from gds_fdtd.core import component, port, technology
+from gds_fdtd.sparams import sparameters
 from abc import abstractmethod
 
 
@@ -97,6 +98,7 @@ class fdtd_solver:
         working_dir (str): Base directory where a component-specific subdirectory will be created for FDTD project files.
         component_working_dir (str): Same as working_dir, the component-specific directory path.
         fdtd_ports (list of fdtd_port): List of converted FDTD port objects.
+
     """
 
     def __init__(
@@ -180,6 +182,7 @@ class fdtd_solver:
         self.fdtd_ports: list[fdtd_port] = self._convert_component_ports_to_fdtd_ports()
 
         self.field_monitors_objs = []
+        self._sparameters = None
 
     def _calculate_simulation_domain(self):
         """Calculate the simulation domain center and span from the component geometry."""
@@ -197,7 +200,7 @@ class fdtd_solver:
                 c.bounds.y_span + 2 * self.buffer,
                 self.z_max - self.z_min,
             ]
-        except AttributeError:
+        except AttributeError:    
             # Fallback to default values if component doesn't have bbox
             self.center = [0.0, 0.0, (self.z_max + self.z_min) / 2]
             self.span = [5.0, 5.0, self.z_max - self.z_min]
@@ -261,6 +264,12 @@ class fdtd_solver:
 
         return fdtd_ports
 
+    @property
+    def sparameters(self) -> sparameters:
+        """Get the S-parameters results."""
+        if self._sparameters is None:
+            print("S-parameters results not available. Please run the simulation first.")
+        return self._sparameters
 
     @abstractmethod
     def setup(self) -> None:

@@ -7,7 +7,7 @@ Lumerical tools interface module.
 import os
 from lumapi import FDTD
 from gds_fdtd.solver import fdtd_solver, fdtd_field_monitor
-
+from gds_fdtd.sparams import process_dat
 
 class fdtd_solver_lumerical(fdtd_solver):
     """
@@ -81,7 +81,7 @@ class fdtd_solver_lumerical(fdtd_solver):
         self.fdtd.exportsweep("sparams", results_filepath)
         sparams_sweep = self.fdtd.getsweepresult("sparams", "S parameters")
 
-        sparams = {}
+        self._sparameters = process_dat(results_filepath)
 
     def _setup_s_parameters_sweep(self) -> None:
         """
