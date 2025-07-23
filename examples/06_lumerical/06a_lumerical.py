@@ -5,7 +5,7 @@ Example of simulating a component in lumerical.
 """
 import os
 from lumapi import FDTD  # can also be mode/device
-from gds_fdtd.solver import fdtd_solver_lumerical
+from gds_fdtd.solver_lumerical import fdtd_solver_lumerical
 from gds_fdtd.core import parse_yaml_tech
 from gds_fdtd.simprocessor import load_component_from_tech
 from gds_fdtd.lyprocessor import load_cell
@@ -30,16 +30,18 @@ if __name__ == "__main__":
         wavelength_points=100,
         mesh=6,
         boundary=["PML", "PML", "Metal"],
-        symmetry=[0, 1, 1],
+        symmetry=[0, 0, 0],
         z_min=-1.0,
         z_max=1.11,
         width_ports=2.0,
         depth_ports=1.5,
         buffer=1.0,
-        modes=[1,3],
-        run_time_factor=3,
+        modes=[1],
+        run_time_factor=5,
         field_monitors=["z"],
+        working_dir=os.getcwd(),  # Files will be saved to ./crossing_te1550/ subdirectory
     )
-    input('Proceed to terminate the GUI?')
+    solver.run()
+    input("Proceed to terminate the GUI?")
 
 # %%
