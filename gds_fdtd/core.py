@@ -50,7 +50,7 @@ class layout:
 
 
 def calculate_polygon_extension(
-    center: list[float, float], width: float, direction: float, buffer: float = 1.0
+    center: list[float, float], width: float, direction: float, buffer: float = 4.0
 ) -> list[list[float, float]]:
     """
     Calculate the polygon extension for a port.
@@ -185,7 +185,7 @@ class port:
         """
         return int("".join(char for char in reversed(self.name) if char.isdigit()))
 
-    def polygon_extension(self, buffer: float = 1.0) -> list[list[float, float]]:
+    def polygon_extension(self, buffer: float = 4.0) -> list[list[float, float]]:
         """
         Calculate the polygon extension for this port.
 
@@ -531,8 +531,6 @@ class s_parameters:
         for s in input_entries:
             if s.idx_in == idx_in and s.idx_out == idx_out:
                 entries.append(s)
-        if len(entries) == 1:
-            entries = entries[0]
         return entries
 
     def plot(self):

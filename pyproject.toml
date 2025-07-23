@@ -8,7 +8,7 @@ build-backend = "flit_core.buildapi"
 # ────────────────────────── project meta ─────────────────────────
 [project]
 name            = "gds_fdtd"
-version         = "0.3.10"
+version         = "0.3.11"
 description     = "Minimalist utilities for photonic FDTD workflows."
 authors         = [{ name = "Mustafa Hammood", email = "mustafa@siepic.com" }]
 license         = { text = "MIT" }
@@ -71,7 +71,7 @@ Repository  = "https://github.com/SiEPIC/gds_fdtd"
 
 # ─────────────────────────── tooling ────────────────────────────
 [tool.pytest.ini_options]
-addopts = "--cov=."
+# addopts = "--cov=."  # Disabled - pytest-cov not available
 
 [tool.flake8]
 max-line-length = 88

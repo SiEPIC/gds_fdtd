@@ -1,6 +1,6 @@
 # gds_fdtd
 
-![alternative text](/docs/banner.png)
+![alternative text](/docs/logo.png)
 
 ![codecov](https://codecov.io/gh/siepic/gds_fdtd/branch/main/graph/badge.svg)
 ![build](https://github.com/siepic/gds_fdtd/actions/workflows/build_and_test.yml/badge.svg)
@@ -68,7 +68,7 @@ pip install -e .[dev]
 
 ### Requirements
 
-- Python ≥ 3.11  
+- Python ≥ 3.10 (note: gdsfactory requires Python ≥ 3.11)  
 - Runtime deps: numpy, matplotlib, shapely, PyYAML, klayout
 
 
