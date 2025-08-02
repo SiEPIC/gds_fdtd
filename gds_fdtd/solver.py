@@ -184,6 +184,13 @@ class fdtd_solver:
         self.field_monitors_objs = []
         self._sparameters = None
 
+    def _export_gds(self):
+        """Export the component GDS to the working directory."""
+        self._gds_filename = f"{self.component.name}.gds"
+        self._gds_filepath = os.path.join(self.working_dir, self._gds_filename)
+        self.component.export_gds(export_dir=self.working_dir, buffer=2 * self.buffer)
+
+
     def _calculate_simulation_domain(self):
         """Calculate the simulation domain center and span from the component geometry."""
         # This is a placeholder implementation - you'll need to adjust based on your component structure
@@ -271,6 +278,7 @@ class fdtd_solver:
             print("S-parameters results not available. Please run the simulation first.")
         return self._sparameters
 
+    # below are abstract methods that must be implemented by the solver
     @abstractmethod
     def setup(self) -> None:
         """Setup the simulation."""

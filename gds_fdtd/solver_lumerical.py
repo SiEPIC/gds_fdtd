@@ -26,15 +26,16 @@ class fdtd_solver_lumerical(fdtd_solver):
     def setup(self) -> None:
         """Setup the Lumerical simulation."""
         # Export GDS with port extensions to working directory
-        gds_filename = f"{self.component.name}.gds"
-        gds_filepath = os.path.join(self.working_dir, gds_filename)
-        self.component.export_gds(export_dir=self.working_dir, buffer=2 * self.buffer)
+        self._export_gds()
 
         # Initialize FDTD
         self.fdtd = FDTD()
 
+        # set the working directory
+        self.fdtd.eval(f'cd("{self.working_dir}");')
+
         # Setup the layer builder with technology information
-        self._setup_layer_builder(gds_filepath)
+        self._setup_layer_builder()
 
         # Setup the FDTD simulation
         self._setup_fdtd()
@@ -68,10 +69,16 @@ class fdtd_solver_lumerical(fdtd_solver):
 
     def run(self) -> None:
         """Run the simulation."""
+        # note: this only works for Lumerical 2024.
+        # For Lumerical 2025, Lumerical has changed the syntax for setting GPU.
+        # I Don't have a 2025 license, so I can't test it.
+        # If you do, please update the code to make it work for 2025 as well as 2024.
+        # lumerical: please make your api backwards compatible :)))
         if self.gpu:
-            self.fdtd.runsweep("sparams", "GPU")
+            self.fdtd.setresource("FDTD", "GPU", 1)
         else:
-            self.fdtd.runsweep("sparams")
+            self.fdtd.setresource("FDTD", "CPU", 1)
+        self.fdtd.runsweep("sparams")
 
         self.get_results()
 
@@ -176,12 +183,10 @@ class fdtd_solver_lumerical(fdtd_solver):
         else:
             print("  Warning: No active port-mode combinations found!")
 
-    def _setup_layer_builder(self, gds_filename: str) -> None:
+    def _setup_layer_builder(self) -> None:
         """
         Setup the Lumerical layer builder with technology information.
 
-        Args:
-            gds_filename (str): Full path to the GDS file to be loaded.
         """
         self.fdtd.addlayerbuilder()
 
@@ -203,7 +208,7 @@ class fdtd_solver_lumerical(fdtd_solver):
         self.fdtd.setnamed("layer group", "gds center y", -self.center[1] * 1e-6)
 
         # Load the GDS file into the layer builder
-        self.fdtd.eval(f'loadgdsfile("{gds_filename}");')
+        self.fdtd.eval(f'loadgdsfile("{self._gds_filename}");')
 
         # Get list of layers that actually exist in the GDS file
         self.fdtd.eval("gds_layers = getlayerlist;")
