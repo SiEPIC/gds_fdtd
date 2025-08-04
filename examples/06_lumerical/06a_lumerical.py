@@ -50,12 +50,12 @@ if __name__ == "__main__":
 
     # example fetching specific s-parameters of interest
     wavl = solver.sparameters.wavelength
-    s21_te = solver.sparameters.S(in_port=1, out_port=4, in_modeid=1, out_modeid=1)
-    s21_tm = solver.sparameters.S(in_port=1, out_port=4, in_modeid=2, out_modeid=2)
+    s41_te = solver.sparameters.S(in_port=1, out_port=4, in_modeid=1, out_modeid=1)
+    s41_tm = solver.sparameters.S(in_port=1, out_port=4, in_modeid=2, out_modeid=2)
 
     fig, ax = plt.subplots(1, 1, figsize=(6, 4))
-    ax.plot(wavl, 10*np.log10(np.abs(s21_te.s_mag)**2), label='S41 TE->TE')
-    ax.plot(wavl, 10*np.log10(np.abs(s21_tm.s_mag)**2), label='S41 TM->TM')
+    ax.plot(wavl, 10*np.log10(np.abs(s41_te.s_mag)**2), label='S41 TE->TE')
+    ax.plot(wavl, 10*np.log10(np.abs(s41_tm.s_mag)**2), label='S41 TM->TM')
     ax.set_xlabel('Wavelength [um]')
     ax.set_ylabel('Transmission [dB]')
     ax.set_ylim(-1, 0)

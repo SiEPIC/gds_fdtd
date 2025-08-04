@@ -271,6 +271,33 @@ class fdtd_solver:
 
         return fdtd_ports
 
+    def _get_active_ports(self) -> list[fdtd_port]:
+        """Get the active ports from the component ports."""
+        # Determine which ports should be active
+        # active_ports should be a list of component port objects (type: port from component.ports)
+        if self.port_input is None:
+            # Default: activate all ports for full S-parameter matrix
+            active_port_names = [fdtd_port.name for fdtd_port in self.fdtd_ports]
+        elif isinstance(self.port_input, list):
+            # List of component port objects
+            active_port_names = []
+            for component_port in self.port_input:
+                if hasattr(component_port, "name"):
+                    active_port_names.append(component_port.name)
+                else:
+                    raise ValueError(
+                        f"Invalid port object in active_ports list: {component_port}"
+                    )
+        else:
+            # Single component port object (user fed in 1 active port)
+            if hasattr(self.port_input, "name"):
+                active_port_names = [self.port_input.name]
+            else:
+                raise ValueError(
+                    f"Invalid single port object: {self.port_input}. Expected component port object with 'name' attribute."
+                )
+        return active_port_names
+
     @property
     def sparameters(self) -> sparameters:
         """Get the S-parameters results."""

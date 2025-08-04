@@ -98,40 +98,16 @@ class fdtd_solver_lumerical(fdtd_solver):
         1. Creates an S-parameter sweep
         2. Automatically generates port-mode combinations based on fdtd_ports and modes
         3. Sets active only the ports that should be excited
-
-        Args:
-            active_ports (list, optional): List of port names to activate. If None, activates all ports.
         """
+
+        active_port_names = self._get_active_ports()
+
         # Create S-parameter sweep
         self.fdtd.addsweep(3)  # 3 is s-parameter sweep
         self.fdtd.setsweep("s-parameter sweep", "name", "sparams")
         self.fdtd.setsweep(
             "sparams", "Excite all ports", 0
         )  # We'll manually set active ports
-
-        # Determine which ports should be active
-        # active_ports should be a list of component port objects (type: port from component.ports)
-        if self.port_input is None:
-            # Default: activate all ports for full S-parameter matrix
-            active_port_names = [fdtd_port.name for fdtd_port in self.fdtd_ports]
-        elif isinstance(self.port_input, list):
-            # List of component port objects
-            active_port_names = []
-            for component_port in self.port_input:
-                if hasattr(component_port, "name"):
-                    active_port_names.append(component_port.name)
-                else:
-                    raise ValueError(
-                        f"Invalid port object in active_ports list: {component_port}"
-                    )
-        else:
-            # Single component port object (user fed in 1 active port)
-            if hasattr(self.port_input, "name"):
-                active_port_names = [self.port_input.name]
-            else:
-                raise ValueError(
-                    f"Invalid single port object: {self.port_input}. Expected component port object with 'name' attribute."
-                )
 
         # Automatically generate indices based on sorted fdtd_ports and modes
         indices = []
