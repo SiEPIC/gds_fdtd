@@ -1,0 +1,79 @@
+#%% 
+"""
+Example of simulating a component in Tidy3D using the new fdtd_solver_tidy3d class.
+@author: Mustafa Hammood
+"""
+import os
+import matplotlib.pyplot as plt
+import numpy as np
+from gds_fdtd.solver_tidy3d import fdtd_solver_tidy3d
+from gds_fdtd.core import parse_yaml_tech
+from gds_fdtd.simprocessor import load_component_from_tech
+from gds_fdtd.lyprocessor import load_cell
+
+if __name__ == "__main__":
+    # Load technology file - need to modify for Tidy3D materials
+    tech_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "tech_tidy3d.yaml")
+    technology = parse_yaml_tech(tech_path)
+
+    # Load GDS component
+    file_gds = os.path.join(os.path.dirname(os.path.dirname(__file__)), "devices.gds")
+    cell, layout = load_cell(file_gds, top_cell='crossing_te1550')
+    component = load_component_from_tech(cell=cell, tech=technology)
+
+    # Create Tidy3D solver
+    solver = fdtd_solver_tidy3d(
+        component=component,
+        tech=technology,
+        port_input=[component.ports[0]],  # Input port(s)
+        visualize=False,  # Set to True to show simulation setup plots
+        wavelength_start=1.5,
+        wavelength_end=1.6,
+        wavelength_points=50,  # Fewer points for faster simulation
+        mesh=6,  # Grid cells per wavelength
+        boundary=["PML", "PML", "PML"],
+        symmetry=[0, 0, 0],
+        z_min=-1.0,
+        z_max=1.11,
+        width_ports=2.0,
+        depth_ports=1.5,
+        buffer=1.0,
+        modes=[1, 2],  # TE and TM modes
+        run_time_factor=50,
+        field_monitors=["z"],
+        working_dir=os.getcwd(),  # Files will be saved to ./crossing_te1550/ subdirectory
+    )
+    
+    # This requires Tidy3D cloud credentials and will consume simulation credits   
+    solver.run()
+    
+    # Plot all the s-parameters
+    solver.sparameters.plot()
+    #%%
+    # Example fetching specific s-parameters of interest
+    wavl = solver.sparameters.wavelength
+    s41_te = solver.sparameters.S(in_port=1, out_port=4, in_modeid=1, out_modeid=1)
+    s41_tm = solver.sparameters.S(in_port=1, out_port=4, in_modeid=2, out_modeid=2)
+    
+    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
+    ax.plot(wavl, 10*np.log10(np.abs(s41_te.s_mag)**2), label='S41 TE->TE')
+    ax.plot(wavl, 10*np.log10(np.abs(s41_tm.s_mag)**2), label='S41 TM->TM')
+    ax.set_xlabel('Wavelength [um]')
+    ax.set_ylabel('Transmission [dB]')
+    #ax.set_ylim(-1, 0)
+    ax.legend()
+    plt.show()
+    
+    # Visualize results (S-parameters plots and export to .dat)
+    solver.visualize_results()
+    
+    # Visualize field monitors through field monitor objects
+    solver.visualize_field_monitors()
+
+    print("\nTidy3D solver setup completed successfully!")
+    print("✅ S-parameters exported to .dat file automatically")  
+    print("✅ Field visualization handled through field monitor objects")
+    print("Note: Run solver.run() first to generate actual simulation data")
+    print("This consumes Tidy3D cloud simulation credits.")
+
+# %% 

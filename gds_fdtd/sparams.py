@@ -508,7 +508,7 @@ def process_dat(file_path: str, name: str | None = None, verbose: bool = True):
             i += 1
     return spar
 
-class s_paramet_writer():
+class s_parameter_writer():
     """Object that writes data to Lumerical INTERCONNECT S-parameters .dat format
     """
     def __init__(self):

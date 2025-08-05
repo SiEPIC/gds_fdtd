@@ -36,4 +36,4 @@ technology:
       material:
         tidy3d_db:
           model: [Si3N4, Luke2015PMLStable]
-      sidewall_angle: 90
+      sidewall_angle: 83
