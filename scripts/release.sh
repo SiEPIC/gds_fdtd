@@ -38,6 +38,10 @@ git pull origin main
 echo -e "${BLUE}Current version information:${NC}"
 make check-version
 
+# Install build dependencies
+echo -e "${YELLOW}Installing build dependencies...${NC}"
+pip install build twine
+
 # Run tests
 echo -e "${YELLOW}Running tests...${NC}"
 make test
