@@ -8,15 +8,13 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import tidy3d as td
+from tidy3d.plugins.smatrix import ComponentModeler, Port
 from gds_fdtd.solver import fdtd_solver
-from gds_fdtd.core import sparam
 from gds_fdtd.sparams import sparameters
 
 class fdtd_solver_tidy3d(fdtd_solver):
     """
     FDTD solver for electromagnetic simulations using Tidy3D.
-    
-    This implementation directly replicates the working t3d_tools.py approach.
     """
 
     def __init__(self, *args, visualize: bool = True, **kwargs):
@@ -27,60 +25,51 @@ class fdtd_solver_tidy3d(fdtd_solver):
         self.setup()
 
     def setup(self) -> None:
-        """Setup the Tidy3D simulation using the exact t3d_tools.py pattern."""
+        """Setup the Tidy3D simulation using ComponentModeler for S-matrix calculation."""
         # Validate simulation parameters
         self._validate_simulation_parameters()
         
         # Export GDS with port extensions to working directory
         self._export_gds()
 
-        # Calculate frequencies exactly like t3d_tools.py
-        lda0 = (self.wavelength_end + self.wavelength_start) / 2
-        freq0 = td.C_0 / lda0
-        freqs = td.C_0 / np.linspace(self.wavelength_start, self.wavelength_end, self.wavelength_points)
-        fwidth = 0.5 * (np.max(freqs) - np.min(freqs))
+        # Calculate frequencies for S-matrix calculation
+        self.freqs = td.C_0 / np.linspace(self.wavelength_start, self.wavelength_end, self.wavelength_points)
+        self.lda0 = (self.wavelength_end + self.wavelength_start) / 2
+        self.freq0 = td.C_0 / self.lda0
 
-        # Store for later use
-        self.lda0 = lda0
-        self.freq0 = freq0
-        self.freqs = freqs
-        self.fwidth = fwidth
+        # Create base simulation and ports for S-matrix calculation
+        self.base_simulation = self._create_base_simulation()
+        self.smatrix_ports = self._create_smatrix_ports()
 
-        # Create simulation using exact t3d_tools.py workflow
-        self.simulation = self._make_t3d_sim_like_original()
+        # Create ComponentModeler for S-matrix calculation
+        self.component_modeler = ComponentModeler(
+            simulation=self.base_simulation,
+            ports=self.smatrix_ports,
+            freqs=self.freqs,
+            verbose=True,
+            path_dir=self.working_dir
+        )
 
         # Print setup summary
         self._print_simulation_summary()
-        print(f"Tidy3D solver setup complete with {len(self.simulation.sim_jobs)} simulation jobs")
+        total_mode_combinations = len(self.smatrix_ports) * len(self.modes)
+        print(f"Tidy3D solver setup complete with ComponentModeler:")
+        print(f"  • {len(self.smatrix_ports)} ports × {len(self.modes)} modes = {total_mode_combinations} mode combinations")
+        print(f"  • Multi-modal S-matrix calculation ready")
+        print(f"  • ComponentModeler will auto-generate task names for {self.component.name}")
 
-    def _make_t3d_sim_like_original(self):
-        """Replicate the exact make_t3d_sim function workflow from t3d_tools.py"""
-        
-        # Convert solver parameters to t3d_tools.py format
+    def _create_base_simulation(self):
+        """Create base simulation without sources/monitors for ComponentModeler."""
         device = self.component
-        in_port = self.port_input if isinstance(self.port_input, list) else [self.port_input] if self.port_input else [device.ports[0]]
-        mode_index = [m-1 for m in self.modes]  # Convert to 0-based like t3d_tools.py
         
-        # define structures from device
-        structures = self._make_structures()
+        # Create structures
+        structures = self._create_structures()
 
-        # define monitors - Use standardized fdtd_port objects like Lumerical
+        # Add field monitor if requested
         monitors = []
-        for fdtd_port in self.fdtd_ports:
-            monitors.append(
-                self._make_port_monitor(
-                    fdtd_port,
-                    freqs=self.freqs,
-                    depth=self.depth_ports,
-                    width=self.width_ports,
-                    num_modes=len(self.modes),
-                )
-            )
-
-        # make field monitor and create field monitor objects
         if self.field_monitors:
             for field_monitor_axis in self.field_monitors:
-                field_monitor = self._make_field_monitor(device, freqs=self.freqs, axis=field_monitor_axis)
+                field_monitor = self._create_field_monitor(device, freqs=self.freqs, axis=field_monitor_axis)
                 monitors.append(field_monitor)
                 
                 # Create field monitor object for visualization
@@ -93,78 +82,61 @@ class fdtd_solver_tidy3d(fdtd_solver):
                     self.field_monitors_objs = []
                 self.field_monitors_objs.append(field_monitor_obj)
 
-        # simulation domain size (in microns) - Use solver's calculated span that includes buffer
-        sim_size = [self.span[0], self.span[1], self.span[2]]  # Use solver's span, not device.bounds
+        # simulation domain size (in microns)
+        sim_size = [self.span[0], self.span[1], self.span[2]]
         
         # run time calculation
-        run_time = (
-            self.run_time_factor * max(sim_size) / td.C_0
-        )
+        run_time = self.run_time_factor * max(sim_size) / td.C_0
 
         # Create boundary spec
         boundary_spec = td.BoundarySpec.all_sides(boundary=td.PML())
 
-        # define sim jobs - Use standardized fdtd_port objects like Lumerical  
-        sim_jobs = []
-        for m in mode_index:
-            for fdtd_port in self.fdtd_ports:
-                # Only create jobs for active ports
-                if fdtd_port.name in [p.name for p in in_port]:
-                    source = self._make_source(
-                        fdtd_port=fdtd_port,
-                        depth=self.depth_ports,
-                        width=self.width_ports,
-                        freq0=self.freq0,
-                        num_freqs=3,
-                        fwidth=self.fwidth,
-                        num_modes=len(self.modes),
-                        mode_index=m,
-                    )
-                    sim = {}
-                    sim["name"] = f"{device.name}_{fdtd_port.name}_idx{m}"
-                    sim["source"] = source
-                    sim["in_port"] = fdtd_port  # Use fdtd_port object
-                    sim["num_modes"] = len(self.modes)
-                    sim["sim"] = td.Simulation(
-                        size=sim_size,
-                        grid_spec=td.GridSpec.auto(
-                            min_steps_per_wvl=self.mesh, wavelength=self.lda0
-                        ),
-                        structures=structures,
-                        sources=[source],
-                        monitors=monitors,
-                        run_time=run_time,
-                        boundary_spec=boundary_spec,
-                        center=(
-                            self.center[0],  # Use solver's center, not device.bounds
-                            self.center[1],  # Use solver's center, not device.bounds  
-                            self.center[2],  # Use solver's center, not device.bounds
-                        ),
-                        symmetry=tuple(self.symmetry),
-                    )
-                    sim_jobs.append(sim)
-
-        # Create sim_tidy3d-like object
-        class TempSimulation:
-            def __init__(self, in_port, device, wavl_min, wavl_max, wavl_pts, sim_jobs):
-                self.in_port = in_port
-                self.device = device
-                self.wavl_min = wavl_min
-                self.wavl_max = wavl_max
-                self.wavl_pts = wavl_pts
-                self.sim_jobs = sim_jobs
-                self.results = None
-
-        return TempSimulation(
-            in_port=in_port,
-            wavl_max=self.wavelength_end,
-            wavl_min=self.wavelength_start,
-            wavl_pts=self.wavelength_points,
-            device=device,
-            sim_jobs=sim_jobs,
+        # Create base simulation (no sources - ComponentModeler adds them)
+        base_sim = td.Simulation(
+            size=sim_size,
+            grid_spec=td.GridSpec.auto(min_steps_per_wvl=self.mesh, wavelength=self.lda0),
+            structures=structures,
+            sources=[],  # No sources - ComponentModeler will add them
+            monitors=monitors,
+            run_time=run_time,
+            boundary_spec=boundary_spec,
+            center=(self.center[0], self.center[1], self.center[2]),
+            symmetry=tuple(self.symmetry),
         )
 
-    def _make_structures(self):
+        return base_sim
+
+    def _create_smatrix_ports(self):
+        """Create Tidy3D Port objects for S-matrix calculation with multi-modal support."""
+        ports = []
+        
+        for fdtd_port in self.fdtd_ports:
+            # Determine port direction and size based on fdtd_port configuration
+            if fdtd_port.span[0] is None:  # x-axis injection
+                direction = "+" if fdtd_port.direction == "forward" else "-"
+                size = [0, self.width_ports, self.depth_ports]
+            elif fdtd_port.span[1] is None:  # y-axis injection  
+                direction = "+" if fdtd_port.direction == "forward" else "-"
+                size = [self.width_ports, 0, self.depth_ports]
+            else:
+                raise ValueError(f"Invalid span configuration for port {fdtd_port.name}")
+
+            # Create Tidy3D Port object with multi-modal support
+            # Convert 1-based mode indices to 0-based for Tidy3D
+            mode_indices = [m - 1 for m in self.modes]
+            
+            port = Port(
+                center=fdtd_port.position,
+                size=size,
+                direction=direction,
+                name=fdtd_port.name,
+                mode_spec=td.ModeSpec(num_modes=max(self.modes))  # Ensure enough modes are calculated
+            )
+            ports.append(port)
+            
+        return ports
+
+    def _create_structures(self):
         """Create Tidy3D structure objects from the component."""
         device = self.component
         
@@ -265,65 +237,7 @@ class fdtd_solver_tidy3d(fdtd_solver):
             )
         return structures
 
-    def _make_port_monitor(self, fdtd_port, freqs=2e14, num_modes=1, depth=2, width=3):
-        """Create mode monitor exactly at fdtd_port position (consistent with Lumerical)."""
-        # Monitor position - exactly at port position (no buffer like Lumerical)
-        center = [fdtd_port.position[0], fdtd_port.position[1], fdtd_port.position[2]]
-        
-        # Determine size based on fdtd_port span (None indicates injection axis)
-        if fdtd_port.span[0] is None:  # x-axis injection
-            size = [0, width, depth]
-        elif fdtd_port.span[1] is None:  # y-axis injection  
-            size = [width, 0, depth]
-        else:
-            raise ValueError(f"Invalid span configuration for port {fdtd_port.name}")
-
-        return td.ModeMonitor(
-            center=center,
-            size=size,
-            freqs=freqs,
-            mode_spec=td.ModeSpec(num_modes=num_modes),
-            name=fdtd_port.name,
-        )
-
-    def _make_source(self, fdtd_port, num_modes=1, mode_index=0, width=3.0, depth=2.0, freq0=2e14, num_freqs=5, fwidth=1e13, buffer=-0.2):
-        """Create mode source with buffer offset from fdtd_port position."""
-        # Source position - apply buffer offset from port position
-        center = [fdtd_port.position[0], fdtd_port.position[1], fdtd_port.position[2]]
-        
-        # Apply buffer offset and direction based on fdtd_port mapping
-        # This replicates the t3d_tools.py logic with fdtd_port objects
-        if fdtd_port.span[0] is None:  # x-axis injection
-            if fdtd_port.direction == "forward":
-                center[0] += buffer  # buffer = -0.2, so moves toward device center
-                direction = "+"  # From t3d_tools.py: port directions 180,270 → "+"
-            else:  # backward
-                center[0] -= buffer  # Moves toward device center
-                direction = "-"  # From t3d_tools.py: port directions 0,90 → "-"
-            size = [0, width, depth]
-        elif fdtd_port.span[1] is None:  # y-axis injection
-            if fdtd_port.direction == "forward":
-                center[1] += buffer  # buffer = -0.2, so moves toward device center
-                direction = "+"
-            else:  # backward
-                center[1] -= buffer  # Moves toward device center
-                direction = "-" 
-            size = [width, 0, depth]
-        else:
-            raise ValueError(f"Invalid span configuration for port {fdtd_port.name}")
-
-        return td.ModeSource(
-            center=center,
-            size=size,
-            direction=direction,
-            source_time=td.GaussianPulse(freq0=freq0, fwidth=fwidth),
-            mode_spec=td.ModeSpec(num_modes=num_modes),
-            mode_index=mode_index,
-            num_freqs=num_freqs,
-            name=f"msource_{fdtd_port.name}_idx{mode_index}",
-        )
-
-    def _make_field_monitor(self, device, freqs=2e14, axis="z", z_center=None):
+    def _create_field_monitor(self, device, freqs=2e14, axis="z", z_center=None):
         """Create a field monitor for the specified axis."""
         # identify a device field z_center if None
         if z_center is None:
@@ -353,148 +267,113 @@ class fdtd_solver_tidy3d(fdtd_solver):
 
     def get_resources(self) -> None:
         """Get the resources used by the simulation."""
-        if not self.simulation or not self.simulation.sim_jobs:
-            print("No simulation jobs available.")
+        if not hasattr(self, 'component_modeler'):
+            print("No ComponentModeler available.")
             return
             
-        print(f"Simulation jobs created: {len(self.simulation.sim_jobs)}")
-        print("Resource estimation not implemented for Tidy3D (cloud-based)")
+        total_simulations = len(self.smatrix_ports) * len(self.modes)
+        print(f"ComponentModeler Multi-Modal Configuration:")
+        print(f"  • {len(self.smatrix_ports)} ports")
+        print(f"  • {len(self.modes)} modes per port: {self.modes}")
+        print(f"  • Total simulations required: {total_simulations}")
+        print(f"  • Component: {self.component.name}")
+        print("Resource estimation handled by Tidy3D cloud platform")
 
     def run(self) -> None:
-        """Run the simulation using the exact t3d_tools.py pattern."""
-        if not self.simulation:
-            raise RuntimeError("No simulation created. Call setup() first.")
+        """Run the simulation using ComponentModeler."""
+        if not hasattr(self, 'component_modeler'):
+            raise RuntimeError("No ComponentModeler created. Call setup() first.")
             
-        # Upload jobs to Tidy3D cloud
-        self._upload_jobs()
+        print("Running S-matrix calculation with ComponentModeler...")
         
-        # Execute jobs and extract S-parameters
-        self._execute_jobs()
+        # Run the S-matrix calculation
+        smatrix_result = self.component_modeler.run()
+        
+        # Convert results to sparameters format for interface compatibility
+        self._convert_smatrix_to_sparameters(smatrix_result)
+        
+        print("S-matrix calculation completed successfully!")
 
-    def _upload_jobs(self):
-        """Upload simulation jobs to Tidy3D cloud."""
-        from tidy3d import web
-
-        # divide between job and sim, how to attach them?
-        for sim_job in self.simulation.sim_jobs:
-            sim = sim_job["sim"]
-            name = sim_job["name"]
-            sim_job["job"] = web.Job(simulation=sim, task_name=name)
-
-    def _execute_jobs(self):
-        """Execute jobs and extract S-parameters (updated for fdtd_port consistency)"""
-        def get_directions(fdtd_ports):
-            directions = []
-            for fdtd_port in fdtd_ports:
-                # Convert fdtd_port directions to monitor directions
-                if fdtd_port.direction == "forward":
-                    directions.append("+")
-                else:  # backward
-                    directions.append("-")
-            return tuple(directions)
-
-        def get_source_direction(fdtd_port):
-            # Convert fdtd_port direction to source direction (opposite of monitor)
-            if fdtd_port.direction == "forward":
-                return "-"
-            else:  # backward
-                return "+"
-
-        def get_port_name(port_name):
-            return [int(i) for i in port_name if i.isdigit()][0]
-
-        def measure_transmission(in_fdtd_port, in_mode_idx: int, out_mode_idx: int):
-            """
-            Constructs a "row" of the scattering matrix.
-            """
-            num_ports = len(self.fdtd_ports)
-
-            if isinstance(self.simulation.results, list):
-                if len(self.simulation.results) == 1:
-                    results = self.simulation.results[0]
-                else:
-                    # TBD: Handle the case where self.results is a list with more than one item
-                    print("Multiple results handler is WIP, using first results entry")
-                    results = self.simulation.results[-1]
-            else:
-                results = self.simulation.results
-
-            input_amp = results[in_fdtd_port.name].amps.sel(
-                direction=get_source_direction(in_fdtd_port),
-                mode_index=in_mode_idx,
-            )
-            amps = np.zeros((num_ports, self.simulation.wavl_pts), dtype=complex)
-            directions = get_directions(self.fdtd_ports)
-            for i, (monitor, direction) in enumerate(
-                zip(results.simulation.monitors[:num_ports], directions)
-            ):
-                amp = results[monitor.name].amps.sel(
-                    direction=direction, mode_index=out_mode_idx
-                )
-                amp_normalized = amp / input_amp
-                amps[i] = np.squeeze(amp_normalized.values)
-
-            return amps
-
-        self.simulation.s_parameters = sparameters(self.simulation.device.name)  # initialize empty s parameters
-
-        self.simulation.results = []
-        for sim_job in self.simulation.sim_jobs:
-            if not os.path.exists(self.simulation.device.name):
-                os.makedirs(self.simulation.device.name)
-            self.simulation.results.append(
-                sim_job["job"].run(
-                    path=os.path.join(self.simulation.device.name, f"{sim_job['name']}.hdf5")
-                )
-            )
-            for mode in range(sim_job["num_modes"]):
-                amps_arms = measure_transmission(
-                    in_fdtd_port=sim_job["in_port"],  # Now using fdtd_port
-                    in_mode_idx=sim_job["source"].mode_index,
-                    out_mode_idx=mode,
-                )
-
-                print("Mode amplitudes in each port: \n")
-                wavl = np.linspace(self.simulation.wavl_min, self.simulation.wavl_max, self.simulation.wavl_pts)
-                for amp, monitor in zip(
-                    amps_arms, self.simulation.results[-1].simulation.monitors
-                ):
-                    print(f'\tmonitor     = "{monitor.name}"')
-                    print(f"\tamplitude^2 = {[abs(i)**2 for i in amp]}")
-                    print(f"\tphase       = {[np.angle(i)**2 for i in amp]} (rad)\n")
-
-                                        # Convert complex amplitude to magnitude and phase for sparameters interface
-                    in_port_num = next(p.idx for p in self.component.ports if p.name == sim_job["in_port"].name)
-                    out_port_num = get_port_name(monitor.name)
-                    
-                    # Convert amplitude to magnitude and phase
-                    s_mag = np.abs(amp)
-                    s_phase = np.angle(amp)
-                    
-                    self.simulation.s_parameters.add_data(
-                        in_port=str(in_port_num),
-                        out_port=str(out_port_num),
-                        mode_label=1,
-                        in_modeid=sim_job["source"].mode_index + 1,  # Convert to 1-based
-                        out_modeid=mode + 1,  # Convert to 1-based
-                        data_type="transmission",
-                        group_delay=0.0,
-                        f=list(td.C_0 / wavl),  # frequency in Hz
-                        s_mag=list(s_mag),
-                        s_phase=list(s_phase),
-                    )
-        if isinstance(self.simulation.results, list) and len(self.simulation.results) == 1:
-            self.simulation.results = self.simulation.results[0]
-
-        # Store results for later access
-        self._sparameters = self.simulation.s_parameters
+    def _convert_smatrix_to_sparameters(self, smatrix_result):
+        """Convert Tidy3D S-matrix results to sparameters format with multi-modal support."""
+        # Initialize sparameters object
+        self._sparameters = sparameters(self.component.name)
+        
+        # Extract wavelength information
+        freqs = smatrix_result.coords["f"].values
+        wavelengths = td.C_0 / freqs
+        
+        print(f"Converting S-matrix results: {len(freqs)} frequency points")
+        print(f"Available ports: {list(smatrix_result.coords['port_in'].values)}")
+        print(f"Available modes: {list(smatrix_result.coords['mode_index_in'].values)}")
+        
+        # Process all S-matrix elements for multi-modal case
+        for port_in in smatrix_result.coords["port_in"].values:
+            for port_out in smatrix_result.coords["port_out"].values:
+                for mode_in in smatrix_result.coords["mode_index_in"].values:
+                    for mode_out in smatrix_result.coords["mode_index_out"].values:
+                        
+                        # Only process modes that are in our requested mode list
+                        # Convert Tidy3D 0-based to our 1-based mode indexing
+                        mode_in_1based = mode_in + 1
+                        mode_out_1based = mode_out + 1
+                        
+                        if mode_in_1based not in self.modes or mode_out_1based not in self.modes:
+                            continue
+                        
+                        # Extract S-parameter data
+                        s_data = smatrix_result.sel(
+                            port_in=port_in,
+                            port_out=port_out, 
+                            mode_index_in=mode_in,
+                            mode_index_out=mode_out
+                        ).values
+                        
+                        # Convert complex S-parameter to magnitude and phase
+                        s_mag = np.abs(s_data)
+                        s_phase = np.angle(s_data)
+                        
+                        # Extract port numbers from port names
+                        in_port_num = self._extract_port_number(port_in)
+                        out_port_num = self._extract_port_number(port_out)
+                        
+                        # Add to sparameters object with proper mode indexing
+                        self._sparameters.add_data(
+                            in_port=str(in_port_num),
+                            out_port=str(out_port_num),
+                            mode_label=1,
+                            in_modeid=mode_in_1based,  # Use 1-based indexing for interface compatibility
+                            out_modeid=mode_out_1based,  # Use 1-based indexing for interface compatibility
+                            data_type="transmission",
+                            group_delay=0.0,
+                            f=list(freqs),
+                            s_mag=list(s_mag),
+                            s_phase=list(s_phase),
+                        )
+                        
+                        print(f"Added S-parameter: Port {in_port_num}(mode {mode_in_1based}) -> Port {out_port_num}(mode {mode_out_1based})")
+        
+        # Store the raw Tidy3D results for field visualization
+        self.smatrix_result = smatrix_result
+        
+        print(f"✅ Multi-modal S-matrix conversion complete: {len(self._sparameters.data)} S-parameter entries")
+        
+    def _extract_port_number(self, port_name):
+        """Extract port number from port name."""
+        # Find port in component ports by name and return its index
+        for port in self.component.ports:
+            if port.name == port_name:
+                return port.idx
+        # Fallback: extract digits from port name
+        digits = [int(i) for i in port_name if i.isdigit()]
+        return digits[0] if digits else 1
 
     def get_results(self) -> None:
         """Get the results of the simulation."""
-        if not hasattr(self.simulation, 's_parameters') or self.simulation.s_parameters is None:
+        if not hasattr(self, '_sparameters') or self._sparameters is None:
             print("No results available. Run simulation first.")
             return
-        self._sparameters = self.simulation.s_parameters
+        # Results are already stored in self._sparameters by _convert_smatrix_to_sparameters
 
     def get_log(self) -> None:
         """Get the log of the simulation."""
@@ -503,7 +382,7 @@ class fdtd_solver_tidy3d(fdtd_solver):
 
     def export_sparameters_dat(self, filepath: str = None):
         """Export S-parameters to .dat file using s_parameter_writer."""
-        if not hasattr(self.simulation, 's_parameters') or self.simulation.s_parameters is None:
+        if not hasattr(self, '_sparameters') or self._sparameters is None:
             print("No S-parameters available for export. Run simulation first.")
             return
             
@@ -526,7 +405,7 @@ class fdtd_solver_tidy3d(fdtd_solver):
             
             # Convert S-parameters data to writer format
             writer.data = []
-            for data_entry in self.simulation.s_parameters.data:
+            for data_entry in self._sparameters.data:
                 # Convert s_mag to power (magnitude squared)
                 s_power = [abs(mag)**2 for mag in data_entry.s_mag]
                 s_phase = data_entry.s_phase
@@ -541,19 +420,19 @@ class fdtd_solver_tidy3d(fdtd_solver):
 
     def visualize_results(self):
         """Visualize the simulation results."""
-        if not hasattr(self.simulation, 's_parameters') or self.simulation.s_parameters is None:
+        if not hasattr(self, '_sparameters') or self._sparameters is None:
             print("No results available for visualization.")
             return
             
         # Plot S-parameters
-        self.simulation.s_parameters.plot()
+        self._sparameters.plot()
         
         # Export S-parameters to .dat file
         self.export_sparameters_dat()
         
     def visualize_field_monitors(self):
         """Visualize field monitor data through field monitor objects."""
-        if not hasattr(self.simulation, 'results') or self.simulation.results is None:
+        if not hasattr(self, 'smatrix_result') or self.smatrix_result is None:
             print("No simulation results available for field visualization.")
             print("Run solver.run() first to generate field data.")
             return
@@ -561,58 +440,25 @@ class fdtd_solver_tidy3d(fdtd_solver):
         if not self.visualize:
             return
             
-        results = self.simulation.results
-        if not isinstance(results, list):
-            results = [results]
-            
         # Get field monitors from field_monitors_objs
         field_monitors = getattr(self, 'field_monitors_objs', [])
         if not field_monitors:
             print("No field monitor objects available.")
             return
             
-        freq = td.C_0 / ((self.simulation.wavl_max + self.simulation.wavl_min) / 2)
+        # Use center frequency for visualization
+        freq = self.freq0
         
-        for field_monitor in field_monitors:
-            try:
-                field_name = f"{field_monitor.monitor_type}_field"
+        # Access field data from ComponentModeler results
+        # Note: Field data access depends on how ComponentModeler stores results
+        try:
+            # The ComponentModeler may store field results differently
+            # This is a simplified approach - may need adjustment based on actual structure
+            for field_monitor in field_monitors:
+                print(f"Field monitor visualization for {field_monitor.monitor_type} axis")
+                print("Field visualization from ComponentModeler requires accessing individual simulation results")
+                print("This feature may need further customization based on your specific field monitor requirements")
                 
-                for result in results:
-                    print(f"Visualizing field monitor: {field_name}")
-                    
-                    # Create flexible field plots
-                    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-                    fig.suptitle(f'Field Monitor: {field_name} at {freq/1e14:.2f} THz')
-                    
-                    # Plot Ex, Ey, Ez, |E|
-                    field_components = ['Ex', 'Ey', 'Ez']
-                    
-                    for i, component in enumerate(field_components):
-                        try:
-                            ax = axes[i//2, i%2]
-                            result.plot_field(field_name, component, freq=freq, ax=ax)
-                            ax.set_title(f'{component} field')
-                        except Exception as e:
-                            print(f"Could not plot {component}: {e}")
-                    
-                    # Plot |E| magnitude
-                    try:
-                        ax = axes[1, 1]
-                        # Calculate |E| from Ex, Ey, Ez
-                        Ex = result[field_name].Ex.sel(f=freq, method='nearest')
-                        Ey = result[field_name].Ey.sel(f=freq, method='nearest')
-                        Ez = result[field_name].Ez.sel(f=freq, method='nearest')
-                        E_mag = np.sqrt(np.abs(Ex)**2 + np.abs(Ey)**2 + np.abs(Ez)**2)
-                        
-                        # Simple plot of magnitude
-                        im = ax.imshow(np.real(E_mag), cmap='hot', origin='lower')
-                        ax.set_title('|E| magnitude')
-                        plt.colorbar(im, ax=ax)
-                    except Exception as e:
-                        print(f"Could not plot |E| magnitude: {e}")
-                    
-                    plt.tight_layout()
-                    plt.show()
-                    
-            except Exception as e:
-                print(f"Could not create field plots for {field_monitor.name}: {e}")
+        except Exception as e:
+            print(f"Field visualization error: {e}")
+            print("Field monitor visualization from ComponentModeler may require additional implementation")

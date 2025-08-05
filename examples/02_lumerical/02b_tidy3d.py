@@ -1,6 +1,7 @@
 #%% 
 """
 Example of simulating a component in Tidy3D using the new fdtd_solver_tidy3d class.
+
 @author: Mustafa Hammood
 """
 import os
@@ -50,30 +51,27 @@ if __name__ == "__main__":
     # Plot all the s-parameters
     solver.sparameters.plot()
     #%%
-    # Example fetching specific s-parameters of interest
+    # Example fetching specific s-parameters of interest (multi-modal)
     wavl = solver.sparameters.wavelength
-    s41_te = solver.sparameters.S(in_port=1, out_port=4, in_modeid=1, out_modeid=1)
-    s41_tm = solver.sparameters.S(in_port=1, out_port=4, in_modeid=2, out_modeid=2)
-    
-    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
-    ax.plot(wavl, 10*np.log10(np.abs(s41_te.s_mag)**2), label='S41 TE->TE')
-    ax.plot(wavl, 10*np.log10(np.abs(s41_tm.s_mag)**2), label='S41 TM->TM')
-    ax.set_xlabel('Wavelength [um]')
+    s41_te_te = solver.sparameters.S(in_port=1, out_port=4, in_modeid=1, out_modeid=1)  # TE->TE
+    s41_tm_tm = solver.sparameters.S(in_port=1, out_port=4, in_modeid=2, out_modeid=2)  # TM->TM
+
+    # Multi-modal transmission plot
+    fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+    ax.plot(wavl, 10*np.log10(np.abs(s41_te_te.s_mag)**2), label='S41 TE→TE', linewidth=2)
+    ax.plot(wavl, 10*np.log10(np.abs(s41_tm_tm.s_mag)**2), label='S41 TM→TM', linewidth=2)
+    ax.set_xlabel('Wavelength [μm]')
     ax.set_ylabel('Transmission [dB]')
-    #ax.set_ylim(-1, 0)
+    ax.set_title('Multi-Modal S-Parameters: Port 1 → Port 4')
+    ax.grid(True, alpha=0.3)
     ax.legend()
+    plt.tight_layout()
     plt.show()
     
     # Visualize results (S-parameters plots and export to .dat)
     solver.visualize_results()
-    
+
     # Visualize field monitors through field monitor objects
     solver.visualize_field_monitors()
-
-    print("\nTidy3D solver setup completed successfully!")
-    print("✅ S-parameters exported to .dat file automatically")  
-    print("✅ Field visualization handled through field monitor objects")
-    print("Note: Run solver.run() first to generate actual simulation data")
-    print("This consumes Tidy3D cloud simulation credits.")
 
 # %% 
