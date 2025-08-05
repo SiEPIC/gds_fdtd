@@ -1,62 +1,53 @@
 Architecture Overview
 =====================
 
-This page provides a short description of the main modules in
-``gds_fdtd`` and how they interact to build FDTD simulations.
+Here's how the different parts of ``gds_fdtd`` work together to run FDTD simulations.
 
-Core Modules
+Main Modules
 ------------
 
 ``core``
-    Core data structures and helper functions used throughout the
-    package. It defines geometrical primitives, ports, components,
-    and S-parameter utilities used by all solver backends.
+    Contains the basic data structures and functions that everything else uses.
+    This is where ports, components, and geometry are defined.
 
 ``lyprocessor``
-    Utilities for parsing and processing GDS files with
-    :mod:`klayout`. These helpers convert layouts into the internal
-    data structures defined in ``core``.
+    Takes GDS files and turns them into something the simulation can understand.
+    Uses KLayout to read the layout files and extract the shapes.
 
 ``simprocessor``
-    Higher level routines to assemble complete simulations from a
-    technology description and extracted layout information.
+    Puts everything together. Takes your technology file and GDS layout
+    and creates a simulation setup.
 
 ``sparams``
-    S-parameter handling, analysis, and export functionality
-    supporting multi-modal calculations and various output formats.
+    Handles S-parameter calculations after the simulation runs. Can export
+    results to different file formats.
 
 ``logging_config``
-    Comprehensive logging system providing detailed simulation
-    tracking and debugging capabilities.
+    Keeps track of what happens during simulations. Writes detailed logs
+    to files so you can debug problems.
 
-Solver Architecture
--------------------
+How the Solvers Work
+--------------------
 
 ``solver`` (Base Class)
-    Abstract base class defining the common interface for all FDTD
-    solvers. Provides standardized port handling, field monitoring,
-    logging, and parameter validation.
+    The foundation that both Tidy3D and Lumerical solvers build on.
+    Handles common tasks like port setup and parameter checking.
 
 ``solver_tidy3d``
-    Tidy3D cloud-based FDTD solver implementation using the official
-    ComponentModeler plugin for accurate S-matrix calculation.
-    Supports multi-modal simulations and enhanced field visualization.
+    Runs simulations on Tidy3D's cloud platform. Uses their ComponentModeler
+    to get accurate S-parameters. Works with multiple polarizations.
 
 ``solver_lumerical``
-    Lumerical FDTD solver implementation with GPU acceleration support,
-    layer builder integration, and S-parameter sweep configuration.
+    Interfaces with Lumerical FDTD on your local machine or cluster.
+    Can use GPU acceleration and handles complex layer stacks.
 
-Key Features
-------------
+What Makes It Useful
+--------------------
 
-- **Modular Design**: Object-oriented architecture with pluggable solver backends
-- **Multi-Modal Support**: Full TE/TM polarization and mode conversion analysis
-- **Comprehensive Logging**: Detailed simulation tracking with file output
-- **Field Visualization**: Enhanced field monitor system with solver-specific plotting
-- **Technology Integration**: YAML-based technology files for material and layer definitions
-- **S-Parameter Analysis**: Advanced S-parameter calculation, validation, and export
+The package is built so you can easily switch between different solvers without rewriting your simulation setup. Both Tidy3D and Lumerical solvers use the same interface, so your code stays mostly the same.
 
-The modular architecture allows easy extension to new FDTD solvers while
-maintaining a consistent interface. The examples demonstrate how these modules
-work together to create, run, and analyze electromagnetic simulations of
-photonic devices.
+You can run simulations with both TE and TM polarizations at once, which is handy for analyzing things like polarization beam splitters or mode converters.
+
+Everything gets logged automatically, so when something goes wrong (and it will), you have detailed information to figure out what happened.
+
+The examples show you how to use all these pieces together for real photonic device simulations.

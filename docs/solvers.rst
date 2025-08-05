@@ -1,19 +1,19 @@
 FDTD Solvers
 ============
 
-The ``gds_fdtd`` package provides a modular FDTD solver architecture with support for multiple electromagnetic simulation backends. The solver system is built around an object-oriented design that allows for easy extension and maintenance.
+The ``gds_fdtd`` package lets you run FDTD simulations using different solvers without changing much of your code. Right now it supports Tidy3D and Lumerical, but you can add other solvers if needed.
 
 Base Solver Class
 -----------------
 
 The :class:`~gds_fdtd.solver.fdtd_solver` serves as the abstract base class for all FDTD solver implementations. It provides common functionality and defines the interface that all solvers must implement.
 
-Key Features:
-- Standardized port representation via :class:`~gds_fdtd.solver.fdtd_port` objects
-- Comprehensive logging system
-- Modular field monitor system
-- Automatic simulation domain calculation
-- Parameter validation and error handling
+What it does:
+- Converts your component ports into a standard format
+- Logs everything that happens during setup and simulation
+- Manages field monitors for visualizing results
+- Figures out how big your simulation domain needs to be
+- Checks that your parameters make sense before running
 
 .. code-block:: python
 
@@ -47,12 +47,12 @@ Tidy3D Solver
 
 The :class:`~gds_fdtd.solver_tidy3d.fdtd_solver_tidy3d` provides integration with the Tidy3D cloud-based FDTD platform using the official ComponentModeler plugin.
 
-Features:
-- Official Tidy3D ComponentModeler integration for accurate S-matrix calculation
-- Multi-modal S-parameter support (TE, TM, mode conversion)
-- Cloud-based simulation execution
-- Enhanced field visualization with Tidy3D-specific plotting
-- Automatic source and monitor setup with proper normalization
+What it does:
+- Uses Tidy3D's ComponentModeler to calculate S-parameters correctly
+- Handles multiple polarizations in one simulation
+- Runs everything on their cloud servers
+- Can plot field distributions using Tidy3D's plotting tools
+- Sets up sources and monitors automatically
 
 .. code-block:: python
 
@@ -89,12 +89,12 @@ Lumerical Solver
 
 The :class:`~gds_fdtd.solver_lumerical.fdtd_solver_lumerical` provides integration with Lumerical FDTD for commercial-grade electromagnetic simulations.
 
-Features:
-- Full Lumerical FDTD integration
-- GPU acceleration support
-- Layer builder integration with technology files
-- S-parameter sweep configuration
-- Field monitor support
+What it can do:
+- Runs Lumerical FDTD simulations directly
+- Uses GPU acceleration if you have it set up
+- Builds 3D structures from your technology file
+- Sets up S-parameter sweeps automatically
+- Saves field data for visualization
 
 .. code-block:: python
 
@@ -148,7 +148,7 @@ The :class:`~gds_fdtd.solver.fdtd_field_monitor` provides the base functionality
 Tidy3D Field Monitors
 ^^^^^^^^^^^^^^^^^^^^^
 
-Tidy3D solvers use specialized field monitors with enhanced visualization:
+Tidy3D solvers use field monitors that work with Tidy3D's plotting functions:
 
 .. code-block:: python
 
@@ -163,7 +163,7 @@ Tidy3D solvers use specialized field monitors with enhanced visualization:
 Logging System
 --------------
 
-All solvers feature comprehensive logging to files in the working directory:
+All solvers write detailed logs to files in the working directory:
 
 .. code-block:: python
 

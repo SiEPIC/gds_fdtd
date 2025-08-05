@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.abspath('../'))
 # Project details
 project = 'gds_fdtd'
 author = 'Mustafa Hammood'
-release = '0.3.10'
+release = '0.4.0'
 
 # Extensions
 extensions = [

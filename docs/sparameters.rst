@@ -1,7 +1,7 @@
 Working with S-Parameters
 =========================
 
-S-parameters (scattering parameters) are fundamental for characterizing the performance of photonic components. The ``gds_fdtd`` package provides comprehensive tools for calculating, analyzing, and exporting S-parameters from FDTD simulations.
+S-parameters (scattering parameters) are used to characterize how photonic components work. The ``gds_fdtd`` package has tools for calculating, analyzing, and exporting S-parameters from FDTD simulations.
 
 S-Parameter Fundamentals
 ------------------------
@@ -390,7 +390,7 @@ For reciprocal devices, verify S₁₂ = S₂₁:
     # Check reciprocity
     check_reciprocity(solver)
 
-Advanced S-Parameter Analysis
+More S-Parameter Analysis
 -----------------------------
 
 Frequency Domain Analysis
@@ -489,4 +489,4 @@ Best Practices
 6. **Verify convergence** with mesh and time step refinement
 7. **Use multi-modal analysis** for polarization-sensitive devices
 
-This comprehensive S-parameter functionality enables thorough characterization and analysis of photonic devices for both research and commercial applications. 
+These S-parameter tools let you analyze photonic devices for research or commercial use. 

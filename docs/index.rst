@@ -4,18 +4,17 @@
 Welcome to gds_fdtd's documentation!
 =====================================
 
-``gds_fdtd`` is a minimal Python module for setting up FDTD simulations on planar nanophotonic devices using solvers like Tidy3D and Lumerical.
+``gds_fdtd`` is a Python package that helps you set up FDTD simulations for photonic devices. It works with both Tidy3D and Lumerical solvers.
 
-**Key Features:**
-- Modular FDTD solver architecture (Tidy3D, Lumerical)  
-- Multi-modal electromagnetic simulations (TE/TM modes)
-- Comprehensive S-parameter analysis and export
-- Enhanced field visualization and logging
-- YAML-based technology configuration
-- GDS layout integration with automatic port detection
+What you can do with it:
+- Run simulations using either Tidy3D or Lumerical
+- Handle TE and TM polarizations in the same simulation
+- Extract and analyze S-parameters from your results
+- Monitor electromagnetic fields during simulation
+- Configure materials and layers using YAML files
+- Load GDS layouts and automatically detect ports
 
-**Quick Start:**
-For installation instructions, examples, and detailed guides, visit the sections below.
+The sections below will show you how to install and use the package.
 
 .. toctree::
    :maxdepth: 2

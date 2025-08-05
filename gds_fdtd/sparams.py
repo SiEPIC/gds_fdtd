@@ -390,7 +390,7 @@ class sparameters:
             print(f"Expected IDNs: {len(expected_idns)}")
             print(f"Actual non-zero IDNs: {len(actual_non_zero_idns)}")
             
-            print(f"\n✅ Expected and found non-zero: {len(expected_and_found)}")
+            print(f"\nExpected and found non-zero: {len(expected_and_found)}")
             if expected_and_found and len(expected_and_found) <= 16:
                 print(f"   {sorted(expected_and_found)}")
             elif expected_and_found:
@@ -412,7 +412,7 @@ class sparameters:
                 print(f"\n⚠️  WARNING: Found excitations at unexpected ports/modes!")
                 print(f"   This suggests the simulation included more inputs than expected.")
             else:
-                print(f"\n✅ All non-zero entries match expected excitations.")
+                print(f"\nAll non-zero entries match expected excitations.")
         
         return {
             'expected_idns': expected_idns,

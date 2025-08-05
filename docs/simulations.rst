@@ -296,7 +296,7 @@ Accessing the Working Directory
             print("Simulation log preview:")
             print(log_content[:500] + "...")
 
-Advanced Configuration
+More Options
 ----------------------
 
 Custom Working Directory

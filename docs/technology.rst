@@ -285,8 +285,8 @@ Equivalent technology file for Lumerical:
               model: Si3N4 (Silicon Nitride) - Luke
           sidewall_angle: 83
 
-Advanced Configuration
-----------------------
+More Configuration Options
+--------------------------
 
 Multi-Layer Stacks
 ^^^^^^^^^^^^^^^^^^^

@@ -140,7 +140,7 @@ After simulation, access all mode combinations:
 Multi-Modal Visualization
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Create comprehensive multi-modal plots:
+Create multi-modal plots:
 
 .. code-block:: python
 
@@ -206,7 +206,7 @@ Create comprehensive multi-modal plots:
         plt.tight_layout()
         plt.show()
     
-    # Create comprehensive multi-modal plot
+    # Create multi-modal plot
     plot_multimodal_transmission(solver, in_port=1, out_port=4)
 
 Multi-Modal Performance Metrics
@@ -493,4 +493,4 @@ Best Practices for Multi-Modal Simulations
    - Cross-check with experimental data
    - Verify mesh convergence for mode calculations
 
-Multi-modal simulations provide comprehensive insight into polarization effects and mode coupling in photonic devices, enabling design optimization for real-world applications where polarization control is critical. 
+Multi-modal simulations help you understand polarization effects and mode coupling in photonic devices. This is useful for designing devices where polarization control matters. 

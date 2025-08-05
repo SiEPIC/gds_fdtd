@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install .[dev]
+
+    - name: Run tests
+      run: |
+        pytest --cov=gds_fdtd tests/
+
+    - name: Build documentation
+      run: |
+        cd docs
+        make html
+
+    - name: Build package
+      run: |
+        python -m build
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          ## Changes in this Release
+          
+          Please see the [CHANGELOG.md](https://github.com/SiEPIC/gds_fdtd/blob/main/CHANGELOG.md) for detailed changes.
+          
+          ## Installation
+          
+          ```bash
+          pip install gds_fdtd==${{ github.ref_name }}
+          ```
+          
+          ## Documentation
+          
+          Documentation is available at: https://siepic.github.io/gds_fdtd/
+        draft: false
+        prerelease: false
+
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        verbose: true 
