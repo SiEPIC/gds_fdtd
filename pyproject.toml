@@ -39,7 +39,7 @@ dependencies = [
 # ──────────────── optional feature / tool sets ────────────────
 [project.optional-dependencies]
 
-tidy3d      = ["tidy3d>=2.8.3,<2.9"]           # enables gds_fdtd.t3d_tools
+tidy3d      = ["tidy3d>=2.8.3,<2.9"]           # enables gds_fdtd.solver_tidy3d
 gdsfactory  = ["gdsfactory>=9.5.7,<10"]
 prefab      = ["prefab>=1.2.0"]
 siepic      = ["SiEPIC>=0.5.25"]

@@ -25,7 +25,7 @@ You can install `gds_fdtd` using the following options:
 ### Quick install (PyPI)
 
 ```bash
-pip install gds_fdtd
+pip install gds-fdtd
 ```
 
 ### Option: Basic Installation from source

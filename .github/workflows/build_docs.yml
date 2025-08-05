@@ -4,39 +4,36 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+
 permissions:
-  contents: write 
+  contents: write
 
 jobs:
-  build-docs:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    
     steps:
-      # Step 1: Check out the repository
-      - name: Check out the repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      # Step 2: Set up Python
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
 
-      # Step 3: Install dependencies
-      - name: Install dependencies
-        run: |
-          pip install .[dev]
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install .[dev]
 
-      # Step 4: Build the docs
-      - name: Build the docs
-        run: |
-          sphinx-build -b html docs docs/_build/html
+    - name: Build documentation
+      run: |
+        cd docs
+        make html
 
-      # Step 5: Deploy to GitHub Pages
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/_build/html
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: docs/_build/html
+        force_orphan: true
