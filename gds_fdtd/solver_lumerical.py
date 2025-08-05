@@ -25,6 +25,9 @@ class fdtd_solver_lumerical(fdtd_solver):
 
     def setup(self) -> None:
         """Setup the Lumerical simulation."""
+        # Validate simulation parameters
+        self._validate_simulation_parameters()
+        
         # Export GDS with port extensions to working directory
         self._export_gds()
 
@@ -53,6 +56,9 @@ class fdtd_solver_lumerical(fdtd_solver):
 
         # Get the resources used by the simulation
         self.get_resources()
+        
+        # Print simulation summary
+        self._print_simulation_summary()
 
     def get_resources(self) -> None:
         """Get the resources used by the simulation."""
@@ -438,19 +444,13 @@ class fdtd_solver_lumerical(fdtd_solver):
 
     def _setup_time(self) -> None:
         """Setup the appropriate simulation time span."""
-        c = 299792458  # speed of light in m/s
-        # get the maximum time span from the component using the maximum span in the x, y, and z directions
-        max_span = (
-            max(self.span[0], self.span[1], self.span[2]) * 1e-6
-        )  # convert to meters
-        # assume the maximum group index is 4.5
-        # TODO: get the maximum group index from the component based on the material properties and center wavelength of the simulation
-        max_group_index = 4.5
-        # velocity of pulse in the medium
-        v = c / max_group_index
-        # calculate the time span based on the maximum group index and the speed of light, converted to fs
-        time_span = self.run_time_factor * max_span / (v)
-        # set the time span
+        # Get the maximum dimension in meters
+        max_span = max(self.span[0], self.span[1], self.span[2]) * 1e-6
+        
+        # Use the common time calculation method from base class
+        time_span = self._calculate_simulation_time(max_span)
+        
+        # Set the time span
         self.fdtd.setnamed("FDTD", "simulation time", time_span)
 
     def _setup_mesh(self) -> None:
@@ -513,3 +513,20 @@ class fdtd_solver_lumerical(fdtd_solver):
             self.fdtd.setnamed("FDTD", "y min bc", "Anti-Symmetric")
         if self.symmetry[2] == -1:
             self.fdtd.setnamed("FDTD", "z min bc", "Anti-Symmetric")
+
+    def get_log(self) -> None:
+        """Get the log of the simulation."""
+        try:
+            if hasattr(self, 'fdtd') and self.fdtd:
+                # Get the log from Lumerical FDTD
+                log_text = self.fdtd.getresult("FDTD", "log")
+                if log_text:
+                    print("Lumerical FDTD simulation log:")
+                    print(log_text)
+                else:
+                    print("No log data available from Lumerical FDTD.")
+            else:
+                print("FDTD solver not initialized.")
+        except Exception as e:
+            print(f"Error retrieving log: {e}")
+            print("Log retrieval not available for this Lumerical version.")

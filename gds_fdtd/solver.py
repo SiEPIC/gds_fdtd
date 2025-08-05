@@ -298,6 +298,74 @@ class fdtd_solver:
                 )
         return active_port_names
 
+    def _validate_simulation_parameters(self) -> None:
+        """Validate simulation parameters for consistency."""
+        # Wavelength validation
+        if self.wavelength_start >= self.wavelength_end:
+            raise ValueError("wavelength_start must be less than wavelength_end")
+        if self.wavelength_points < 2:
+            raise ValueError("wavelength_points must be at least 2")
+            
+        # Geometry validation
+        if self.z_min >= self.z_max:
+            raise ValueError("z_min must be less than z_max")
+        if any(s <= 0 for s in [self.width_ports, self.depth_ports, self.buffer]):
+            raise ValueError("width_ports, depth_ports, and buffer must be positive")
+            
+        # Mode validation
+        if not self.modes or any(m <= 0 for m in self.modes):
+            raise ValueError("modes must be a non-empty list of positive integers")
+            
+        # Mesh validation
+        if self.mesh <= 0:
+            raise ValueError("mesh must be positive")
+            
+        print("✓ Simulation parameters validated successfully")
+
+    def _calculate_simulation_time(self, max_dimension: float, max_group_index: float = 4.5) -> float:
+        """Calculate appropriate simulation time based on geometry and materials.
+        
+        Args:
+            max_dimension: Maximum dimension of the simulation domain in meters
+            max_group_index: Maximum group index of materials in the simulation
+            
+        Returns:
+            Simulation time in seconds
+        """
+        c = 299792458  # speed of light in m/s
+        v = c / max_group_index  # velocity of pulse in the medium
+        time_span = self.run_time_factor * max_dimension / v
+        return time_span
+
+    def _print_simulation_summary(self) -> None:
+        """Print a summary of the simulation configuration."""
+        print("\n" + "="*60)
+        print(f"FDTD Simulation Summary")
+        print("="*60)
+        print(f"Component: {self.component.name}")
+        print(f"Technology: {getattr(self.tech, 'name', 'Custom')}")
+        print(f"Solver type: {self.__class__.__name__}")
+        print(f"Working directory: {self.working_dir}")
+        print()
+        print("Simulation Parameters:")
+        print(f"  Wavelength range: {self.wavelength_start} - {self.wavelength_end} μm")
+        print(f"  Wavelength points: {self.wavelength_points}")
+        print(f"  Simulation domain: {self.span[0]:.1f} × {self.span[1]:.1f} × {self.span[2]:.1f} μm")
+        print(f"  Domain center: ({self.center[0]:.1f}, {self.center[1]:.1f}, {self.center[2]:.1f}) μm")
+        print(f"  Mesh resolution: {self.mesh} cells/wavelength")
+        print(f"  Run time factor: {self.run_time_factor}")
+        print()
+        print("Port Configuration:")
+        print(f"  Total ports: {len(self.fdtd_ports)}")
+        print(f"  Active ports: {len(self._get_active_ports())}")
+        print(f"  Port dimensions: {self.width_ports} × {self.depth_ports} μm")
+        print(f"  Modes per port: {self.modes}")
+        print()
+        print("Boundary Conditions:")
+        print(f"  Boundaries: {self.boundary}")
+        print(f"  Symmetry: {self.symmetry}")
+        print("="*60 + "\n")
+
     @property
     def sparameters(self) -> sparameters:
         """Get the S-parameters results."""
