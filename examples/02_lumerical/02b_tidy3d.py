@@ -68,10 +68,25 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.show()
     
-    # Visualize results (S-parameters plots and export to .dat)
+        # Visualize results (S-parameters plots and export to .dat)
     solver.visualize_results()
-
-    # Visualize field monitors through field monitor objects
+    
+    # Visualize field monitors through enhanced field monitor objects
+    print("\nField Monitor Visualization:")
+    print("-" * 40)
     solver.visualize_field_monitors()
+    
+    # Show field monitor information
+    for monitor in solver.field_monitors_objs:
+        print(f"Field Monitor Info: {monitor.get_field_info()}")
+        
+    print("\nLogging Information:")
+    print("-" * 40)
+    log_files = [f for f in os.listdir(solver.working_dir) if f.endswith('.log')]
+    if log_files:
+        print(f"Detailed simulation log saved to: {log_files[0]}")
+        print("Log contains comprehensive simulation details and debugging information")
+    else:
+        print("No log files found")
 
 # %% 

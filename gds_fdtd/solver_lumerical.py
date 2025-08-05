@@ -8,6 +8,7 @@ import os
 from lumapi import FDTD
 from gds_fdtd.solver import fdtd_solver, fdtd_field_monitor
 from gds_fdtd.sparams import process_dat
+from gds_fdtd.logging_config import log_simulation_start, log_simulation_complete
 
 class fdtd_solver_lumerical(fdtd_solver):
     """
@@ -25,17 +26,22 @@ class fdtd_solver_lumerical(fdtd_solver):
 
     def setup(self) -> None:
         """Setup the Lumerical simulation."""
+        self.logger.info("Starting Lumerical solver setup")
+        
         # Validate simulation parameters
         self._validate_simulation_parameters()
         
         # Export GDS with port extensions to working directory
         self._export_gds()
+        self.logger.info(f"GDS exported to: {self._gds_filepath}")
 
         # Initialize FDTD
         self.fdtd = FDTD()
+        self.logger.info("Lumerical FDTD session initialized")
 
         # set the working directory
         self.fdtd.eval(f'cd("{self.working_dir}");')
+        self.logger.debug(f"Lumerical working directory set to: {self.working_dir}")
 
         # Setup the layer builder with technology information
         self._setup_layer_builder()
@@ -52,6 +58,7 @@ class fdtd_solver_lumerical(fdtd_solver):
         # Save the Lumerical FDTD project to working directory
         project_filepath = os.path.join(self.working_dir, f"{self.component.name}.fsp")
         self.fdtd.save(project_filepath)
+        self.logger.info(f"FDTD project saved: {project_filepath}")
         print(f"FDTD project saved: {project_filepath}")
 
         # Get the resources used by the simulation
@@ -75,6 +82,8 @@ class fdtd_solver_lumerical(fdtd_solver):
 
     def run(self) -> None:
         """Run the simulation."""
+        log_simulation_start(self.logger, "Lumerical FDTD", self.component.name)
+        
         # note: this only works for Lumerical 2024.
         # For Lumerical 2025, Lumerical has changed the syntax for setting GPU.
         # I Don't have a 2025 license, so I can't test it.
@@ -82,11 +91,21 @@ class fdtd_solver_lumerical(fdtd_solver):
         # lumerical: please make your api backwards compatible :)))
         if self.gpu:
             self.fdtd.setresource("FDTD", "GPU", 1)
+            self.logger.info("GPU acceleration enabled")
         else:
             self.fdtd.setresource("FDTD", "CPU", 1)
-        self.fdtd.runsweep("sparams")
+            self.logger.info("CPU processing selected")
+            
+        self.logger.info("Starting S-parameter sweep")
+        try:
+            self.fdtd.runsweep("sparams")
+            self.logger.info("S-parameter sweep completed successfully")
+        except Exception as e:
+            self.logger.error(f"S-parameter sweep failed: {e}")
+            raise
 
         self.get_results()
+        log_simulation_complete(self.logger, "Lumerical FDTD")
 
     def get_results(self) -> None:
         """Get the results of the simulation."""
@@ -356,7 +375,8 @@ class fdtd_solver_lumerical(fdtd_solver):
 
     def _setup_field_monitors(self) -> None:
         """Setup the field monitors."""
-        field_monitors = []
+        self.logger.info(f"Setting up field monitors: {self.field_monitors}")
+        
         for m in self.field_monitors:
             if m == "z":
                 self.fdtd.addprofile(
@@ -368,9 +388,9 @@ class fdtd_solver_lumerical(fdtd_solver):
                 self.fdtd.set("z", self.center[2] * 1e-6)
                 self.fdtd.set("x span", self.span[0] * 1e-6)
                 self.fdtd.set("y span", self.span[1] * 1e-6)
-                field_monitors.append(
-                    fdtd_field_monitor(name="profile_z", monitor_type="z")
-                )
+                self.create_field_monitor_object(name="profile_z", monitor_type="z")
+                self.logger.debug("Created Z-normal field monitor")
+                
             if m == "x":
                 self.fdtd.addprofile(
                     name="profile_x",
@@ -381,9 +401,9 @@ class fdtd_solver_lumerical(fdtd_solver):
                 self.fdtd.set("z", self.center[2] * 1e-6)
                 self.fdtd.set("y span", self.span[1] * 1e-6)
                 self.fdtd.set("z span", self.span[2] * 1e-6)
-                field_monitors.append(
-                    fdtd_field_monitor(name="profile_x", monitor_type="x")
-                )
+                self.create_field_monitor_object(name="profile_x", monitor_type="x")
+                self.logger.debug("Created X-normal field monitor")
+                
             if m == "y":
                 self.fdtd.addprofile(
                     name="profile_y",
@@ -394,11 +414,10 @@ class fdtd_solver_lumerical(fdtd_solver):
                 self.fdtd.set("z", self.center[2] * 1e-6)
                 self.fdtd.set("x span", self.span[0] * 1e-6)
                 self.fdtd.set("z span", self.span[2] * 1e-6)
-                field_monitors.append(
-                    fdtd_field_monitor(name="profile_y", monitor_type="y")
-                )
+                self.create_field_monitor_object(name="profile_y", monitor_type="y")
+                self.logger.debug("Created Y-normal field monitor")
 
-        self.field_monitors_objs = field_monitors
+        self.logger.info(f"Created {len(self.field_monitors_objs)} field monitor objects")
 
     def _setup_ports(self) -> None:
         """

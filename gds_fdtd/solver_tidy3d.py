@@ -9,8 +9,97 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tidy3d as td
 from tidy3d.plugins.smatrix import ComponentModeler, Port
-from gds_fdtd.solver import fdtd_solver
+from gds_fdtd.solver import fdtd_solver, fdtd_field_monitor
 from gds_fdtd.sparams import sparameters
+from gds_fdtd.logging_config import get_logger, log_simulation_start, log_simulation_complete
+
+class tidy3d_field_monitor(fdtd_field_monitor):
+    """
+    Tidy3D-specific field monitor with visualization capabilities.
+    """
+    
+    def __init__(self, name: str, monitor_type: str, logger=None):
+        super().__init__(name, monitor_type, logger)
+        self.tidy3d_data = None
+        
+    def set_tidy3d_data(self, sim_data, freq_data=None):
+        """
+        Set Tidy3D-specific field data.
+        
+        Args:
+            sim_data: Tidy3D simulation data containing field monitors
+            freq_data: Frequency data for visualization
+        """
+        self.tidy3d_data = sim_data
+        self.freq_data = freq_data
+        
+        # Extract field data for this monitor
+        field_name = f"{self.monitor_type}_field"
+        if hasattr(sim_data, field_name):
+            self.field_data = getattr(sim_data, field_name)
+            self.logger.debug(f"Tidy3D field data set for monitor {self.name}")
+        else:
+            self.logger.warning(f"Field monitor {field_name} not found in simulation data")
+            
+    def _create_field_plots(self, freq, field_component, figsize):
+        """Create Tidy3D-specific field visualization plots."""
+        if not self.has_data() or self.tidy3d_data is None:
+            self.logger.error("No Tidy3D field data available for visualization")
+            return
+            
+        field_name = f"{self.monitor_type}_field"
+        
+        try:
+            # Use center frequency if not specified
+            if freq is None:
+                if hasattr(self.freq_data, '__len__') and len(self.freq_data) > 0:
+                    freq = self.freq_data[len(self.freq_data)//2]  # Center frequency
+                else:
+                    self.logger.warning("No frequency data available, using first available")
+                    
+            fig, axes = plt.subplots(2, 2, figsize=figsize)
+            fig.suptitle(f'Field Monitor: {self.name} ({self.monitor_type}-axis) at {freq/1e12:.2f} THz')
+            
+            # Plot field components
+            field_components = ['Ex', 'Ey', 'Ez'] if field_component == 'E' else [field_component]
+            
+            for i, component in enumerate(field_components[:3]):
+                if i < 3:
+                    ax = axes[i//2, i%2]
+                    try:
+                        self.tidy3d_data.plot_field(field_name, component, freq=freq, ax=ax)
+                        ax.set_title(f'{component} field')
+                    except Exception as e:
+                        self.logger.warning(f"Could not plot {component}: {e}")
+                        ax.text(0.5, 0.5, f'{component} field\n(Error: {str(e)})', 
+                               ha='center', va='center', transform=ax.transAxes)
+                        ax.set_title(f'{component} field')
+                        
+            # Plot field magnitude
+            ax = axes[1, 1]
+            try:
+                # Calculate field magnitude from components
+                Ex = self.tidy3d_data[field_name].Ex.sel(f=freq, method='nearest')
+                Ey = self.tidy3d_data[field_name].Ey.sel(f=freq, method='nearest')
+                Ez = self.tidy3d_data[field_name].Ez.sel(f=freq, method='nearest')
+                E_mag = np.sqrt(np.abs(Ex)**2 + np.abs(Ey)**2 + np.abs(Ez)**2)
+                
+                # Simple plot of magnitude
+                im = ax.imshow(np.real(E_mag), cmap='hot', origin='lower')
+                ax.set_title('|E| magnitude')
+                plt.colorbar(im, ax=ax)
+            except Exception as e:
+                self.logger.warning(f"Could not plot field magnitude: {e}")
+                ax.text(0.5, 0.5, f'|E| magnitude\n(Error: {str(e)})', 
+                       ha='center', va='center', transform=ax.transAxes)
+                ax.set_title('|E| magnitude')
+            
+            plt.tight_layout()
+            plt.show()
+            
+        except Exception as e:
+            self.logger.error(f"Error creating Tidy3D field plots: {e}")
+            super()._create_field_plots(freq, field_component, figsize)  # Fallback
 
 class fdtd_solver_tidy3d(fdtd_solver):
     """
@@ -26,20 +115,25 @@ class fdtd_solver_tidy3d(fdtd_solver):
 
     def setup(self) -> None:
         """Setup the Tidy3D simulation using ComponentModeler for S-matrix calculation."""
+        self.logger.info("Starting Tidy3D solver setup")
+        
         # Validate simulation parameters
         self._validate_simulation_parameters()
         
         # Export GDS with port extensions to working directory
         self._export_gds()
+        self.logger.info(f"GDS exported to: {self._gds_filepath}")
 
         # Calculate frequencies for S-matrix calculation
         self.freqs = td.C_0 / np.linspace(self.wavelength_start, self.wavelength_end, self.wavelength_points)
         self.lda0 = (self.wavelength_end + self.wavelength_start) / 2
         self.freq0 = td.C_0 / self.lda0
+        self.logger.debug(f"Frequency calculation: {len(self.freqs)} points from {self.freqs[0]:.2e} to {self.freqs[-1]:.2e} Hz")
 
         # Create base simulation and ports for S-matrix calculation
         self.base_simulation = self._create_base_simulation()
         self.smatrix_ports = self._create_smatrix_ports()
+        self.logger.info(f"Created base simulation with {len(self.smatrix_ports)} ports")
 
         # Create ComponentModeler for S-matrix calculation
         self.component_modeler = ComponentModeler(
@@ -49,10 +143,14 @@ class fdtd_solver_tidy3d(fdtd_solver):
             verbose=True,
             path_dir=self.working_dir
         )
+        self.logger.info("ComponentModeler created successfully")
 
         # Print setup summary
         self._print_simulation_summary()
         total_mode_combinations = len(self.smatrix_ports) * len(self.modes)
+        setup_info = f"Tidy3D solver setup complete with ComponentModeler: {len(self.smatrix_ports)} ports × {len(self.modes)} modes = {total_mode_combinations} mode combinations"
+        self.logger.info(setup_info)
+        
         print(f"Tidy3D solver setup complete with ComponentModeler:")
         print(f"  • {len(self.smatrix_ports)} ports × {len(self.modes)} modes = {total_mode_combinations} mode combinations")
         print(f"  • Multi-modal S-matrix calculation ready")
@@ -71,16 +169,18 @@ class fdtd_solver_tidy3d(fdtd_solver):
             for field_monitor_axis in self.field_monitors:
                 field_monitor = self._create_field_monitor(device, freqs=self.freqs, axis=field_monitor_axis)
                 monitors.append(field_monitor)
+                self.logger.debug(f"Created Tidy3D field monitor: {field_monitor.name}")
                 
-                # Create field monitor object for visualization
-                from gds_fdtd.solver import fdtd_field_monitor
-                field_monitor_obj = fdtd_field_monitor(
+                # Create Tidy3D-specific field monitor object for visualization
+                field_monitor_obj = tidy3d_field_monitor(
                     name=field_monitor.name,
-                    monitor_type=field_monitor_axis
+                    monitor_type=field_monitor_axis,
+                    logger=self.logger
                 )
                 if not hasattr(self, 'field_monitors_objs'):
                     self.field_monitors_objs = []
                 self.field_monitors_objs.append(field_monitor_obj)
+                self.logger.debug(f"Created field monitor object: {field_monitor.name} ({field_monitor_axis})")
 
         # simulation domain size (in microns)
         sim_size = [self.span[0], self.span[1], self.span[2]]
@@ -282,17 +382,62 @@ class fdtd_solver_tidy3d(fdtd_solver):
     def run(self) -> None:
         """Run the simulation using ComponentModeler."""
         if not hasattr(self, 'component_modeler'):
-            raise RuntimeError("No ComponentModeler created. Call setup() first.")
+            error_msg = "No ComponentModeler created. Call setup() first."
+            self.logger.error(error_msg)
+            raise RuntimeError(error_msg)
             
+        log_simulation_start(self.logger, "Tidy3D ComponentModeler", self.component.name)
         print("Running S-matrix calculation with ComponentModeler...")
         
         # Run the S-matrix calculation
-        smatrix_result = self.component_modeler.run()
+        try:
+            smatrix_result = self.component_modeler.run()
+            self.logger.info("ComponentModeler simulation completed successfully")
+        except Exception as e:
+            self.logger.error(f"ComponentModeler simulation failed: {e}")
+            raise
         
         # Convert results to sparameters format for interface compatibility
         self._convert_smatrix_to_sparameters(smatrix_result)
         
+        # Set field data in field monitor objects if available
+        self._set_field_data_in_monitors()
+        
+        log_simulation_complete(self.logger, "Tidy3D ComponentModeler")
         print("S-matrix calculation completed successfully!")
+
+    def _set_field_data_in_monitors(self):
+        """Set field data in field monitor objects from ComponentModeler results."""
+        if not hasattr(self, 'field_monitors_objs') or not self.field_monitors_objs:
+            self.logger.debug("No field monitor objects to populate with data")
+            return
+            
+        if not hasattr(self, 'smatrix_result') or self.smatrix_result is None:
+            self.logger.warning("No simulation results available for field monitors")
+            return
+            
+        self.logger.info("Setting field data in monitor objects")
+        
+        # Access field data from ComponentModeler results
+        # ComponentModeler may store results differently than direct simulation
+        try:
+            # Try to access individual simulation results from the batch
+            # This depends on how ComponentModeler structures its results
+            if hasattr(self.component_modeler, 'batch_data') and self.component_modeler.batch_data:
+                # Use the first simulation result that has field data
+                for job_result in self.component_modeler.batch_data.values():
+                    if hasattr(job_result, 'simulation'):
+                        # Found a simulation result with field data
+                        for monitor_obj in self.field_monitors_objs:
+                            monitor_obj.set_tidy3d_data(job_result, self.freqs)
+                            self.logger.debug(f"Set field data for monitor: {monitor_obj.name}")
+                        break
+            else:
+                self.logger.warning("ComponentModeler batch data not accessible for field visualization")
+                
+        except Exception as e:
+            self.logger.error(f"Error setting field data in monitors: {e}")
+            self.logger.info("Field monitors will not have visualization data available")
 
     def _convert_smatrix_to_sparameters(self, smatrix_result):
         """Convert Tidy3D S-matrix results to sparameters format with multi-modal support."""
@@ -356,7 +501,7 @@ class fdtd_solver_tidy3d(fdtd_solver):
         # Store the raw Tidy3D results for field visualization
         self.smatrix_result = smatrix_result
         
-        print(f"✅ Multi-modal S-matrix conversion complete: {len(self._sparameters.data)} S-parameter entries")
+        print(f"Multi-modal S-matrix conversion complete: {len(self._sparameters.data)} S-parameter entries")
         
     def _extract_port_number(self, port_name):
         """Extract port number from port name."""
@@ -430,35 +575,13 @@ class fdtd_solver_tidy3d(fdtd_solver):
         # Export S-parameters to .dat file
         self.export_sparameters_dat()
         
-    def visualize_field_monitors(self):
+    def visualize_field_monitors(self, freq=None):
         """Visualize field monitor data through field monitor objects."""
-        if not hasattr(self, 'smatrix_result') or self.smatrix_result is None:
-            print("No simulation results available for field visualization.")
-            print("Run solver.run() first to generate field data.")
-            return
-            
-        if not self.visualize:
-            return
-            
-        # Get field monitors from field_monitors_objs
-        field_monitors = getattr(self, 'field_monitors_objs', [])
-        if not field_monitors:
-            print("No field monitor objects available.")
-            return
-            
-        # Use center frequency for visualization
-        freq = self.freq0
+        self.logger.info("Starting field monitor visualization")
         
-        # Access field data from ComponentModeler results
-        # Note: Field data access depends on how ComponentModeler stores results
-        try:
-            # The ComponentModeler may store field results differently
-            # This is a simplified approach - may need adjustment based on actual structure
-            for field_monitor in field_monitors:
-                print(f"Field monitor visualization for {field_monitor.monitor_type} axis")
-                print("Field visualization from ComponentModeler requires accessing individual simulation results")
-                print("This feature may need further customization based on your specific field monitor requirements")
-                
-        except Exception as e:
-            print(f"Field visualization error: {e}")
-            print("Field monitor visualization from ComponentModeler may require additional implementation")
+        if not self.visualize:
+            self.logger.debug("Visualization disabled, skipping field monitor visualization")
+            return
+            
+        # Use the base class method for modular field visualization
+        self.visualize_all_field_monitors(freq=freq or self.freq0)
