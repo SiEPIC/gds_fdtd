@@ -413,14 +413,12 @@ def plot_mesh_convergence_results(results, base_working_dir):
     
     # Print convergence summary
     print(f"\n--- Lumerical Mesh Convergence Summary at λ = {actual_wl:.3f} μm ---")
-    mesh_to_level = {6: 1, 10: 2, 14: 3, 18: 4, 22: 5, 26: 6, 30: 7, 34: 8}
-    for i, size in enumerate(valid_mesh_sizes):
-        level = mesh_to_level.get(size, "?")
-        print(f"{size:2d} cells/λ (L{level}): S21 = {s21_at_target[i]:.6f}, S11 = {s11_at_target[i]:.6f}")
+    for i, (level, size) in enumerate(zip(valid_mesh_levels, valid_mesh_sizes)):
+        print(f"Level {level} ({size:2d} cells/λ): S21 = {s21_at_target[i]:.6f}, S11 = {s11_at_target[i]:.6f}")
         if i > 0:
             s21_change = abs(s21_at_target[i] - s21_at_target[i-1]) / s21_at_target[i] * 100
             s11_change = abs(s11_at_target[i] - s11_at_target[i-1]) / s11_at_target[i] * 100
-            print(f"                 Change: S21 = {s21_change:.2f}%, S11 = {s11_change:.2f}%")
+            print(f"                     Change: S21 = {s21_change:.2f}%, S11 = {s11_change:.2f}%")
 
 def plot_port_width_convergence_results(results, base_working_dir):
     """Plot port width convergence results for Lumerical."""
