@@ -7,6 +7,7 @@ Tidy3D FDTD solver interface module.
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import re
 import tidy3d as td
 from tidy3d.plugins.smatrix import ComponentModeler, Port
 from gds_fdtd.solver import fdtd_solver, fdtd_field_monitor
@@ -520,10 +521,119 @@ class fdtd_solver_tidy3d(fdtd_solver):
             return
         # Results are already stored in self._sparameters by _convert_smatrix_to_sparameters
 
-    def get_log(self) -> None:
+    def get_log(self) -> str:
         """Get the log of the simulation."""
-        print("Tidy3D simulation logs are available through the web interface.")
-        print("Individual job logs can be accessed via the Tidy3D web platform.")
+        try:
+            if hasattr(self, 'component_modeler') and self.component_modeler:
+                # Try to get log from ComponentModeler's simulation data
+                if hasattr(self.component_modeler, 'sim_data') and self.component_modeler.sim_data:
+                    log_text = str(self.component_modeler.sim_data.log)
+                    return log_text
+                else:
+                    print("ComponentModeler simulation data not available for log extraction.")
+                    return "Log not available - ComponentModeler simulation data not accessible."
+            else:
+                print("ComponentModeler not initialized.")
+                return "Log not available - ComponentModeler not initialized."
+        except Exception as e:
+            print(f"Error retrieving Tidy3D log: {e}")
+            return f"Log retrieval error: {str(e)}"
+
+    def _extract_log_metrics(self, log_text: str) -> dict:
+        """
+        Extract Tidy3D-specific metrics from log text.
+        
+        Args:
+            log_text: Raw Tidy3D log text
+            
+        Returns:
+            dict: Extracted metrics specific to Tidy3D
+        """
+        log_metrics = super()._extract_log_metrics(log_text)
+        
+        try:
+            # Grid points
+            grid_match = re.search(r'Number of computational grid points: ([\d.e+-]+)', log_text)
+            if grid_match:
+                log_metrics['grid_points'] = grid_match.group(1)
+            
+            # Domain size
+            domain_match = re.search(r'Simulation domain Nx, Ny, Nz: \[(\d+), (\d+), (\d+)\]', log_text)
+            if domain_match:
+                log_metrics['domain_nx'] = int(domain_match.group(1))
+                log_metrics['domain_ny'] = int(domain_match.group(2))
+                log_metrics['domain_nz'] = int(domain_match.group(3))
+            
+            # Time steps
+            time_steps_match = re.search(r'Number of time steps: ([\d.e+-]+)', log_text)
+            if time_steps_match:
+                log_metrics['time_steps'] = time_steps_match.group(1)
+            
+            # Time step size
+            time_step_match = re.search(r'Time step \(s\): ([\d.e+-]+)', log_text)
+            if time_step_match:
+                log_metrics['time_step_size'] = time_step_match.group(1)
+            
+            # Auto shutoff factor
+            shutoff_match = re.search(r'Automatic shutoff factor: ([\d.e+-]+)', log_text)
+            if shutoff_match:
+                log_metrics['shutoff_factor'] = shutoff_match.group(1)
+            
+            # Solver times
+            source_modes_time = re.search(r'Compute source modes time \(s\):\s*([\d.]+)', log_text)
+            if source_modes_time:
+                log_metrics['source_modes_time'] = float(source_modes_time.group(1))
+            
+            monitor_modes_time = re.search(r'Compute monitor modes time \(s\):\s*([\d.]+)', log_text)
+            if monitor_modes_time:
+                log_metrics['monitor_modes_time'] = float(monitor_modes_time.group(1))
+            
+            solver_time_match = re.search(r'Solver time \(s\):\s*([\d.]+)', log_text)
+            if solver_time_match:
+                log_metrics['solver_time'] = float(solver_time_match.group(1))
+            
+            post_processing_time = re.search(r'Post-processing time \(s\):\s*([\d.]+)', log_text)
+            if post_processing_time:
+                log_metrics['post_processing_time'] = float(post_processing_time.group(1))
+            
+            # Time-stepping performance
+            time_stepping_speed = re.search(r'Time-stepping speed \(cells/s\):\s*([\d.e+]+)', log_text)
+            if time_stepping_speed:
+                log_metrics['time_stepping_speed'] = time_stepping_speed.group(1)
+            
+            # Field decay
+            field_decay_matches = re.findall(r'field decay: ([\d.e+-]+)', log_text)
+            if field_decay_matches:
+                log_metrics['final_field_decay'] = field_decay_matches[-1]
+                log_metrics['initial_field_decay'] = field_decay_matches[0] if len(field_decay_matches) > 1 else field_decay_matches[0]
+            
+            # FDTD solver details from the solver log section
+            fdtd_setup_time = re.search(r'Solver setup time \(s\):\s*([\d.]+)', log_text)
+            if fdtd_setup_time:
+                log_metrics['fdtd_setup_time'] = float(fdtd_setup_time.group(1))
+            
+            fdtd_time_stepping = re.search(r'Time-stepping time \(s\):\s*([\d.]+)', log_text)
+            if fdtd_time_stepping:
+                log_metrics['fdtd_time_stepping'] = float(fdtd_time_stepping.group(1))
+            
+            data_write_time = re.search(r'Data write time \(s\):\s*([\d.]+)', log_text)
+            if data_write_time:
+                log_metrics['data_write_time'] = float(data_write_time.group(1))
+            
+            # Convergence information
+            if "Field decay smaller than shutoff factor, exiting solver" in log_text:
+                log_metrics['converged'] = True
+            else:
+                log_metrics['converged'] = False
+            
+            # Mode solver warnings
+            mode_warnings = re.findall(r"WARNING: Mode '\d+' appears to undergo a discontinuous change", log_text)
+            log_metrics['mode_warnings'] = len(mode_warnings)
+            
+        except Exception as e:
+            self.logger.warning(f"Error extracting Tidy3D log metrics: {e}")
+        
+        return log_metrics
 
     def export_sparameters_dat(self, filepath: str = None):
         """Export S-parameters to .dat file using s_parameter_writer."""

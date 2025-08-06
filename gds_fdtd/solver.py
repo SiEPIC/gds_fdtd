@@ -8,6 +8,8 @@ import os
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
+import re
+from datetime import datetime
 from gds_fdtd.core import component, port, technology
 from gds_fdtd.sparams import sparameters
 from gds_fdtd.logging_config import setup_logging, get_logger, log_separator, log_dict, log_simulation_start
@@ -553,6 +555,106 @@ class fdtd_solver:
         if self._sparameters is None:
             print("S-parameters results not available. Please run the simulation first.")
         return self._sparameters
+
+    def extract_and_save_log(self, log_text: str, mesh_size: int = None, study_type: str = "simulation") -> dict:
+        """
+        Extract key metrics from simulation log and save to file.
+        
+        Args:
+            log_text: Raw simulation log text
+            mesh_size: Mesh size for filename (optional)
+            study_type: Type of study for filename (e.g., "mesh", "width", "depth")
+            
+        Returns:
+            dict: Extracted log metrics
+        """
+        try:
+            # Create logs directory
+            log_dir = os.path.join(self.working_dir, "logs")
+            os.makedirs(log_dir, exist_ok=True)
+            
+            # Generate filename
+            solver_type = self.__class__.__name__.replace('fdtd_solver_', '')
+            if mesh_size is not None:
+                log_file = os.path.join(log_dir, f"{solver_type}_{study_type}_mesh{mesh_size}_log.txt")
+            else:
+                log_file = os.path.join(log_dir, f"{solver_type}_{study_type}_log.txt")
+            
+            # Save full log to file
+            with open(log_file, 'w') as f:
+                f.write(f"=== {solver_type.upper()} Simulation Log ===\n")
+                f.write(f"Component: {self.component.name}\n")
+                if mesh_size is not None:
+                    f.write(f"Mesh: {mesh_size} cells/λ\n")
+                f.write(f"Study Type: {study_type}\n")
+                f.write(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("="*60 + "\n\n")
+                f.write(log_text)
+            
+            # Extract metrics using solver-specific method
+            log_metrics = self._extract_log_metrics(log_text)
+            log_metrics['log_file'] = log_file
+            
+            self.logger.info(f"Log saved to: {log_file}")
+            return log_metrics
+            
+        except Exception as e:
+            self.logger.error(f"Error extracting/saving log: {str(e)}")
+            return {}
+
+    def _extract_log_metrics(self, log_text: str) -> dict:
+        """
+        Extract key metrics from log text. Override in subclasses for solver-specific parsing.
+        
+        Args:
+            log_text: Raw log text
+            
+        Returns:
+            dict: Extracted metrics
+        """
+        # Base implementation - can be overridden by subclasses
+        log_metrics = {
+            'log_length': len(log_text.split('\n')),
+            'timestamp': datetime.now().isoformat()
+        }
+        return log_metrics
+
+    def save_log_summary(self, log_metrics_list: list, study_type: str = "convergence"):
+        """
+        Save a summary of log metrics from multiple simulations.
+        
+        Args:
+            log_metrics_list: List of log metrics dictionaries
+            study_type: Type of study for filename
+        """
+        try:
+            log_dir = os.path.join(self.working_dir, "logs")
+            os.makedirs(log_dir, exist_ok=True)
+            
+            solver_type = self.__class__.__name__.replace('fdtd_solver_', '')
+            summary_file = os.path.join(log_dir, f"{solver_type}_{study_type}_log_summary.txt")
+            
+            with open(summary_file, 'w') as f:
+                f.write(f"=== {solver_type.upper()} {study_type.title()} Study Log Summary ===\n")
+                f.write(f"Component: {self.component.name}\n")
+                f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("="*60 + "\n\n")
+                
+                for i, metrics in enumerate(log_metrics_list):
+                    if not metrics:
+                        continue
+                        
+                    f.write(f"Simulation {i+1}:\n")
+                    for key, value in metrics.items():
+                        if key != 'log_file':  # Skip file path in summary
+                            f.write(f"  {key}: {value}\n")
+                    f.write("\n")
+            
+            self.logger.info(f"Log summary saved to: {summary_file}")
+            print(f"Log summary saved to: {summary_file}")
+            
+        except Exception as e:
+            self.logger.error(f"Error saving log summary: {str(e)}")
 
     # below are abstract methods that must be implemented by the solver
     @abstractmethod

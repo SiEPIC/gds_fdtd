@@ -5,6 +5,7 @@ Lumerical tools interface module.
 @author: Mustafa Hammood, 2025
 """
 import os
+import re
 from lumapi import FDTD
 from gds_fdtd.solver import fdtd_solver, fdtd_field_monitor
 from gds_fdtd.sparams import process_dat
@@ -533,19 +534,71 @@ class fdtd_solver_lumerical(fdtd_solver):
         if self.symmetry[2] == -1:
             self.fdtd.setnamed("FDTD", "z min bc", "Anti-Symmetric")
 
-    def get_log(self) -> None:
+    def get_log(self) -> str:
         """Get the log of the simulation."""
         try:
             if hasattr(self, 'fdtd') and self.fdtd:
-                # Get the log from Lumerical FDTD
-                log_text = self.fdtd.getresult("FDTD", "log")
-                if log_text:
-                    print("Lumerical FDTD simulation log:")
-                    print(log_text)
-                else:
-                    print("No log data available from Lumerical FDTD.")
+                # Try to get the log from Lumerical FDTD
+                # Note: This may vary by Lumerical version
+                try:
+                    log_text = self.fdtd.getresult("FDTD", "log")
+                    if log_text:
+                        return str(log_text)
+                    else:
+                        return "No log data available from Lumerical FDTD."
+                except:
+                    # Fallback - try alternative log access methods
+                    try:
+                        # Try getting simulation log through eval
+                        self.fdtd.eval("log_data = getresult('FDTD', 'log');")
+                        log_data = self.fdtd.getv("log_data")
+                        if log_data:
+                            return str(log_data)
+                    except:
+                        pass
+                    return "Log retrieval not available for this Lumerical version."
             else:
-                print("FDTD solver not initialized.")
+                return "FDTD solver not initialized."
         except Exception as e:
-            print(f"Error retrieving log: {e}")
-            print("Log retrieval not available for this Lumerical version.")
+            return f"Error retrieving log: {str(e)}"
+
+    def _extract_log_metrics(self, log_text: str) -> dict:
+        """
+        Extract Lumerical-specific metrics from log text.
+        
+        Args:
+            log_text: Raw Lumerical log text
+            
+        Returns:
+            dict: Extracted metrics specific to Lumerical
+        """
+        log_metrics = super()._extract_log_metrics(log_text)
+        
+        try:
+            # TODO: Implement Lumerical-specific log parsing
+            # This will depend on the actual format of Lumerical logs
+            # For now, we'll add basic parsing patterns
+            
+            # Memory usage
+            memory_match = re.search(r'Memory.*?(\d+\.?\d*)\s*GB', log_text, re.IGNORECASE)
+            if memory_match:
+                log_metrics['memory_gb'] = float(memory_match.group(1))
+            
+            # Simulation time
+            sim_time_match = re.search(r'simulation time.*?(\d+\.?\d*)\s*s', log_text, re.IGNORECASE)
+            if sim_time_match:
+                log_metrics['simulation_time'] = float(sim_time_match.group(1))
+            
+            # Time steps
+            time_steps_match = re.search(r'time steps.*?(\d+)', log_text, re.IGNORECASE)
+            if time_steps_match:
+                log_metrics['time_steps'] = int(time_steps_match.group(1))
+            
+            # Note: This is a placeholder implementation
+            # Actual Lumerical log format will need to be analyzed for proper parsing
+            log_metrics['note'] = "Lumerical log parsing is placeholder - needs actual log format analysis"
+            
+        except Exception as e:
+            self.logger.warning(f"Error extracting Lumerical log metrics: {e}")
+        
+        return log_metrics
