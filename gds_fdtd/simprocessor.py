@@ -19,13 +19,18 @@ from .lyprocessor import (
 
 def get_material(device: dict):
     """
-    TODO: find a better way to handle this
-    maybe use opticalmaterialspy as a universal base?
+    Load material properties for different solvers.
+    
+    Args:
+        device: Device dictionary containing material specifications
+        
+    Returns:
+        dict: Material dictionary with solver-specific materials
     """
     material = {'tidy3d': None, 'lum': None}
+    
     if "tidy3d_db" in device["material"]:
-        from .t3d_tools import load_material
-        material['tidy3d'] = load_material(device["material"]["tidy3d_db"])
+        material['tidy3d'] = _load_tidy3d_material(device["material"]["tidy3d_db"])
 
     if "lum_db" in device["material"]:
         # load material from lumerical material database, format: material model name
@@ -34,6 +39,62 @@ def get_material(device: dict):
         material['lum'] = mat_lum
 
     return material
+
+
+def _load_tidy3d_material(material_spec: dict):
+    """
+    Load Tidy3D material from specification.
+    
+    Args:
+        material_spec: Material specification dictionary
+        
+    Returns:
+        tidy3d.Medium: Tidy3D material object
+    """
+    try:
+        import tidy3d as td
+    except ImportError:
+        raise ImportError("tidy3d is required for Tidy3D material loading. Install with: pip install tidy3d")
+    
+    # Handle simple refractive index specification
+    if "nk" in material_spec:
+        n_value = material_spec["nk"]
+        if isinstance(n_value, (int, float)):
+            # Simple real refractive index
+            return td.Medium(permittivity=n_value**2)
+        elif isinstance(n_value, list) and len(n_value) == 2:
+            # Complex refractive index [n, k]
+            n, k = n_value
+            return td.Medium(permittivity=(n + 1j*k)**2)
+    
+    # Handle material database model specification
+    if "model" in material_spec:
+        model_spec = material_spec["model"]
+        if isinstance(model_spec, list) and len(model_spec) == 2:
+            material_name, variant = model_spec
+            try:
+                # Try to load from Tidy3D material database
+                return td.material_library[material_name][variant]
+            except KeyError:
+                print(f"Warning: Material {material_name}[{variant}] not found in Tidy3D library")
+                print(f"Available variants for {material_name}: {list(td.material_library[material_name].keys()) if material_name in td.material_library else 'Material not found'}")
+                # Fallback to silicon with warning
+                return td.material_library["cSi"]["Li1993_293K"]
+        elif isinstance(model_spec, str):
+            # Single material name, try to get default variant
+            try:
+                material_dict = td.material_library[model_spec]
+                # Get first available variant as default
+                first_variant = next(iter(material_dict.keys()))
+                return material_dict[first_variant]
+            except (KeyError, StopIteration):
+                print(f"Warning: Material {model_spec} not found in Tidy3D library")
+                # Fallback to silicon
+                return td.material_library["cSi"]["Li1993_293K"]
+    
+    # Fallback: return silicon if nothing else works
+    print("Warning: Could not parse material specification, using default silicon")
+    return td.material_library["cSi"]["Li1993_293K"]
 
 
 def load_component_from_tech(cell, tech, z_span=4, z_center=None):
