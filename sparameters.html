@@ -1,0 +1,834 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Multi-Modal Simulations" href="multimodal.html" /><link rel="prev" title="Setting Up Simulations" href="simulations.html" />
+
+    <!-- Generated with Sphinx 8.1.3 and Furo 2025.07.19 -->
+        <title>Working with S-Parameters - gds_fdtd 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=25af2a20" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  --color-brand-primary: #3498db;
+  --color-brand-content: #2ecc71;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
+  --color-brand-primary: #9b59b6;
+  --color-brand-content: #e74c3c;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
+  --color-brand-primary: #9b59b6;
+  --color-brand-content: #e74c3c;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">gds_fdtd 0.4.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">gds_fdtd 0.4.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="solvers.html">FDTD Solvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simulations.html">Setting Up Simulations</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Working with S-Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="multimodal.html">Multi-Modal Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="technology.html">Technology Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="modules.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API Reference</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/gds_fdtd.core.html">gds_fdtd.core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/gds_fdtd.lyprocessor.html">gds_fdtd.lyprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/gds_fdtd.simprocessor.html">gds_fdtd.simprocessor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/gds_fdtd.solver.html">gds_fdtd.solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/gds_fdtd.sparams.html">gds_fdtd.sparams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/gds_fdtd.logging_config.html">gds_fdtd.logging_config</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/sparameters.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="working-with-s-parameters">
+<h1>Working with S-Parameters<a class="headerlink" href="#working-with-s-parameters" title="Link to this heading">¶</a></h1>
+<p>S-parameters (scattering parameters) are used to characterize how photonic components work. The <code class="docutils literal notranslate"><span class="pre">gds_fdtd</span></code> package has tools for calculating, analyzing, and exporting S-parameters from FDTD simulations.</p>
+<section id="s-parameter-fundamentals">
+<h2>S-Parameter Fundamentals<a class="headerlink" href="#s-parameter-fundamentals" title="Link to this heading">¶</a></h2>
+<p>S-parameters describe how electromagnetic waves are scattered by a multi-port network. For a photonic device:</p>
+<ul class="simple">
+<li><p><strong>S₁₁</strong>: Reflection at port 1 when excited at port 1</p></li>
+<li><p><strong>S₂₁</strong>: Transmission from port 1 to port 2</p></li>
+<li><p><strong>S₁₂</strong>: Transmission from port 2 to port 1</p></li>
+<li><p><strong>S₂₂</strong>: Reflection at port 2 when excited at port 2</p></li>
+</ul>
+<p>For multi-modal devices, S-parameters include mode indices:
+- <strong>S₁₁⁽ᵀᴱ→ᵀᴱ⁾</strong>: TE mode reflection at port 1
+- <strong>S₂₁⁽ᵀᴱ→ᵀᴹ⁾</strong>: TE to TM mode conversion from port 1 to port 2</p>
+</section>
+<section id="accessing-s-parameters">
+<h2>Accessing S-Parameters<a class="headerlink" href="#accessing-s-parameters" title="Link to this heading">¶</a></h2>
+<p>After running a simulation, S-parameters are available through the solver’s <code class="docutils literal notranslate"><span class="pre">sparameters</span></code> property:</p>
+<section id="basic-access">
+<h3>Basic Access<a class="headerlink" href="#basic-access" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run simulation first</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="c1"># Access S-parameters object</span>
+<span class="n">sparams</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span>
+
+<span class="c1"># Basic information</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Component: </span><span class="si">{</span><span class="n">sparams</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of S-parameter entries: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sparams</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Frequency points: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sparams</span><span class="o">.</span><span class="n">wavelength</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="wavelength-information">
+<h3>Wavelength Information<a class="headerlink" href="#wavelength-information" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get wavelength array</span>
+<span class="n">wavelengths</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">wavelength</span>  <span class="c1"># in micrometers</span>
+<span class="n">frequencies</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">frequency</span>   <span class="c1"># in Hz</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wavelength range: </span><span class="si">{</span><span class="n">wavelengths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">wavelengths</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> μm&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of points: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="individual-s-parameter-access">
+<h3>Individual S-Parameter Access<a class="headerlink" href="#individual-s-parameter-access" title="Link to this heading">¶</a></h3>
+<p>Access specific S-parameters using the <code class="docutils literal notranslate"><span class="pre">S()</span></code> method:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Single-mode device</span>
+<span class="n">s21</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Multi-modal device - different mode combinations</span>
+<span class="n">s21_te_te</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># TE→TE</span>
+<span class="n">s21_te_tm</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># TE→TM</span>
+<span class="n">s21_tm_te</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">in_modeid</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># TM→TE</span>
+<span class="n">s21_tm_tm</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">in_modeid</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># TM→TM</span>
+</pre></div>
+</div>
+</section>
+<section id="s-parameter-properties">
+<h3>S-Parameter Properties<a class="headerlink" href="#s-parameter-properties" title="Link to this heading">¶</a></h3>
+<p>Each S-parameter entry contains magnitude and phase information:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get specific S-parameter</span>
+<span class="n">s21</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Access properties</span>
+<span class="n">magnitude</span> <span class="o">=</span> <span class="n">s21</span><span class="o">.</span><span class="n">s_mag</span>      <span class="c1"># Linear magnitude</span>
+<span class="n">phase</span> <span class="o">=</span> <span class="n">s21</span><span class="o">.</span><span class="n">s_phase</span>        <span class="c1"># Phase in radians</span>
+<span class="n">power</span> <span class="o">=</span> <span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">magnitude</span><span class="p">]</span>  <span class="c1"># Power transmission</span>
+
+<span class="c1"># Convert to dB</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="n">transmission_db</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">power</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Peak transmission: </span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">power</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">transmission_db</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="visualization-and-analysis">
+<h2>Visualization and Analysis<a class="headerlink" href="#visualization-and-analysis" title="Link to this heading">¶</a></h2>
+<section id="built-in-plotting">
+<h3>Built-in Plotting<a class="headerlink" href="#built-in-plotting" title="Link to this heading">¶</a></h3>
+<p>The package provides automatic plotting of all S-parameters:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot all S-parameters</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">visualize_results</span><span class="p">()</span>  <span class="c1"># Includes S-parameter plots and .dat export</span>
+
+<span class="c1"># Or directly plot S-parameters</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="custom-plotting">
+<h3>Custom Plotting<a class="headerlink" href="#custom-plotting" title="Link to this heading">¶</a></h3>
+<p>Create custom plots for specific analysis:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Get wavelength and S-parameters</span>
+<span class="n">wavelengths</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">wavelength</span>
+<span class="n">s21</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">s31</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Transmission plot</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">,</span> <span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">s21</span><span class="o">.</span><span class="n">s_mag</span><span class="p">]),</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Port 1→2&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">,</span> <span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">s31</span><span class="o">.</span><span class="n">s_mag</span><span class="p">]),</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Port 1→3&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Wavelength (μm)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Transmission (dB)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Device Transmission Spectrum&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="multi-modal-analysis">
+<h3>Multi-Modal Analysis<a class="headerlink" href="#multi-modal-analysis" title="Link to this heading">¶</a></h3>
+<p>Analyze mode conversion and polarization effects:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Multi-modal transmission analysis</span>
+<span class="n">wavelengths</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">wavelength</span>
+
+<span class="c1"># Get all mode combinations for port 1→4</span>
+<span class="n">s41_te_te</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">s41_te_tm</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">s41_tm_te</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">in_modeid</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">s41_tm_tm</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">in_modeid</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Plot multi-modal transmission</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">,</span> <span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">s41_te_te</span><span class="o">.</span><span class="n">s_mag</span><span class="p">]),</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">&#39;TE→TE&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">,</span> <span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">s41_tm_tm</span><span class="o">.</span><span class="n">s_mag</span><span class="p">]),</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">&#39;TM→TM&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">,</span> <span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">s41_te_tm</span><span class="o">.</span><span class="n">s_mag</span><span class="p">]),</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">&#39;TE→TM (conversion)&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">,</span> <span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">s41_tm_te</span><span class="o">.</span><span class="n">s_mag</span><span class="p">]),</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">&#39;TM→TE (conversion)&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Wavelength (μm)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Transmission (dB)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Multi-Modal S-Parameters: Port 1 → Port 4&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="performance-metrics">
+<h3>Performance Metrics<a class="headerlink" href="#performance-metrics" title="Link to this heading">¶</a></h3>
+<p>Calculate common device performance metrics:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_metrics</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate common performance metrics.&quot;&quot;&quot;</span>
+    <span class="n">wavelengths</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">wavelength</span>
+
+    <span class="c1"># Get S-parameters</span>
+    <span class="n">s_trans</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="n">in_port</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="n">out_port</span><span class="p">,</span>
+                                  <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">s_refl</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="n">in_port</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="n">in_port</span><span class="p">,</span>
+                                 <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Calculate metrics</span>
+    <span class="n">transmission</span> <span class="o">=</span> <span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">s_trans</span><span class="o">.</span><span class="n">s_mag</span><span class="p">]</span>
+    <span class="n">reflection</span> <span class="o">=</span> <span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">s_refl</span><span class="o">.</span><span class="n">s_mag</span><span class="p">]</span>
+    <span class="n">insertion_loss</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">transmission</span><span class="p">]</span>
+    <span class="n">return_loss</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reflection</span><span class="p">]</span>
+
+    <span class="c1"># Find performance at specific wavelength</span>
+    <span class="n">target_wl</span> <span class="o">=</span> <span class="mf">1.55</span>  <span class="c1"># μm</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">wavelengths</span> <span class="o">-</span> <span class="n">target_wl</span><span class="p">))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Performance at </span><span class="si">{</span><span class="n">target_wl</span><span class="si">}</span><span class="s2"> μm:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Transmission: </span><span class="si">{</span><span class="n">transmission</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="o">-</span><span class="n">insertion_loss</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB)&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Reflection: </span><span class="si">{</span><span class="n">reflection</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="o">-</span><span class="n">return_loss</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB)&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Insertion Loss: </span><span class="si">{</span><span class="n">insertion_loss</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Return Loss: </span><span class="si">{</span><span class="n">return_loss</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;wavelength&#39;</span><span class="p">:</span> <span class="n">wavelengths</span><span class="p">,</span>
+        <span class="s1">&#39;transmission&#39;</span><span class="p">:</span> <span class="n">transmission</span><span class="p">,</span>
+        <span class="s1">&#39;reflection&#39;</span><span class="p">:</span> <span class="n">reflection</span><span class="p">,</span>
+        <span class="s1">&#39;insertion_loss&#39;</span><span class="p">:</span> <span class="n">insertion_loss</span><span class="p">,</span>
+        <span class="s1">&#39;return_loss&#39;</span><span class="p">:</span> <span class="n">return_loss</span>
+    <span class="p">}</span>
+
+<span class="c1"># Calculate metrics</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="n">calculate_metrics</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="exporting-s-parameters">
+<h2>Exporting S-Parameters<a class="headerlink" href="#exporting-s-parameters" title="Link to this heading">¶</a></h2>
+<section id="dat-file-export">
+<h3>.dat File Export<a class="headerlink" href="#dat-file-export" title="Link to this heading">¶</a></h3>
+<p>Export S-parameters to standard .dat format for use in circuit simulators:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Automatic export (included in visualize_results)</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">visualize_results</span><span class="p">()</span>  <span class="c1"># Creates .dat file automatically</span>
+
+<span class="c1"># Manual export</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">export_sparameters_dat</span><span class="p">(</span><span class="s2">&quot;my_device_sparams.dat&quot;</span><span class="p">)</span>
+
+<span class="c1"># Custom filepath</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">dat_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">solver</span><span class="o">.</span><span class="n">working_dir</span><span class="p">,</span> <span class="s2">&quot;custom_sparams.dat&quot;</span><span class="p">)</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">export_sparameters_dat</span><span class="p">(</span><span class="n">dat_path</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The .dat file format is compatible with most circuit simulators and contains:
+- Frequency sweep information
+- S-parameter magnitude and phase data
+- Multi-port and multi-modal data</p>
+</section>
+<section id="custom-export-formats">
+<h3>Custom Export Formats<a class="headerlink" href="#custom-export-formats" title="Link to this heading">¶</a></h3>
+<p>Export to custom formats for specific analysis tools:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">export_json</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Export S-parameters to JSON format.&quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;component&#39;</span><span class="p">:</span> <span class="n">solver</span><span class="o">.</span><span class="n">component</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="s1">&#39;wavelength_um&#39;</span><span class="p">:</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">wavelength</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+        <span class="s1">&#39;frequency_hz&#39;</span><span class="p">:</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">frequency</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+        <span class="s1">&#39;sparameters&#39;</span><span class="p">:</span> <span class="p">[]</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="n">sparam</span> <span class="ow">in</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;in_port&#39;</span><span class="p">:</span> <span class="n">sparam</span><span class="o">.</span><span class="n">in_port</span><span class="p">,</span>
+            <span class="s1">&#39;out_port&#39;</span><span class="p">:</span> <span class="n">sparam</span><span class="o">.</span><span class="n">out_port</span><span class="p">,</span>
+            <span class="s1">&#39;in_mode&#39;</span><span class="p">:</span> <span class="n">sparam</span><span class="o">.</span><span class="n">in_modeid</span><span class="p">,</span>
+            <span class="s1">&#39;out_mode&#39;</span><span class="p">:</span> <span class="n">sparam</span><span class="o">.</span><span class="n">out_modeid</span><span class="p">,</span>
+            <span class="s1">&#39;magnitude&#39;</span><span class="p">:</span> <span class="n">sparam</span><span class="o">.</span><span class="n">s_mag</span><span class="p">,</span>
+            <span class="s1">&#39;phase_rad&#39;</span><span class="p">:</span> <span class="n">sparam</span><span class="o">.</span><span class="n">s_phase</span><span class="p">,</span>
+            <span class="s1">&#39;power&#39;</span><span class="p">:</span> <span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">sparam</span><span class="o">.</span><span class="n">s_mag</span><span class="p">]</span>
+        <span class="p">}</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;sparameters&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;S-parameters exported to </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Export to JSON</span>
+<span class="n">export_json</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="s2">&quot;device_sparams.json&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="touchstone-format">
+<h3>Touchstone Format<a class="headerlink" href="#touchstone-format" title="Link to this heading">¶</a></h3>
+<p>Export to Touchstone (.s2p, .s4p) format for RF/microwave tools:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">export_touchstone</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Export to Touchstone format.&quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="c1"># Get number of ports</span>
+    <span class="n">n_ports</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">solver</span><span class="o">.</span><span class="n">fdtd_ports</span><span class="p">)</span>
+    <span class="n">wavelengths</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">wavelength</span>
+    <span class="n">frequencies</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">frequency</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="c1"># Header</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;# Hz S MA R 50</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;! Exported from gds_fdtd for </span><span class="si">{</span><span class="n">solver</span><span class="o">.</span><span class="n">component</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Data for each frequency</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">freq</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">frequencies</span><span class="p">):</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">freq</span><span class="si">:</span><span class="s2">.6e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Write S-parameters in order (S11, S12, S21, S22 for 2-port)</span>
+            <span class="k">for</span> <span class="n">out_port</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_ports</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">in_port</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_ports</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">s_param</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="n">in_port</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="n">out_port</span><span class="p">,</span>
+                                                  <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">mag</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">s_param</span><span class="o">.</span><span class="n">s_mag</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                    <span class="n">phase_deg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">s_param</span><span class="o">.</span><span class="n">s_phase</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">mag</span><span class="si">:</span><span class="s2">.6e</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">phase_deg</span><span class="si">:</span><span class="s2">.6e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Touchstone file exported: </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Export 4-port device</span>
+<span class="n">export_touchstone</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="s2">&quot;device.s4p&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="s-parameter-validation">
+<h2>S-Parameter Validation<a class="headerlink" href="#s-parameter-validation" title="Link to this heading">¶</a></h2>
+<section id="data-quality-checks">
+<h3>Data Quality Checks<a class="headerlink" href="#data-quality-checks" title="Link to this heading">¶</a></h3>
+<p>Validate S-parameter data quality and physical consistency:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">validate_sparameters</span><span class="p">(</span><span class="n">solver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate S-parameter data for physical consistency.&quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;S-Parameter Validation:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
+
+    <span class="c1"># Check data completeness</span>
+    <span class="n">expected_combinations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">solver</span><span class="o">.</span><span class="n">fdtd_ports</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">solver</span><span class="o">.</span><span class="n">modes</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">actual_combinations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;S-parameter combinations: </span><span class="si">{</span><span class="n">actual_combinations</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">expected_combinations</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check energy conservation (for lossless devices)</span>
+    <span class="n">wavelengths</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">wavelength</span>
+    <span class="n">n_ports</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">solver</span><span class="o">.</span><span class="n">fdtd_ports</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">wl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">[::</span><span class="mi">10</span><span class="p">]):</span>  <span class="c1"># Check every 10th point</span>
+        <span class="n">total_power</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">out_port</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_ports</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">s_param</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="n">out_port</span><span class="p">,</span>
+                                          <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">power</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">s_param</span><span class="o">.</span><span class="n">s_mag</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="mi">10</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span>
+            <span class="n">total_power</span> <span class="o">+=</span> <span class="n">power</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;λ=</span><span class="si">{</span><span class="n">wl</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">μm: Total power = </span><span class="si">{</span><span class="n">total_power</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">total_power</span> <span class="o">&gt;</span> <span class="mf">1.01</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  WARNING: Power &gt; 1 (gain or numerical error)&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">total_power</span> <span class="o">&lt;</span> <span class="mf">0.95</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  INFO: Power &lt; 1 (loss present)&quot;</span><span class="p">)</span>
+
+<span class="c1"># Run validation</span>
+<span class="n">validate_sparameters</span><span class="p">(</span><span class="n">solver</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="reciprocity-check">
+<h3>Reciprocity Check<a class="headerlink" href="#reciprocity-check" title="Link to this heading">¶</a></h3>
+<p>For reciprocal devices, verify S₁₂ = S₂₁:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">check_reciprocity</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check device reciprocity.&quot;&quot;&quot;</span>
+    <span class="n">n_ports</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">solver</span><span class="o">.</span><span class="n">fdtd_ports</span><span class="p">)</span>
+    <span class="n">wavelengths</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">wavelength</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Reciprocity Check:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">20</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_ports</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_ports</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">s_ij</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="n">j</span><span class="p">,</span> <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">s_ji</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="n">j</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="c1"># Compare magnitudes</span>
+            <span class="n">mag_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">m1</span><span class="p">)</span> <span class="o">-</span> <span class="nb">abs</span><span class="p">(</span><span class="n">m2</span><span class="p">))</span> <span class="k">for</span> <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span> <span class="ow">in</span>
+                               <span class="nb">zip</span><span class="p">(</span><span class="n">s_ij</span><span class="o">.</span><span class="n">s_mag</span><span class="p">,</span> <span class="n">s_ji</span><span class="o">.</span><span class="n">s_mag</span><span class="p">)])</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;S</span><span class="si">{</span><span class="n">i</span><span class="si">}{</span><span class="n">j</span><span class="si">}</span><span class="s2"> vs S</span><span class="si">{</span><span class="n">j</span><span class="si">}{</span><span class="n">i</span><span class="si">}</span><span class="s2">: Avg magnitude difference = </span><span class="si">{</span><span class="n">mag_diff</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mag_diff</span> <span class="o">&gt;</span> <span class="n">tolerance</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  WARNING: Large reciprocity error (&gt;</span><span class="si">{</span><span class="n">tolerance</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+<span class="c1"># Check reciprocity</span>
+<span class="n">check_reciprocity</span><span class="p">(</span><span class="n">solver</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="more-s-parameter-analysis">
+<h2>More S-Parameter Analysis<a class="headerlink" href="#more-s-parameter-analysis" title="Link to this heading">¶</a></h2>
+<section id="frequency-domain-analysis">
+<h3>Frequency Domain Analysis<a class="headerlink" href="#frequency-domain-analysis" title="Link to this heading">¶</a></h3>
+<p>Analyze S-parameters in the frequency domain:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">analyze_bandwidth</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">threshold_db</span><span class="o">=-</span><span class="mi">3</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate 3dB bandwidth.&quot;&quot;&quot;</span>
+    <span class="n">s_param</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="n">in_port</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="n">out_port</span><span class="p">,</span>
+                                  <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">wavelengths</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">wavelength</span>
+
+    <span class="c1"># Convert to dB</span>
+    <span class="n">power_db</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">s_param</span><span class="o">.</span><span class="n">s_mag</span><span class="p">]</span>
+    <span class="n">max_power_db</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">power_db</span><span class="p">)</span>
+    <span class="n">threshold</span> <span class="o">=</span> <span class="n">max_power_db</span> <span class="o">+</span> <span class="n">threshold_db</span>  <span class="c1"># -3dB from peak</span>
+
+    <span class="c1"># Find bandwidth</span>
+    <span class="n">above_threshold</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="o">&gt;</span> <span class="n">threshold</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">power_db</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">above_threshold</span><span class="p">):</span>
+        <span class="n">start_idx</span> <span class="o">=</span> <span class="n">above_threshold</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">end_idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">above_threshold</span><span class="p">)</span> <span class="o">-</span> <span class="n">above_threshold</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+        <span class="n">bandwidth</span> <span class="o">=</span> <span class="n">wavelengths</span><span class="p">[</span><span class="n">end_idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">wavelengths</span><span class="p">[</span><span class="n">start_idx</span><span class="p">]</span>
+        <span class="n">center_wl</span> <span class="o">=</span> <span class="p">(</span><span class="n">wavelengths</span><span class="p">[</span><span class="n">start_idx</span><span class="p">]</span> <span class="o">+</span> <span class="n">wavelengths</span><span class="p">[</span><span class="n">end_idx</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Device Bandwidth Analysis:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Center wavelength: </span><span class="si">{</span><span class="n">center_wl</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> μm&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="o">-</span><span class="n">threshold_db</span><span class="si">}</span><span class="s2">dB bandwidth: </span><span class="si">{</span><span class="n">bandwidth</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> μm&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Relative bandwidth: </span><span class="si">{</span><span class="n">bandwidth</span><span class="o">/</span><span class="n">center_wl</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">center_wl</span><span class="p">,</span> <span class="n">bandwidth</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No points above threshold found&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+<span class="c1"># Analyze bandwidth</span>
+<span class="n">center</span><span class="p">,</span> <span class="n">bw</span> <span class="o">=</span> <span class="n">analyze_bandwidth</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="n">threshold_db</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="group-delay-analysis">
+<h3>Group Delay Analysis<a class="headerlink" href="#group-delay-analysis" title="Link to this heading">¶</a></h3>
+<p>Calculate group delay from S-parameter phase:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">calculate_group_delay</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="n">in_port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate group delay from S-parameter phase.&quot;&quot;&quot;</span>
+    <span class="n">s_param</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">in_port</span><span class="o">=</span><span class="n">in_port</span><span class="p">,</span> <span class="n">out_port</span><span class="o">=</span><span class="n">out_port</span><span class="p">,</span>
+                                  <span class="n">in_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">out_modeid</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">frequencies</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">frequency</span>
+    <span class="n">phases</span> <span class="o">=</span> <span class="n">s_param</span><span class="o">.</span><span class="n">s_phase</span>
+
+    <span class="c1"># Unwrap phase for continuous derivative</span>
+    <span class="n">phases_unwrapped</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unwrap</span><span class="p">(</span><span class="n">phases</span><span class="p">)</span>
+
+    <span class="c1"># Calculate group delay: τ = -dφ/dω</span>
+    <span class="n">group_delay</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">phases_unwrapped</span><span class="p">,</span> <span class="n">frequencies</span><span class="p">)</span>
+    <span class="n">wavelengths</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">sparameters</span><span class="o">.</span><span class="n">wavelength</span>
+
+    <span class="c1"># Plot group delay</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+
+    <span class="c1"># Phase plot</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">phases</span><span class="p">),</span> <span class="s1">&#39;b-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Phase (degrees)&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;S-Parameter Phase and Group Delay&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+    <span class="c1"># Group delay plot</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">,</span> <span class="n">group_delay</span> <span class="o">*</span> <span class="mf">1e12</span><span class="p">,</span> <span class="s1">&#39;r-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># Convert to ps</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Wavelength (μm)&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Group Delay (ps)&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">group_delay</span>
+
+<span class="c1"># Calculate group delay</span>
+<span class="n">gd</span> <span class="o">=</span> <span class="n">calculate_group_delay</span><span class="p">(</span><span class="n">solver</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p><strong>Always validate S-parameter data</strong> for physical consistency</p></li>
+<li><p><strong>Use appropriate wavelength resolution</strong> for your analysis needs</p></li>
+<li><p><strong>Check reciprocity</strong> for passive, reciprocal devices</p></li>
+<li><p><strong>Export data in multiple formats</strong> for different analysis tools</p></li>
+<li><p><strong>Document simulation parameters</strong> with S-parameter files</p></li>
+<li><p><strong>Verify convergence</strong> with mesh and time step refinement</p></li>
+<li><p><strong>Use multi-modal analysis</strong> for polarization-sensitive devices</p></li>
+</ol>
+<p>These S-parameter tools let you analyze photonic devices for research or commercial use.</p>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="multimodal.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Multi-Modal Simulations</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="simulations.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Setting Up Simulations</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Working with S-Parameters</a><ul>
+<li><a class="reference internal" href="#s-parameter-fundamentals">S-Parameter Fundamentals</a></li>
+<li><a class="reference internal" href="#accessing-s-parameters">Accessing S-Parameters</a><ul>
+<li><a class="reference internal" href="#basic-access">Basic Access</a></li>
+<li><a class="reference internal" href="#wavelength-information">Wavelength Information</a></li>
+<li><a class="reference internal" href="#individual-s-parameter-access">Individual S-Parameter Access</a></li>
+<li><a class="reference internal" href="#s-parameter-properties">S-Parameter Properties</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#visualization-and-analysis">Visualization and Analysis</a><ul>
+<li><a class="reference internal" href="#built-in-plotting">Built-in Plotting</a></li>
+<li><a class="reference internal" href="#custom-plotting">Custom Plotting</a></li>
+<li><a class="reference internal" href="#multi-modal-analysis">Multi-Modal Analysis</a></li>
+<li><a class="reference internal" href="#performance-metrics">Performance Metrics</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#exporting-s-parameters">Exporting S-Parameters</a><ul>
+<li><a class="reference internal" href="#dat-file-export">.dat File Export</a></li>
+<li><a class="reference internal" href="#custom-export-formats">Custom Export Formats</a></li>
+<li><a class="reference internal" href="#touchstone-format">Touchstone Format</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#s-parameter-validation">S-Parameter Validation</a><ul>
+<li><a class="reference internal" href="#data-quality-checks">Data Quality Checks</a></li>
+<li><a class="reference internal" href="#reciprocity-check">Reciprocity Check</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#more-s-parameter-analysis">More S-Parameter Analysis</a><ul>
+<li><a class="reference internal" href="#frequency-domain-analysis">Frequency Domain Analysis</a></li>
+<li><a class="reference internal" href="#group-delay-analysis">Group Delay Analysis</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#best-practices">Best Practices</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=6c02275b"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/toggleprompt.js?v=5801b3bb"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    </body>
+</html>
