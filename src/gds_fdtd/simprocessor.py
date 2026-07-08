@@ -47,7 +47,14 @@ def get_material(device: dict):
                 "Invalid technology material: 'tidy3d_db' must be a mapping containing "
                 f"'nk' or 'model'; got {tidy3d_db!r}"
             )
-        material["tidy3d"] = _load_tidy3d_material(tidy3d_db)
+        try:
+            material["tidy3d"] = _load_tidy3d_material(tidy3d_db)
+        except ImportError:
+            # engine-agnostic loading (F13): a unified technology carries
+            # hints for EVERY engine; a missing tidy3d must not break
+            # loading for beamz/lumerical users. The raw hint is preserved
+            # below; the tidy3d adapter errors clearly if actually used.
+            material["tidy3d"] = None
 
     if "lum_db" in mat_spec:
         lum_db = mat_spec["lum_db"]
@@ -57,6 +64,13 @@ def get_material(device: dict):
                 f"'model'; got {lum_db!r}"
             )
         material["lum"] = lum_db["model"]
+
+    # preserve the raw neutral + per-engine hints so offline consumers
+    # (grid.resolve_index, beamz, mode solving) can resolve indices without
+    # engine imports — this is what makes ONE tech file serve every solver
+    for key in ("nk", "rii", "tidy3d_db", "lum_db"):
+        if key in mat_spec:
+            material[key] = mat_spec[key]
 
     return material
 

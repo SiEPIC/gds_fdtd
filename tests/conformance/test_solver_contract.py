@@ -108,10 +108,13 @@ def _make_job(cls):
         gf.gpdk.PDK.activate()
         from gds_fdtd.layout.gdsfactory import from_gdsfactory
 
-        tech_dict = parse_yaml_tech(str(TESTS_DIR / "tech_tidy3d.yaml"))
+        # AGNOSTIC setup (owner directive): the unified tech carries neutral
+        # nk entries and from_gdsfactory attaches the source component, so
+        # beamz needs NO solver-specific kwargs.
+        tech_dict = parse_yaml_tech(str(TESTS_DIR / "tech_unified.yaml"))
         gf_c = gf.components.straight(length=5)
         comp = from_gdsfactory(gf_c, tech_dict)
-        return comp, tech_dict, None, {"gf_component": gf_c, "n_core": 3.47}
+        return comp, tech_dict, None, {}
 
     tech_file = "tech_tidy3d.yaml" if cls.name == "tidy3d" else "tech_lumerical.yaml"
     tech_dict = parse_yaml_tech(str(TESTS_DIR / tech_file))

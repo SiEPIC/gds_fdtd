@@ -174,9 +174,14 @@ def from_gdsfactory(c, tech, z_span: float = 4.0) -> Component:
             )
         )
 
-    return Component(
+    component = Component(
         name=c.name,
         structures=[*background, *structures],
         ports=ports,
         bounds=bounds,
     )
+    # keep the source component around: engines with native gdsfactory
+    # pipelines (beamz) pick it up automatically, so solver setup stays
+    # identical across engines — get_solver(name)(component, tech, spec)
+    component.gf_component = c
+    return component

@@ -117,7 +117,7 @@ def test_beamz_validate_requires_gf_component():
     comp, tech, layout = _job("tech_tidy3d.yaml")
     solver = get_solver("beamz")(comp, technology=tech)
     problems = solver.validate()
-    assert any("gf_component" in p for p in problems)
+    assert any("gdsfactory-sourced" in p for p in problems)
     del layout
 
 

@@ -107,7 +107,13 @@ class BeamzSolver(Solver):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.gf_component = gf_component
+        # agnostic setup: components converted via layout.gdsfactory carry
+        # their source component; the kwarg remains as an explicit override
+        self.gf_component = (
+            gf_component
+            if gf_component is not None
+            else getattr(self.component, "gf_component", None)
+        )
         self._n_core_kwarg = n_core
         self._n_clad_kwarg = n_clad
 
@@ -133,22 +139,16 @@ class BeamzSolver(Solver):
         return matches[0] if len(matches) == 1 else None
 
     def _resolve_index(self, material: dict, kwarg: float | None, label: str):
-        """kwargs > rii(@ center wavelength) > tidy3d_db.nk; None if unresolvable."""
+        """kwarg override > any offline-resolvable material shape (neutral nk,
+        rii @ center wavelength, tidy3d nk/medium — via grid.resolve_index)."""
         if kwarg is not None:
             return float(kwarg)
-        if not isinstance(material, dict):
-            return None
-        rii = material.get("rii")
-        if rii:
-            from ..materials.rii import load_rii_material
+        from ..grid import resolve_index
 
-            mat = load_rii_material(rii["shelf"], rii["book"], rii["page"])
-            return float(mat.n_at(self.spec.wavelength_center_um))
-        t3d = material.get("tidy3d_db", {})
-        nk = t3d.get("nk") if isinstance(t3d, dict) else None
-        if isinstance(nk, int | float):
-            return float(nk)
-        return None
+        try:
+            return float(resolve_index(material, self.spec.wavelength_center_um).real)
+        except (ValueError, FileNotFoundError, KeyError):
+            return None
 
     def _indices(self) -> tuple[float | None, float | None]:
         tech = self._tech_dict()
@@ -169,8 +169,9 @@ class BeamzSolver(Solver):
             problems.append("component has no ports")
         if self.gf_component is None:
             problems.append(
-                "BeamzSolver v1 requires the source gdsfactory component "
-                "(pass gf_component=); KLayout-sourced components need WP5.2"
+                "BeamzSolver v1 needs a gdsfactory-sourced component: convert with "
+                "layout.gdsfactory.from_gdsfactory (it is picked up automatically); "
+                "KLayout-sourced components need the WP5.2 kernel pipeline"
             )
         if self.technology is None:
             problems.append("BeamzSolver requires a technology")

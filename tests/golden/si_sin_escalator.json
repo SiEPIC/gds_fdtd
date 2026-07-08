@@ -56,6 +56,9 @@
    ],
    "material": {
     "lum": "SiO2 (Glass) - Palik",
+    "lum_db": {
+     "model": "SiO2 (Glass) - Palik"
+    },
     "tidy3d": null
    },
    "name": "Substrate",
@@ -88,6 +91,9 @@
    ],
    "material": {
     "lum": "SiO2 (Glass) - Palik",
+    "lum_db": {
+     "model": "SiO2 (Glass) - Palik"
+    },
     "tidy3d": null
    },
    "name": "Superstrate",
@@ -120,6 +126,9 @@
    ],
    "material": {
     "lum": "Si (Silicon) - Palik",
+    "lum_db": {
+     "model": "Si (Silicon) - Palik"
+    },
     "tidy3d": null
    },
    "name": "dev_0_0",
@@ -164,6 +173,9 @@
    ],
    "material": {
     "lum": "Si3N4 (Silicon Nitride) - Luke",
+    "lum_db": {
+     "model": "Si3N4 (Silicon Nitride) - Luke"
+    },
     "tidy3d": null
    },
    "name": "dev_1_0",
