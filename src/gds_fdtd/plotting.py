@@ -147,6 +147,27 @@ def plot_component(component, spec=None, ax=None, savefig=None):
             )
         )
 
+    # port extension stubs (the buffer waveguides the solvers add so that
+    # every port terminates through the PML instead of on a reflecting facet)
+    if spec is not None:
+        stub_labeled = False
+        for p in component.ports:
+            stub = p.polygon_extension(buffer=2 * spec.buffer)
+            ax.add_patch(
+                MplPolygon(
+                    stub,
+                    closed=True,
+                    facecolor="none",
+                    edgecolor="tab:green",
+                    linewidth=1.0,
+                    linestyle="--",
+                    hatch="///",
+                    alpha=0.5,
+                    label=None if stub_labeled else "port extension (2×buffer, through PML)",
+                )
+            )
+            stub_labeled = True
+
     # ports: arrow along direction + name
     arrow = max(b.x_span, b.y_span) * 0.06
     for p in component.ports:

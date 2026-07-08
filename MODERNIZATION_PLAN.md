@@ -349,6 +349,18 @@ Jul–Aug 2025: 32, then dormant since Sep 2025). Four identities:
   plots produced, exit 0. **FC LEDGER: +0.33 ⇒ ≈0.53 spent, ≈9.5 remain (exp 2026-07-22).**
   03a's legacy `run_time_factor=50` was cut to 10 first (group-index-aware runtime since
   WP1.5 → 50 would be ~5× cost); measured example estimate 0.332 FC.
+- **FINDING F11 (fixed, 2026-07-08): Windows CI legs red** — `test_sblock_plot_returns_fig_ax`
+  hit `_tkinter.TclError` because matplotlib defaults to TkAgg on windows-latest runners
+  whose Tk install is broken. Fix: `tests/conftest.py` forces `matplotlib.use("Agg")` for
+  the whole suite (no test should open a GUI anyway). Deterministic across platforms.
+- **Buffer-waveguide audit (2026-07-08, owner asked):** port-extension stubs confirmed on
+  ALL solver paths — tidy3d adds `td.Structure` per port via `polygon_extension(buffer=
+  2*buffer)` (solver_tidy3d.py:259); Lumerical gets stubs baked into the exported GDS
+  (`export_gds(buffer=2*spec.buffer)`, geometry.py:516); beamz via `prepare_component(
+  extension=...)`. Physics evidence: S11 −24…−55 dB in all live validations (F8 showed
+  −7 dB when stubs failed to reach PML). Gap closed: `plot_component` now DRAWS the stubs
+  (hatched green outlines, `spec` required) so every example geometry plot shows them;
+  legend assertion added to its unit test.
 - **Owner-env note (2026-07-08, authorized):** conda env `gdsfactory` → tidy3d 2.11.2 +
   gdsfactory 9.45 + editable gds_fdtd. Pre-existing `gplugins==1.4.2` (numpy==2.2 pin) and
   `meow-sim` (tidy3d<2.9 pin) now unsatisfied — flagged to owner; gds_fdtd unaffected.

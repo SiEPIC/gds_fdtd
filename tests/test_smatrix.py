@@ -223,6 +223,7 @@ def test_plot_component_geometry():
     assert any("layer 1/5" in label for label in labels)  # both device layers drawn
     assert any("bounds" in label for label in labels)
     assert any("FDTD region" in label for label in labels)
+    assert any("port extension" in label for label in labels)  # buffer stubs visible
     texts = {t.get_text() for t in ax.texts}
     assert {"opt1", "opt2"} <= texts  # port names annotated
     del layout
