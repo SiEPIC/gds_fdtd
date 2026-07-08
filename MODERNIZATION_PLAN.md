@@ -35,7 +35,7 @@
 | 3 | 3.2 lumerical hardening | ✅ absorbed into 3.1d (script-gen build, F7 probe, quoting, fresh-project sweep) | — |
 | **4 — Ecosystem** | 4.1 tidy3d 2.11 · 4.2 gdsfactory 9 | ✅ both, **validated live** | `b98c106` `26e35a3` |
 | 4 | 4.3 dependency-floor refresh | ◐ partial (tidy3d+gf pins done; numpy/shapely floors + meep/beamz/fdtdz extras pending) | — |
-| **5 — New solvers** | 5.3 beamz (owner priority) | 🔄 adapter+conformance+offline tests DONE; physics: S21/S11 ✓, **FINDING F9 (fixed):** beamz's reference-monitor normalization mis-scales '−'-directed
+| **5 — New solvers** | 5.3 beamz (owner priority) | ✅ **DONE, physics-validated live** (S21≡S12 reciprocal+passive, S11 −34 dB on a gf straight; finding F9 found+fixed) | `a1ad28c` |
   sources by ~+2 dB (S12 showed gain on a straight; their own example only ever excites a
   '+x' port so never hits it). Hypothesis 1 (swap source wave selectors) was tested live and
   REJECTED (+8.7 dB — selectors were correct); hypothesis 2 CONFIRMED: no reference monitor,
@@ -316,6 +316,30 @@ Jul–Aug 2025: 32, then dormant since Sep 2025). Four identities:
 | 4.5 | solver-class rewrite | Jul–Aug 2025 | `75edfd0 "major refactor towards unified solver"`: `fdtd_solver` base + `solver_lumerical` + `solver_tidy3d`; `lum_tools.py` deleted (Jul 23), `t3d_tools.py` deleted (Aug 4) — **but examples 01/05/07/08 still import them**, and `tests/test_{solver,sparams,simprocessor}.py` were deleted without replacement |
 
 **Lessons that shape this plan:**
+- **FINDING F9 (fixed, `a1ad28c`):** beamz's reference-monitor normalization mis-scales
+  '−'-directed sources by ~+2 dB (S12 showed gain on a straight; beamz's own example only
+  ever excites a '+x' port so never hits it). Hypothesis 1 (swap source wave selectors)
+  tested live and REJECTED (+8.7 dB); hypothesis 2 CONFIRMED and shipped: no reference
+  monitor — incident power from the source port's own ModeMonitor via modal wave
+  separation (symmetric by construction). Final validation: S21≡S12 within 0.01 dB mean,
+  S11 −34 dB, reciprocal ✓ passive ✓; the validation script now asserts S21/S12 symmetry +
+  reciprocity + passivity.
+- **FINDING F10 (fixed, `4ae1e75`; found BY THE OWNER running example 03a):** `tidy3d.web`
+  is a lazily-imported submodule in tidy3d ≥2.11 — `import tidy3d as td` does NOT provide
+  `td.web`, and the legacy run() used `td.web.run(...)`. **My validation scripts masked the
+  bug** by importing tidy3d.web themselves. Fixed with an explicit import; regression guard
+  runs in a FRESH subprocess (unmaskable) + static ban on the td.web idiom.
+  **BINDING LESSON: validate through the exact artifact users execute (example file, fresh
+  interpreter, their env), never through bespoke scripts sharing session import state.**
+- **EXAMPLE 03a USER-PATH VALIDATED (2026-07-08):** the exact example file, owner's conda
+  env, real cloud: full 4-port × 2-mode matrix (64 entries); crossing physics textbook —
+  S41 thru −0.5…−0.9 dB, crosstalk −34 dB, S11 −24 dB, reciprocal ✓ passive ✓; .dat +
+  plots produced, exit 0. **FC LEDGER: +0.33 ⇒ ≈0.53 spent, ≈9.5 remain (exp 2026-07-22).**
+  03a's legacy `run_time_factor=50` was cut to 10 first (group-index-aware runtime since
+  WP1.5 → 50 would be ~5× cost); measured example estimate 0.332 FC.
+- **Owner-env note (2026-07-08, authorized):** conda env `gdsfactory` → tidy3d 2.11.2 +
+  gdsfactory 9.45 + editable gds_fdtd. Pre-existing `gplugins==1.4.2` (numpy==2.2 pin) and
+  `meow-sim` (tidy3d<2.9 pin) now unsatisfied — flagged to owner; gds_fdtd unaffected.
 - **Every past rename/refactor was abandoned mid-flight** (a `siepic_tidy3d_v2/` directory once
   coexisted with `siepic_tidy3d/`; today's examples import deleted modules). Countermeasure:
   WPs are small, ordered, and each leaves the repo green — plus an examples-import CI check
