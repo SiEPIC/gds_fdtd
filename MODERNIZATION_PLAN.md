@@ -389,6 +389,23 @@ Jul–Aug 2025: 32, then dormant since Sep 2025). Four identities:
   −7 dB when stubs failed to reach PML). Gap closed: `plot_component` now DRAWS the stubs
   (hatched green outlines, `spec` required) so every example geometry plot shows them;
   legend assertion added to its unit test.
+- **OWNER DIRECTIVE BATCH EXECUTED (2026-07-08 pm):** (1) co-author trailers stripped from
+  16 commits (filter-branch, force-pushed) + memory guard; (2) repo root cleaned, showcase
+  images now live in docs/images/ and the README gallery — all REAL solver output; (3) RdBu
+  is the package default (DEFAULT_CMAP + rdbu_colors sampling; all engines' field plots,
+  geometry, sparams, convergence, cross-solver); (4) EVERY example on the modern agnostic
+  API + ONE tech (examples/tech.yaml) — legacy 15-kwarg constructors gone from examples,
+  02b/03b are identical code except the engine string; (5) beamz fully agnostic
+  (auto gf_component via from_gdsfactory, indices via grid.resolve_index) — F13 fixed:
+  get_material no longer requires tidy3d at load time and preserves raw nk/rii hints
+  (goldens regenerated, additive-only); (6) plot_smatrix: noise-floor traces (<-60 dB peak)
+  dropped by default, big legends moved outside, long titles truncated; (7) remote_compute.md
+  beamz-first (Modal GPU without secrets); tech-2.0 scoped as WP6.4.
+  **LIVE VALIDATION of the exact committed files:** 06a beamz end-to-end (zero kwargs,
+  n=3.476/1.444 auto-resolved, thru ≈0 dB, S11 −31…−41 dB); 03a tidy3d end-to-end on the
+  unified tech (0.292 FC billed; first attempt hit a transient 'no internet' WebError —
+  exactly the 7.6.2 retry case; succeeded on retry). 02a validated offline through build
+  (.lsf written). **FC LEDGER: +0.29 ⇒ ≈1.04 spent, ≈8.96 remain (exp 2026-07-22).**
 - **F11 CONFIRMED FIXED IN CI (2026-07-08):** run 28926190430 fully green after the Agg
   conftest — both windows-latest legs pass; only the advisory mypy leg remains non-green
   (allowed-failure by design).
@@ -1557,6 +1574,33 @@ asserted); JSON log smoke test; docs snippets executed in CI.
 > suggest improvements beyond the card's scope.
 
 ---
+
+---
+**WP6.4 [SCOPING → FEATURE] Technology 2.0 — neutral-first material format** (owner request 2026-07-08: "i hate the fact i have a unique technology for tidy3d and lumerical")
+
+*Shipped today (v1, additive):* ONE yaml serves every engine — each material carries a
+neutral `nk` (+ optional `rii:`) alongside `tidy3d_db`/`lum_db` hints; loading no longer
+requires any engine installed (F13) and raw hints stay on the structures for offline
+resolution. `examples/tech.yaml` is the single example technology.
+
+*v2 proposal (schema_version: 2, gated, migration tool required):*
+1. Top-level `materials:` section with NAMED materials; layers reference by name — no more
+   repeating material blocks per layer:
+   ```yaml
+   materials:
+     Si:   {nk: 3.476, rii: {shelf: main, book: Si, page: Li-293},
+            tidy3d: [cSi, Li1993_293K], lumerical: "Si (Silicon) - Palik"}
+     SiO2: {nk: 1.444, lumerical: "SiO2 (Glass) - Palik"}
+   layers:
+     - {layer: [1, 0], z: [0, 0.22], material: Si, sidewall_angle: 85}
+   ```
+2. NEUTRAL-FIRST resolution order everywhere: rii (dispersive, offline) > nk (constant) >
+   per-engine hint; engines may prefer their native hint only for fidelity (tidy3d models),
+   never for availability.
+3. Interop: import a gdsfactory `LayerStack` and/or KLayout `.lyt/.lyp` so foundry PDKs feed
+   the same model; `gds-fdtd convert-tech old.yaml` migrates v1 files.
+*Accept:* golden equivalence v1↔v2 on the three fixtures; every adapter runs from a
+materials-by-name tech with zero per-engine yaml; migration documented.
 
 ## Part 6 — Testing strategy (summary)
 

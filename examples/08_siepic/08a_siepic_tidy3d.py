@@ -15,7 +15,7 @@ from gds_fdtd.spec import SimulationSpec
 
 if __name__ == "__main__":
     here = os.path.dirname(os.path.dirname(__file__))
-    tech = parse_yaml_tech(os.path.join(here, "tech_tidy3d.yaml"))
+    tech = parse_yaml_tech(os.path.join(here, "tech.yaml"))
 
     ly = Layout()
     ly.technology_name = pdk.tech.name

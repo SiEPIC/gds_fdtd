@@ -62,7 +62,7 @@ What it does:
     from gds_fdtd.lyprocessor import load_cell
 
     # Load component and technology
-    tech = parse_yaml_tech("tech_tidy3d.yaml")
+    tech = parse_yaml_tech("tech.yaml")
     cell, layout = load_cell("device.gds", "crossing_te1550")
     component = load_component_from_tech(cell, tech)
 

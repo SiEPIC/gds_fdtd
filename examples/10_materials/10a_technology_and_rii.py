@@ -13,7 +13,7 @@ from gds_fdtd.technology import RiiRef, Technology
 
 if __name__ == "__main__":
     here = os.path.dirname(os.path.dirname(__file__))
-    tech = Technology.from_yaml(os.path.join(here, "tech_tidy3d.yaml"))
+    tech = Technology.from_yaml(os.path.join(here, "tech.yaml"))
     print(f"technology '{tech.name}': {len(tech.device)} device layers, schema v{tech.schema_version}")
     for d in tech.device:
         print(f"  layer {d.layer}: z={d.z_base}..{d.z_base + d.z_span} um, sidewall {d.sidewall_angle} deg")

@@ -13,7 +13,7 @@ from gds_fdtd.spec import SimulationSpec
 
 if __name__ == "__main__":
     here = os.path.dirname(os.path.dirname(__file__))
-    tech = parse_yaml_tech(os.path.join(here, "tech_tidy3d.yaml"))
+    tech = parse_yaml_tech(os.path.join(here, "tech.yaml"))
     cell, layout = load_cell(os.path.join(here, "devices.gds"), top_cell="crossing_te1550")
     component = load_component_from_tech(cell=cell, tech=tech)
 

@@ -16,7 +16,7 @@ if __name__ == "__main__":
     print("registered solvers:", available_solvers())
 
     here = os.path.dirname(os.path.dirname(__file__))
-    tech = parse_yaml_tech(os.path.join(here, "tech_lumerical.yaml"))
+    tech = parse_yaml_tech(os.path.join(here, "tech.yaml"))
     cell, layout = load_cell(os.path.join(here, "devices.gds"), top_cell="crossing_te1550")
     component = load_component_from_tech(cell=cell, tech=tech)
 

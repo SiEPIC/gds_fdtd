@@ -30,7 +30,7 @@ First, load your GDS file and technology definition:
     from gds_fdtd.lyprocessor import load_cell
 
     # Load technology file
-    tech_path = "examples/tech_tidy3d.yaml"
+    tech_path = "examples/tech.yaml"
     technology = parse_yaml_tech(tech_path)
 
     # Load GDS file and extract cell

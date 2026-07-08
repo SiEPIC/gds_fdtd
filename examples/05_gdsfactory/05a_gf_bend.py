@@ -17,7 +17,7 @@ if __name__ == "__main__":
     gf.gpdk.PDK.activate()  # gdsfactory >= 9.44 requires an active PDK
 
     here = os.path.dirname(os.path.dirname(__file__))
-    tech = parse_yaml_tech(os.path.join(here, "tech_lumerical.yaml"))
+    tech = parse_yaml_tech(os.path.join(here, "tech.yaml"))
 
     component = from_gdsfactory(gf.components.bend_circular(), tech)
     print("ports:", [(p.name, p.center, p.direction) for p in component.ports])

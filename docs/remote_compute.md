@@ -15,12 +15,47 @@ gds-fdtd run job.json --out results/
 # results/smatrix.npz  -> SMatrix (load with SMatrix.from_npz)
 ```
 
-- A job file contains **no secrets**. Credentials come from the environment
-  on the machine that runs it: `TIDY3D_API_KEY` for tidy3d, the Lumerical
+- A job file contains **no secrets**. beamz needs none at all; for the
+  commercial engines, credentials come from the environment on the machine
+  that runs the job: `TIDY3D_API_KEY` for tidy3d, the Lumerical
   license/`lumapi` configuration for Lumerical.
 - Ship the referenced GDS + technology YAML with the job (they're paths in
   the JobSpec) or point them at a shared filesystem.
 - Exit codes: 0 ok · 2 invalid · 3 solver unavailable · 4 budget exceeded.
+
+## beamz first
+
+[beamz](https://github.com/beamzorg/beamz) is the engine that makes remote
+compute trivial: Apache-2.0, `pip install gds_fdtd[beamz]`, no license
+server, no API key, and JAX means the SAME job runs on a laptop CPU or a
+cloud GPU. Every snippet below has a beamz variant — just set
+`"solver": "beamz"` in the job and drop the secrets block.
+
+## Modal — beamz on a serverless GPU (no secrets needed)
+
+```python
+import modal
+
+app = modal.App("gds-fdtd-beamz")
+image = (
+    modal.Image.debian_slim(python_version="3.13")
+    .pip_install("gds_fdtd[beamz,gdsfactory]", "jax[cuda12]")
+    .add_local_dir("jobs", remote_path="/jobs")
+)
+
+@app.function(image=image, gpu="T4", timeout=1800)
+def run_job(job_filename: str) -> bytes:
+    import pathlib
+    import subprocess
+
+    subprocess.run(
+        ["gds-fdtd", "run", f"/jobs/{job_filename}", "--out", "/tmp/out"],
+        check=True,
+    )
+    return pathlib.Path("/tmp/out/smatrix.npz").read_bytes()
+
+# sweep: run_job.map(["mesh_6.json", "mesh_8.json", "mesh_10.json"])
+```
 
 ## SLURM (university cluster with a Lumerical license)
 
@@ -40,7 +75,7 @@ gds-fdtd run "$1" --out "results/${SLURM_JOB_ID}"
 
 Submit a sweep: `for j in jobs/*.json; do sbatch run_job.sh "$j"; done`.
 
-## Modal (serverless GPU/CPU)
+## Modal — tidy3d variant (cloud engine, needs the API-key secret)
 
 ```python
 import modal
@@ -66,8 +101,9 @@ def run_job(job_filename: str) -> bytes:
 
 ## AWS Batch (container + job queue)
 
-Container: any image with `pip install gds_fdtd[tidy3d]`;
-entrypoint `gds-fdtd`. Job definition sketch:
+Container: any image with `pip install gds_fdtd[beamz,gdsfactory]`
+(free engine, no secrets) or `gds_fdtd[tidy3d]` (drop in the API-key
+secret shown below); entrypoint `gds-fdtd`. Job definition sketch:
 
 ```json
 {

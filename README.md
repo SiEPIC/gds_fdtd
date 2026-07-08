@@ -10,7 +10,21 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/SiEPIC/gds_fdtd/badge)](https://scorecard.dev/viewer/?uri=github.com/SiEPIC/gds_fdtd)
 
-**gds_fdtd** turns a photonic chip layout (GDS) into ready-to-run 3D FDTD simulations on the engine of your choice, and returns standardized S-parameters. EDA-agnostic on the front (KLayout/SiEPIC, gdsfactory), solver-agnostic on the back — one component, one technology file, any engine.
+**gds_fdtd** turns a photonic chip layout (GDS) into ready-to-run 3D FDTD simulations on the engine of your choice, and returns standardized S-parameters. EDA-agnostic on the front (KLayout/SiEPIC, gdsfactory), solver-agnostic on the back — one component, one technology file, any engine:
+
+```python
+solver = get_solver("tidy3d" | "lumerical" | "beamz")(component, tech, spec)
+smatrix = solver.run()
+```
+
+| | |
+|:---:|:---:|
+| ![crossing field profile](docs/images/crossing_fields_tidy3d.png) | ![crossing S-parameters](docs/images/crossing_sparams.png) |
+| waveguide crossing on **tidy3d** (`examples/03_tidy3d`) | full 4-port × 2-mode S-matrix from the same run |
+| ![geometry with ports and simulation region](docs/images/crossing_geometry.png) | ![cross-solver agreement](docs/images/escalator_cross_solver.png) |
+| every example starts with geometry + ports + FDTD region + port extensions | **tidy3d vs Lumerical** on identical geometry: 0.08 dB worst-pair agreement |
+
+*All images are real solver output produced by the examples as committed.*
 
 ## Features
 
@@ -36,10 +50,10 @@
 | example | shows |
 |---|---|
 | `01_basics/` | GDS -> tidy3d via the modern solver API (offline build, cloud run) |
-| `02_lumerical/`, `03_tidy3d/` | the documented legacy class interface (+ mesh convergence) |
+| `02_lumerical/`, `03_tidy3d/` | the SAME flow on Lumerical / tidy3d — 02b and 03b are identical code except the engine string (+ mesh convergence via `convergence.sweep`) |
 | `04_solvers/` | the engine-agnostic registry (04a); convergence sweeps + job caching (04b); cross-solver validation on recorded real results, runs offline (04c) |
 | `05_gdsfactory/` | gdsfactory >= 9 conversion -> any solver |
-| `06_beamz/` | the open-source zero-cost engine |
+| `06_beamz/` | the open-source zero-cost engine — identical setup, no license, no credits |
 | `07_prefab/` | lithography-predicted geometry ([PreFab](https://github.com/PreFab-Photonics/PreFab)) |
 | `08_siepic/` | SiEPIC EBeam PDK cells on tidy3d / Lumerical |
 | `09_smatrix/` | SMatrix I/O: .dat/Touchstone/HDF5, physics checks, plotting (runs offline on recorded real data) |

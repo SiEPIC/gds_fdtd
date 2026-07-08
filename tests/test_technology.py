@@ -13,8 +13,8 @@ TESTS_DIR = pathlib.Path(__file__).parent
 TECH_FILES = [
     TESTS_DIR / "tech_lumerical.yaml",
     TESTS_DIR / "tech_tidy3d.yaml",
-    TESTS_DIR.parent / "examples" / "tech_lumerical.yaml",
-    TESTS_DIR.parent / "examples" / "tech_tidy3d.yaml",
+    TESTS_DIR / "tech_unified.yaml",
+    TESTS_DIR.parent / "examples" / "tech.yaml",  # ONE tech for every engine
 ]
 
 

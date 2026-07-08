@@ -374,7 +374,7 @@ Load technology files in your simulation scripts:
     from gds_fdtd.core import parse_yaml_tech
 
     # Load technology file
-    tech_path = "examples/tech_tidy3d.yaml"
+    tech_path = "examples/tech.yaml"
     technology = parse_yaml_tech(tech_path)
 
     # Inspect loaded technology

@@ -57,14 +57,21 @@ def plot_smatrix(sm, kind: str = "db", ax=None, paths=None):
         fig = ax.figure
 
     if paths is None:
-        paths = [
-            (sm.port_names[o], sm.port_names[i], mo + 1, mi + 1)
-            for o in range(sm.n_ports)
-            for i in range(sm.n_ports)
-            for mo in range(sm.n_modes)
-            for mi in range(sm.n_modes)
-            if not np.all(np.isnan(sm.s[:, o, i, mo, mi]))
-        ]
+        # default to measured paths that carry signal: entries whose maximum
+        # is below -60 dB are numerical noise and only bury the real traces
+        # (a full 4-port x 2-mode matrix has 64 paths; ~half are noise)
+        paths = []
+        for o in range(sm.n_ports):
+            for i in range(sm.n_ports):
+                for mo in range(sm.n_modes):
+                    for mi in range(sm.n_modes):
+                        col = sm.s[:, o, i, mo, mi]
+                        if np.all(np.isnan(col)):
+                            continue
+                        with np.errstate(divide="ignore", invalid="ignore"):
+                            peak = 10 * np.log10(np.nanmax(np.abs(col)) ** 2)
+                        if peak > -60.0:
+                            paths.append((sm.port_names[o], sm.port_names[i], mo + 1, mi + 1))
 
     wavl = sm.wavelength_um
     trace_colors = rdbu_colors(len(paths))
@@ -86,8 +93,13 @@ def plot_smatrix(sm, kind: str = "db", ax=None, paths=None):
         ax.plot(wavl, y, label=label, color=trace_color)
 
     ax.set_xlabel("Wavelength [µm]")
-    ax.set_title(f"{sm.name} S-parameters")
-    ax.legend(loc="best", fontsize="small")
+    title = sm.name if len(sm.name) <= 40 else sm.name[:37] + "..."
+    ax.set_title(f"{title} S-parameters")
+    if len(paths) > 8:  # keep dense matrices readable: legend outside
+        ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), fontsize="x-small", ncol=2)
+        fig.tight_layout()
+    else:
+        ax.legend(loc="best", fontsize="small")
     return fig, ax
 
 
