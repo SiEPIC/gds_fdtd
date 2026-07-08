@@ -27,7 +27,7 @@ if __name__ == "__main__":
     solver.build()
 
     # THE LINES BELOW SPEND FLEXCREDITS.
-    # smatrix = solver.run()
-    # thru_db = smatrix.magnitude_db(out="opt4", in_="opt1")
-    # crosstalk_db = smatrix.magnitude_db(out="opt2", in_="opt1")
-    # print(f"insertion loss @ center: {thru_db[len(thru_db)//2]:.2f} dB")
+    smatrix = solver.run()
+    thru_db = smatrix.magnitude_db(out="opt4", in_="opt1")
+    crosstalk_db = smatrix.magnitude_db(out="opt2", in_="opt1")
+    print(f"insertion loss @ center: {thru_db[len(thru_db)//2]:.2f} dB")

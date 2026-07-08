@@ -146,3 +146,7 @@ examples/**/*_setup.lsf
 
 # beamz raster cache
 .beamz_cache/
+
+# solver working directories created by running examples from the repo root
+crossing_te1550/
+*_modeler.hdf5
