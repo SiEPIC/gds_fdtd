@@ -44,6 +44,7 @@ dependencies = [
 
 tidy3d      = ["tidy3d>=2.11,<3"]              # enables gds_fdtd.solver_tidy3d (2.8.x is numpy<2/py<=3.12 only; F5)
 gdsfactory  = ["gdsfactory>=9.5.7,<10"]
+beamz       = ["beamz>=0.4.3"]                 # open-source JAX FDTD engine
 prefab      = ["prefab>=1.2.0"]
 siepic      = ["SiEPIC>=0.5.25"]
 

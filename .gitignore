@@ -136,3 +136,13 @@ examples/private/
 
 .vscode/
 bin/act
+
+# generated example outputs
+examples/**/*.s2p
+examples/**/*.h5
+examples/**/*.png
+examples/**/*.fsp
+examples/**/*_setup.lsf
+
+# beamz raster cache
+.beamz_cache/

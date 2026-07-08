@@ -9,15 +9,38 @@
 [![Python](https://img.shields.io/pypi/pyversions/gds_fdtd)](https://pypi.org/project/gds-fdtd/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**gds_fdtd** is a minimal Python module to assist in setting up FDTD simulations for planar nanophotonic devices using FDTD solvers such as Tidy3D.
+**gds_fdtd** turns a photonic chip layout (GDS) into ready-to-run 3D FDTD simulations on the engine of your choice, and returns standardized S-parameters. EDA-agnostic on the front (KLayout/SiEPIC, gdsfactory), solver-agnostic on the back — one component, one technology file, any engine.
 
 ## Features
 
-- **Automated FDTD Setup:** Easily set up Lumerical and Tidy3D simulations for devices designed in GDS.
-- **Integration with SiEPIC:** Generate FDTD simulations directly from components defined in [SiEPIC](https://github.com/SiEPIC/SiEPIC-Tools) EDA and it's associated PDKs (e.g., [SiEPIC-EBeam-PDK](https://github.com/SiEPIC/SiEPIC_EBeam_PDK)).
-- **Integration with gdsfactory:** Generate Tidy3D simulations directly from [gdsfactory](https://github.com/gdsfactory/gdsfactory) designs by identifying ports and simulation regions from an input technology stack.
-- **S-Parameter Extraction:** Automatically generate and export S-parameters of your photonic devices in standard formats.
-- **Multimode/Dual Polarization Simulations:** Set up simulations that support multimode or dual polarization configurations for device analysis.
+- **Solver-agnostic engine registry:** `get_solver("tidy3d" | "lumerical" | "beamz")` — identical `(component, technology, SimulationSpec)` in, identical `SMatrix` out. Third-party engines plug in via entry points. `validate()`/`build()`/`estimate()` are always offline and free; only `run()` spends credits/licenses/compute.
+- **Layout ingestion:** raw GDS via KLayout with SiEPIC pin/devrec conventions, [SiEPIC](https://github.com/SiEPIC/SiEPIC-Tools) PDK cells, and [gdsfactory](https://github.com/gdsfactory/gdsfactory) (>= 9) components — ports auto-detected, never hand-placed.
+- **Validated technology files:** the layer stack is a pydantic-validated YAML (bad files fail with the offending key named). Materials can carry per-solver entries or a neutral [refractiveindex.info](https://refractiveindex.info) reference (`rii: {shelf, book, page}`), resolved offline from a local database copy.
+- **Canonical S-matrix:** one `SMatrix` type with NaN-aware partial matrices, reciprocity/passivity/power-balance checks, and I/O to Lumerical INTERCONNECT `.dat`, Touchstone `.sNp` (scikit-rf compatible), HDF5/npz, plus plotting.
+- **Cross-validated engines:** the tidy3d (>= 2.11, cloud) and Lumerical (2024/2025, local) adapters were validated live against each other on identical geometry (< 0.15 dB agreement, locked into CI via recorded artifacts). [beamz](https://github.com/beamzorg/beamz) provides a fully open-source, zero-cost local engine (JAX, CPU/GPU).
+- **Multimode/dual-polarization** simulations on the engines that support them (tidy3d, Lumerical).
+
+## Supported solvers
+
+| engine | execution | cost | install |
+|---|---|---|---|
+| [Tidy3D](https://github.com/flexcompute/tidy3d) >= 2.11 | cloud | FlexCredits | `pip install gds_fdtd[tidy3d]` |
+| Ansys Lumerical FDTD 2024/2025 | local | license | Lumerical install + `lumapi` on path |
+| [beamz](https://github.com/beamzorg/beamz) >= 0.4 | local (JAX, CPU/GPU) | free | `pip install gds_fdtd[beamz]` |
+
+## Examples
+
+| example | shows |
+|---|---|
+| `01_basics/` | GDS -> tidy3d via the modern solver API (offline build, cloud run) |
+| `02_lumerical/`, `03_tidy3d/` | the documented legacy class interface (+ mesh convergence) |
+| `04_solvers/` | the engine-agnostic registry: one component, any solver |
+| `05_gdsfactory/` | gdsfactory >= 9 conversion -> any solver |
+| `06_beamz/` | the open-source zero-cost engine |
+| `07_prefab/` | lithography-predicted geometry ([PreFab](https://github.com/PreFab-Photonics/PreFab)) |
+| `08_siepic/` | SiEPIC EBeam PDK cells on tidy3d / Lumerical |
+| `09_smatrix/` | SMatrix I/O: .dat/Touchstone/HDF5, physics checks, plotting (runs offline on recorded real data) |
+| `10_materials/` | validated technology YAML + refractiveindex.info materials |
 
 ## Installation
 
@@ -61,11 +84,14 @@ pip install -e .[dev]
 
 | extra      | purpose                        | install command                             |
 |------------|--------------------------------|---------------------------------------------|
-| siepic     | [SiEPIC](https://github.com/SiEPIC/SiEPIC-Tools) EDA support            | `pip install -e .[siepic]`                  |
-| tidy3d     | [Tidy3D](https://github.com/flexcompute/tidy3d) simulation support      | `pip install -e .[tidy3d]`                  |
-| gdsfactory | [GDSFactory](https://github.com/gdsfactory/gdsfactory) EDA support         | `pip install -e .[gdsfactory]`              |
-| prefab     | [PreFab](https://github.com/PreFab-Photonics/PreFab) lithography prediction support      | `pip install -e .[prefab]`                  |
-| everything | dev tools + all plugins        | `pip install -e .[dev,tidy3d,gdsfactory,prefab,siepic]`   |
+| tidy3d     | [Tidy3D](https://github.com/flexcompute/tidy3d) cloud solver (>= 2.11)   | `pip install -e .[tidy3d]`                  |
+| beamz      | [beamz](https://github.com/beamzorg/beamz) open-source JAX solver        | `pip install -e .[beamz]`                   |
+| gdsfactory | [GDSFactory](https://github.com/gdsfactory/gdsfactory) (>= 9) EDA support | `pip install -e .[gdsfactory]`              |
+| siepic     | [SiEPIC](https://github.com/SiEPIC/SiEPIC-Tools) EDA support             | `pip install -e .[siepic]`                  |
+| prefab     | [PreFab](https://github.com/PreFab-Photonics/PreFab) lithography prediction | `pip install -e .[prefab]`                |
+| everything | dev tools + all plugins        | `pip install -e .[dev,tidy3d,beamz,gdsfactory,prefab,siepic]` |
+
+(Lumerical needs no extra: the adapter finds `lumapi` from the local installation.)
 
 ### Requirements
 
