@@ -51,7 +51,11 @@ Commits are local only — nothing pushed without the user's say-so.
 | WP2.1 | ✅ done | `dfa4b9b` | src/ layout; geometry.py with Port/Structure/Region/Component/LayoutSource; core.py = PEP 562 deprecation shim + technology + legacy sparams; test_core aliases new names (950-line body untouched); goldens unchanged |
 | WP2.2 | ✅ done | `7bb9bc9` | pydantic Technology/MaterialSpec/RiiRef/BackgroundLayer/DeviceLayer; parse_yaml_tech routes through model (goldens prove parser equivalence); **rii support** (owner req): `materials/rii.py` offline reader (tabulated nk/n/k + Sellmeier 1/2, GDS_FDTD_RII_DB env), committed Si fixture, n(1.55)=3.476 acceptance ✓; pydantic>=2.7 now core dep |
 | WP2.3 | ✅ done | `d88aff8` | flat role-tagged structures; nested input warns+flattens; type(s)==list eradicated; E721 un-ignored. **FINDING F4:** tests/tech_*.yaml declared SiN on [4,0] but the escalator GDS draws it on **(1,5)** — layer never loaded and old goldens prove opt2 was CLAIMED BY THE SUPERSTRATE (h=3.0). Fixtures corrected to [1,5]; goldens regenerated with full justification in the commit (crossing/DC geometry byte-identical). "Subtrate" typo fixed at source |
-| **Next** | | | **WP2.4a–d SMatrix** (four sub-PRs per the split mandate), then Phase 3 |
+| WP2.4a | ✅ done | `041c018` | SMatrix (F,P,P,M,M) complex + NaN partials; from_entries; sel/magnitude_db; reciprocity/passivity/power-balance; npz + lazy-h5py hdf5 I/O |
+| WP2.4b | ✅ done | `c428182` | sparameters.to_smatrix(); SMatrix.to_dat/from_dat via WP1.6 writer/parser. **Deviation D6:** core.sparam/s_parameters not deleted (dead legacy, used by nothing internal) — they go with the v1.0 shim removal |
+| WP2.4c | ✅ done | `6edfd3d` | Touchstone v1 .sNp export; (port,mode) flattened port-major (convention in file header); 2-port S11 S21 S12 S22 quirk + N>2 freq+first-row layout; skrf read-back validation (skrf is a test-env-only dep, not in pyproject) |
+| WP2.4d | ✅ done | `5b33799` | plotting.plot_smatrix (db/linear/phase, unwrapped phase, lazy matplotlib) |
+| **Phase 2** | **✅ COMPLETE** | — | 138 tests green. **Next: Phase 3 (WP3.1a–e Solver ABC split mandate: spec.py → base+FakeSolver → port tidy3d → port lumerical → registry+shims), then WP3.2** |
 
 **WP0.2 execution notes for successors:** `dev` is an *extra*, not a PEP 735 group — CI must
 `uv sync --locked --extra dev` (plain `uv sync` gives no pytest). The old
