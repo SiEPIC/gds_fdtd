@@ -93,6 +93,25 @@ packages = ["src/gds_fdtd"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
+markers = [
+  "physics: runs a real solver engine locally (beamz) - slow but free",
+  "gpu: requires a CUDA GPU",
+  "cloud: spends cloud credits (tidy3d FlexCredits)",
+  "licensed: needs a Lumerical license + lumapi",
+  "slow: long-running (>30 s)",
+]
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+# measured honest branch coverage 2026-07-08: 53% (base profile,
+# `pytest --cov=gds_fdtd --cov-branch tests`); set 1 point under for
+# cross-platform variance. Ratchet +1 per release toward 92, never down.
+fail_under = 52
+exclude_also = [
+  "pragma: no cover - requires (license|cloud|gpu)",
+]
 filterwarnings = [
   "error::DeprecationWarning:gds_fdtd.*",
 ]

@@ -1,0 +1,31 @@
+name: lower-bounds
+
+# WP7.1.6: weekly resolution at the LOWEST declared dependency floors —
+# catches "works only on the latest deps" rot that the locked matrix
+# cannot see. Manual dispatch for pre-release checks.
+
+on:
+  schedule:
+    - cron: "17 6 * * 1" # Mondays 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lowest-direct:
+    name: test (py3.11, lowest-direct floors)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0 # hatch-vcs needs tags
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          python-version: "3.11"
+      - name: Install at dependency floors
+        run: |
+          uv venv
+          uv pip install --resolution lowest-direct -e ".[dev]"
+      - name: Run tests
+        run: uv run --no-sync pytest -m "not physics and not gpu and not cloud and not licensed" tests
