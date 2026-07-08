@@ -5,24 +5,26 @@ Unit tests for gds_fdtd.core.
 @author: Mustafa Hammood, 2025
 """
 
-import sys
-import pytest
 import logging
-import numpy as np
-from types import SimpleNamespace
-from typing import Dict, List, Tuple, Any, Optional, Union
+import sys
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
+
+import numpy as np
+import pytest
+
 from gds_fdtd.core import (
-    is_point_inside_polygon,
-    layout,
     calculate_polygon_extension,
-    port,
-    structure,
     component,
     initialize_ports_z,
-    sparam,
-    s_parameters,
+    is_point_inside_polygon,
+    layout,
     parse_yaml_tech,
+    port,
+    s_parameters,
+    sparam,
+    structure,
 )
 from gds_fdtd.core import region as Region  # <-- alias
 
@@ -33,9 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
-def response_is_point_inside_polygon() -> (
-    Dict[str, Union[List[float], List[List[float]]]]
-):
+def response_is_point_inside_polygon() -> dict[str, list[float] | list[list[float]]]:
     """
     Sample pytest fixture that returns a point and polygon.
 
@@ -49,9 +49,7 @@ def response_is_point_inside_polygon() -> (
 
 
 @pytest.fixture
-def response_is_point_outside_polygon() -> (
-    Dict[str, Union[List[float], List[List[float]]]]
-):
+def response_is_point_outside_polygon() -> dict[str, list[float] | list[list[float]]]:
     """
     Sample pytest fixture that returns a point outside a polygon.
 
@@ -65,7 +63,7 @@ def response_is_point_outside_polygon() -> (
 
 
 def test_is_point_inside_polygon(
-    response_is_point_inside_polygon: Dict[str, Any],
+    response_is_point_inside_polygon: dict[str, Any],
 ) -> None:
     """
     Verify that a point inside a polygon is correctly identified.
@@ -80,7 +78,7 @@ def test_is_point_inside_polygon(
 
 
 def test_is_point_outside_polygon(
-    response_is_point_outside_polygon: Dict[str, Any],
+    response_is_point_outside_polygon: dict[str, Any],
 ) -> None:
     """
     Verify that a point outside a polygon is correctly identified.
@@ -118,7 +116,7 @@ def test_layout_dbu_property(dummy_layout: layout) -> None:
     Args:
         dummy_layout: A fixture providing a layout instance.
     """
-    logger.info(f"Testing layout.dbu property, expected value: 1e-3")
+    logger.info("Testing layout.dbu property, expected value: 1e-3")
     assert dummy_layout.dbu == pytest.approx(1e-3)
 
 
@@ -147,7 +145,7 @@ def test_layout_dbu_property(dummy_layout: layout) -> None:
     ],
 )
 def test_calculate_polygon_extension_default_buffer(
-    direction: int, expected: List[List[float]]
+    direction: int, expected: list[list[float]]
 ) -> None:
     """
     Test polygon extension calculation with default buffer value.
@@ -156,7 +154,7 @@ def test_calculate_polygon_extension_default_buffer(
         direction: Port direction in degrees (0, 90, 180, 270).
         expected: Expected polygon coordinates.
     """
-    center: List[float] = [0, 0]
+    center: list[float] = [0, 0]
     width: float = 2
     logger.info(f"Testing polygon extension with direction {direction}°")
     result = calculate_polygon_extension(center, width, direction)
@@ -165,7 +163,7 @@ def test_calculate_polygon_extension_default_buffer(
 
 def test_calculate_polygon_extension_custom_buffer() -> None:
     """Test polygon extension calculation with a custom buffer value."""
-    center: List[float] = [5, 5]
+    center: list[float] = [5, 5]
     width: float = 3
     direction: int = 0
     buffer: float = 2
@@ -234,7 +232,7 @@ def dummy_structure() -> structure:
         A structure instance with predefined parameters.
     """
     logger.debug("Creating dummy structure 'wg'")
-    poly: List[List[float]] = [[0, 0], [10, 0], [10, 5], [0, 5]]
+    poly: list[list[float]] = [[0, 0], [10, 0], [10, 5], [0, 5]]
     return structure("wg", poly, z_base=0, z_span=2, material="SiO2")
 
 
@@ -254,6 +252,7 @@ def test_structure_attrs(dummy_structure: structure) -> None:
     assert s.sidewall_angle == 90.0
     # polygon equivalence without relying on ordering mutations
     assert set(map(tuple, s.polygon)) == {(0, 0), (10, 0), (10, 5), (0, 5)}
+
 
 # ---------- port ---------------------------------------------------------
 
@@ -326,7 +325,7 @@ def test_port_idx(name: str, expected: int) -> None:
     ],
 )
 def test_polygon_extension_consistency(
-    center: List[float], width: float, direction: int, buffer: float
+    center: list[float], width: float, direction: int, buffer: float
 ) -> None:
     """
     Test consistency between port.polygon_extension and calculate_polygon_extension.
@@ -367,7 +366,7 @@ def default_structure() -> structure:
     """
     logger.debug("Creating default structure")
     # simple 10 µm × 5 µm rectangle, vertical sidewalls
-    poly: List[List[float]] = [[0, 0], [10, 0], [10, 5], [0, 5]]
+    poly: list[list[float]] = [[0, 0], [10, 0], [10, 5], [0, 5]]
     return structure("wg", poly, z_base=0.0, z_span=2.0, material="SiO2")
 
 
@@ -393,10 +392,8 @@ def test_structure_attributes(default_structure: structure) -> None:
 def test_structure_custom_sidewall() -> None:
     """Test structure creation with custom sidewall angle."""
     logger.info("Testing structure with custom sidewall angle")
-    poly: List[List[float]] = [[0, 0], [1, 0], [1, 1], [0, 1]]
-    s = structure(
-        "taper", poly, z_base=1.0, z_span=0.5, material="Si", sidewall_angle=80.0
-    )
+    poly: list[list[float]] = [[0, 0], [1, 0], [1, 1], [0, 1]]
+    s = structure("taper", poly, z_base=1.0, z_span=0.5, material="Si", sidewall_angle=80.0)
     assert s.sidewall_angle == 80.0
 
 
@@ -407,7 +404,7 @@ def test_structure_custom_sidewall() -> None:
 
 def make_square(
     side: float = 4,
-    centre: Tuple[float, float] = (0, 0),
+    centre: tuple[float, float] = (0, 0),
     z_base: float = 0.0,
     z_span: float = 2.0,
     mat: str = "Si",
@@ -428,7 +425,7 @@ def make_square(
     logger.debug(f"Creating square structure with side={side}, centre={centre}")
     cx, cy = centre
     h = side / 2
-    poly: List[List[float]] = [
+    poly: list[list[float]] = [
         [cx - h, cy - h],
         [cx + h, cy - h],
         [cx + h, cy + h],
@@ -440,7 +437,7 @@ def make_square(
 # We need a double‑nested list because the production code
 # treats `[struct]` as a *region* (cladding hack).
 @pytest.fixture
-def region() -> List[List[structure]]:
+def region() -> list[list[structure]]:
     """
     Create a region (nested list of structures) for testing.
 
@@ -480,9 +477,7 @@ def p_outside() -> port:
 # ------------------------------------------------------------------------------
 
 
-def test_initialize_ports_sets_attributes(
-    region: List[List[structure]], p_inside: port
-) -> None:
+def test_initialize_ports_sets_attributes(region: list[list[structure]], p_inside: port) -> None:
     """
     Test that initialize_ports_z correctly sets port attributes.
 
@@ -500,7 +495,7 @@ def test_initialize_ports_sets_attributes(
 
 
 def test_initialize_ports_warns_for_unmatched(
-    region: List[List[structure]], p_outside: port, caplog: pytest.LogCaptureFixture
+    region: list[list[structure]], p_outside: port, caplog: pytest.LogCaptureFixture
 ) -> None:
     """
     Test that initialize_ports_z warns for ports outside any structure.
@@ -524,7 +519,7 @@ def test_initialize_ports_warns_for_unmatched(
 
 
 def test_component_init_calls_initialize(
-    monkeypatch: pytest.MonkeyPatch, region: List[List[structure]], p_inside: port
+    monkeypatch: pytest.MonkeyPatch, region: list[list[structure]], p_inside: port
 ) -> None:
     """
     Test that component.__init__ calls initialize_ports_z.
@@ -536,9 +531,9 @@ def test_component_init_calls_initialize(
     """
     logger.info("Testing component.__init__ calls initialize_ports_z")
     # Spy on initialise‑call count
-    calls: Dict[str, int] = {"n": 0}
+    calls: dict[str, int] = {"n": 0}
 
-    def spy(ports: List[port], structures: List[List[structure]]) -> None:
+    def spy(ports: list[port], structures: list[list[structure]]) -> None:
         calls["n"] += 1
         initialize_ports_z(ports, structures)  # keep behaviour
 
@@ -577,8 +572,8 @@ class _DummyCell:
 
 class _DummyLayout:
     def __init__(self) -> None:
-        self.dbu: Optional[float] = None
-        self._cells: List[_DummyCell] = []
+        self.dbu: float | None = None
+        self._cells: list[_DummyCell] = []
 
     def create_cell(self, _name: str) -> _DummyCell:
         cell = _DummyCell()
@@ -602,7 +597,7 @@ class _DummyLayerInfo:
 def test_export_gds_creates_file(
     tmp_path: pytest.TempPathFactory,
     monkeypatch: pytest.MonkeyPatch,
-    region: List[List[structure]],
+    region: list[list[structure]],
 ) -> None:
     """
     Test that component.export_gds creates a GDS file.
@@ -916,7 +911,7 @@ technology:
 # ----------------------------------------------------------------------
 
 
-def _common_assertions(parsed: Dict[str, Any]) -> None:
+def _common_assertions(parsed: dict[str, Any]) -> None:
     """Checks common to both formats."""
     assert parsed["name"] == "EBeam"
     assert parsed["substrate"][0]["z_span"] == -2

@@ -4,16 +4,22 @@ gds_fdtd simulation toolbox.
 FDTD solver module.
 @author: Mustafa Hammood, 2025
 """
+
 import os
-from pathlib import Path
-import numpy as np
-import matplotlib.pyplot as plt
-import re
-from datetime import datetime
-from gds_fdtd.core import component, port, technology
-from gds_fdtd.sparams import sparameters
-from gds_fdtd.logging_config import setup_logging, get_logger, log_separator, log_dict, log_simulation_start
 from abc import abstractmethod
+from datetime import datetime
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+
+from gds_fdtd.core import component, port, technology
+from gds_fdtd.logging_config import (
+    get_logger,
+    log_dict,
+    log_separator,
+    setup_logging,
+)
+from gds_fdtd.sparams import sparameters
 
 
 class fdtd_port:
@@ -73,11 +79,11 @@ class fdtd_field_monitor:
         self.field_data = None
         self.freq_data = None
         self.logger = logger or get_logger(__name__)
-        
+
     def set_field_data(self, field_data, freq_data=None):
         """
         Set field data for this monitor.
-        
+
         Args:
             field_data: Field data from simulation results
             freq_data: Frequency data associated with field data
@@ -85,15 +91,15 @@ class fdtd_field_monitor:
         self.field_data = field_data
         self.freq_data = freq_data
         self.logger.debug(f"Field data set for monitor {self.name}")
-        
+
     def has_data(self):
         """Check if monitor has field data."""
         return self.field_data is not None
-        
-    def visualize(self, freq=None, field_component='E', figsize=(12, 8)):
+
+    def visualize(self, freq=None, field_component="E", figsize=(12, 8)):
         """
         Visualize the field monitor data.
-        
+
         Args:
             freq: Frequency to visualize (if None, uses first available)
             field_component: Field component to visualize ('E', 'H', 'Ex', 'Ey', 'Ez', etc.)
@@ -103,60 +109,72 @@ class fdtd_field_monitor:
             self.logger.warning(f"No field data available for monitor {self.name}")
             print(f"No field data available for monitor {self.name}")
             return
-            
+
         self.logger.info(f"Visualizing field monitor {self.name} - {field_component} component")
-        
+
         try:
             self._create_field_plots(freq, field_component, figsize)
         except Exception as e:
             self.logger.error(f"Error visualizing field monitor {self.name}: {e}")
             print(f"Error visualizing field monitor {self.name}: {e}")
-            
+
     def _create_field_plots(self, freq, field_component, figsize):
         """Create field visualization plots."""
         # This will be overridden by solver-specific implementations
         fig, axes = plt.subplots(2, 2, figsize=figsize)
-        fig.suptitle(f'Field Monitor: {self.name} ({self.monitor_type}-axis)')
-        
+        fig.suptitle(f"Field Monitor: {self.name} ({self.monitor_type}-axis)")
+
         # Plot field components
-        field_components = ['Ex', 'Ey', 'Ez'] if field_component == 'E' else [field_component]
-        
-        for i, component in enumerate(field_components[:3]):
+        field_components = ["Ex", "Ey", "Ez"] if field_component == "E" else [field_component]
+
+        for i, field_name in enumerate(field_components[:3]):
             if i < 3:
-                ax = axes[i//2, i%2]
-                self._plot_field_component(ax, component, freq)
-                
+                ax = axes[i // 2, i % 2]
+                self._plot_field_component(ax, field_name, freq)
+
         # Plot field magnitude
         ax = axes[1, 1]
         self._plot_field_magnitude(ax, freq)
-        
+
         plt.tight_layout()
         plt.show()
-        
+
     def _plot_field_component(self, ax, component, freq):
         """Plot individual field component - to be implemented by subclasses."""
-        ax.text(0.5, 0.5, f'{component} field\n(Implementation needed)', 
-                ha='center', va='center', transform=ax.transAxes)
-        ax.set_title(f'{component} field')
-        
+        ax.text(
+            0.5,
+            0.5,
+            f"{component} field\n(Implementation needed)",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
+        )
+        ax.set_title(f"{component} field")
+
     def _plot_field_magnitude(self, ax, freq):
         """Plot field magnitude - to be implemented by subclasses."""
-        ax.text(0.5, 0.5, f'|E| magnitude\n(Implementation needed)', 
-                ha='center', va='center', transform=ax.transAxes)
-        ax.set_title('|E| magnitude')
-        
+        ax.text(
+            0.5,
+            0.5,
+            "|E| magnitude\n(Implementation needed)",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
+        )
+        ax.set_title("|E| magnitude")
+
     def get_field_info(self):
         """Get information about the field data."""
         if not self.has_data():
             return "No field data available"
-            
+
         info = f"Field Monitor: {self.name}\n"
         info += f"Type: {self.monitor_type}-axis\n"
         info += f"Has data: {self.has_data()}\n"
-        
+
         if self.freq_data is not None:
             info += f"Frequencies: {len(self.freq_data)} points\n"
-            
+
         return info
 
 
@@ -258,23 +276,23 @@ class fdtd_solver:
         # Create component-specific working directory under the base working directory
         self.component_working_dir = os.path.join(self.working_dir, self.component.name)
         Path(self.component_working_dir).mkdir(parents=True, exist_ok=True)
-        
+
         # Update working_dir to point to the component-specific directory for file operations
         self.working_dir = self.component_working_dir
-        
+
         # Setup logging for this solver instance
         self.logger = setup_logging(self.working_dir, self.component.name)
         self.logger.info(f"FDTD working directory: {os.path.abspath(self.component_working_dir)}")
-        
+
         # Log solver initialization
         solver_config = {
-            'solver_type': self.__class__.__name__,
-            'component': self.component.name,
-            'wavelength_range': f"{wavelength_start} - {wavelength_end} um",
-            'wavelength_points': wavelength_points,
-            'mesh': mesh,
-            'modes': modes,
-            'field_monitors': field_monitors,
+            "solver_type": self.__class__.__name__,
+            "component": self.component.name,
+            "wavelength_range": f"{wavelength_start} - {wavelength_end} um",
+            "wavelength_points": wavelength_points,
+            "mesh": mesh,
+            "modes": modes,
+            "field_monitors": field_monitors,
         }
         log_dict(self.logger, solver_config, "Solver Configuration")
 
@@ -286,44 +304,44 @@ class fdtd_solver:
 
         self.field_monitors_objs = []
         self._sparameters = None
-        
+
         # Log field monitor objects creation
         if self.field_monitors:
             self.logger.debug(f"Field monitors requested: {self.field_monitors}")
-            
+
     def create_field_monitor_object(self, name: str, monitor_type: str):
         """Create a field monitor object with logging."""
         monitor = fdtd_field_monitor(name, monitor_type, self.logger)
         self.field_monitors_objs.append(monitor)
         self.logger.debug(f"Created field monitor object: {name} ({monitor_type})")
         return monitor
-        
+
     def get_field_monitor(self, name: str):
         """Get field monitor by name."""
         for monitor in self.field_monitors_objs:
             if monitor.name == name:
                 return monitor
         return None
-        
+
     def visualize_all_field_monitors(self, freq=None):
         """Visualize all field monitors that have data."""
         self.logger.info("Starting field monitor visualization")
-        
+
         if not self.field_monitors_objs:
             self.logger.warning("No field monitor objects available")
             print("No field monitor objects available")
             return
-            
+
         monitors_with_data = [m for m in self.field_monitors_objs if m.has_data()]
-        
+
         if not monitors_with_data:
             self.logger.warning("No field monitors have data available")
             print("No field monitors have data available")
             print("Run solver.run() first to generate field data")
             return
-            
+
         self.logger.info(f"Visualizing {len(monitors_with_data)} field monitors")
-        
+
         for monitor in monitors_with_data:
             monitor.visualize(freq=freq)
 
@@ -332,7 +350,6 @@ class fdtd_solver:
         self._gds_filename = f"{self.component.name}.gds"
         self._gds_filepath = os.path.join(self.working_dir, self._gds_filename)
         self.component.export_gds(export_dir=self.working_dir, buffer=2 * self.buffer)
-
 
     def _calculate_simulation_domain(self):
         """Calculate the simulation domain center and span from the component geometry."""
@@ -350,7 +367,7 @@ class fdtd_solver:
                 c.bounds.y_span + 2 * self.buffer,
                 self.z_max - self.z_min,
             ]
-        except AttributeError:    
+        except AttributeError:
             # Fallback to default values if component doesn't have bbox
             self.center = [0.0, 0.0, (self.z_max + self.z_min) / 2]
             self.span = [5.0, 5.0, self.z_max - self.z_min]
@@ -428,9 +445,7 @@ class fdtd_solver:
                 if hasattr(component_port, "name"):
                     active_port_names.append(component_port.name)
                 else:
-                    raise ValueError(
-                        f"Invalid port object in active_ports list: {component_port}"
-                    )
+                    raise ValueError(f"Invalid port object in active_ports list: {component_port}")
         else:
             # Single component port object (user fed in 1 active port)
             if hasattr(self.port_input, "name"):
@@ -444,7 +459,7 @@ class fdtd_solver:
     def _validate_simulation_parameters(self) -> None:
         """Validate simulation parameters for consistency."""
         self.logger.info("Validating simulation parameters")
-        
+
         # Wavelength validation
         if self.wavelength_start >= self.wavelength_end:
             error_msg = "wavelength_start must be less than wavelength_end"
@@ -454,7 +469,7 @@ class fdtd_solver:
             error_msg = "wavelength_points must be at least 2"
             self.logger.error(error_msg)
             raise ValueError(error_msg)
-            
+
         # Geometry validation
         if self.z_min >= self.z_max:
             error_msg = "z_min must be less than z_max"
@@ -464,29 +479,31 @@ class fdtd_solver:
             error_msg = "width_ports, depth_ports, and buffer must be positive"
             self.logger.error(error_msg)
             raise ValueError(error_msg)
-            
+
         # Mode validation
         if not self.modes or any(m <= 0 for m in self.modes):
             error_msg = "modes must be a non-empty list of positive integers"
             self.logger.error(error_msg)
             raise ValueError(error_msg)
-            
+
         # Mesh validation
         if self.mesh <= 0:
             error_msg = "mesh must be positive"
             self.logger.error(error_msg)
             raise ValueError(error_msg)
-            
+
         self.logger.info("Simulation parameters validated successfully")
         print("Simulation parameters validated successfully")
 
-    def _calculate_simulation_time(self, max_dimension: float, max_group_index: float = 4.5) -> float:
+    def _calculate_simulation_time(
+        self, max_dimension: float, max_group_index: float = 4.5
+    ) -> float:
         """Calculate appropriate simulation time based on geometry and materials.
-        
+
         Args:
             max_dimension: Maximum dimension of the simulation domain in meters
             max_group_index: Maximum group index of materials in the simulation
-            
+
         Returns:
             Simulation time in seconds
         """
@@ -498,33 +515,33 @@ class fdtd_solver:
     def _print_simulation_summary(self) -> None:
         """Print and log a summary of the simulation configuration."""
         log_separator(self.logger, "FDTD SIMULATION SUMMARY")
-        
+
         # Log detailed configuration
         summary_data = {
-            'Component': self.component.name,
-            'Technology': getattr(self.tech, 'name', 'Custom'),
-            'Solver type': self.__class__.__name__,
-            'Working directory': self.working_dir,
-            'Wavelength range': f"{self.wavelength_start} - {self.wavelength_end} μm",
-            'Wavelength points': self.wavelength_points,
-            'Simulation domain': f"{self.span[0]:.1f} × {self.span[1]:.1f} × {self.span[2]:.1f} μm",
-            'Domain center': f"({self.center[0]:.1f}, {self.center[1]:.1f}, {self.center[2]:.1f}) μm",
-            'Mesh resolution': f"{self.mesh} cells/wavelength",
-            'Run time factor': self.run_time_factor,
-            'Total ports': len(self.fdtd_ports),
-            'Active ports': len(self._get_active_ports()),
-            'Port dimensions': f"{self.width_ports} × {self.depth_ports} μm",
-            'Modes per port': self.modes,
-            'Boundaries': self.boundary,
-            'Symmetry': self.symmetry,
+            "Component": self.component.name,
+            "Technology": getattr(self.tech, "name", "Custom"),
+            "Solver type": self.__class__.__name__,
+            "Working directory": self.working_dir,
+            "Wavelength range": f"{self.wavelength_start} - {self.wavelength_end} μm",
+            "Wavelength points": self.wavelength_points,
+            "Simulation domain": f"{self.span[0]:.1f} × {self.span[1]:.1f} × {self.span[2]:.1f} μm",
+            "Domain center": f"({self.center[0]:.1f}, {self.center[1]:.1f}, {self.center[2]:.1f}) μm",
+            "Mesh resolution": f"{self.mesh} cells/wavelength",
+            "Run time factor": self.run_time_factor,
+            "Total ports": len(self.fdtd_ports),
+            "Active ports": len(self._get_active_ports()),
+            "Port dimensions": f"{self.width_ports} × {self.depth_ports} μm",
+            "Modes per port": self.modes,
+            "Boundaries": self.boundary,
+            "Symmetry": self.symmetry,
         }
-        
+
         log_dict(self.logger, summary_data, "Simulation Configuration")
-        
+
         # Console output (formatted for readability)
-        print("\n" + "="*60)
-        print(f"FDTD Simulation Summary")
-        print("="*60)
+        print("\n" + "=" * 60)
+        print("FDTD Simulation Summary")
+        print("=" * 60)
         print(f"Component: {self.component.name}")
         print(f"Technology: {getattr(self.tech, 'name', 'Custom')}")
         print(f"Solver type: {self.__class__.__name__}")
@@ -533,8 +550,12 @@ class fdtd_solver:
         print("Simulation Parameters:")
         print(f"  Wavelength range: {self.wavelength_start} - {self.wavelength_end} μm")
         print(f"  Wavelength points: {self.wavelength_points}")
-        print(f"  Simulation domain: {self.span[0]:.1f} × {self.span[1]:.1f} × {self.span[2]:.1f} μm")
-        print(f"  Domain center: ({self.center[0]:.1f}, {self.center[1]:.1f}, {self.center[2]:.1f}) μm")
+        print(
+            f"  Simulation domain: {self.span[0]:.1f} × {self.span[1]:.1f} × {self.span[2]:.1f} μm"
+        )
+        print(
+            f"  Domain center: ({self.center[0]:.1f}, {self.center[1]:.1f}, {self.center[2]:.1f}) μm"
+        )
         print(f"  Mesh resolution: {self.mesh} cells/wavelength")
         print(f"  Run time factor: {self.run_time_factor}")
         print()
@@ -547,7 +568,7 @@ class fdtd_solver:
         print("Boundary Conditions:")
         print(f"  Boundaries: {self.boundary}")
         print(f"  Symmetry: {self.symmetry}")
-        print("="*60 + "\n")
+        print("=" * 60 + "\n")
 
     @property
     def sparameters(self) -> sparameters:
@@ -556,15 +577,17 @@ class fdtd_solver:
             print("S-parameters results not available. Please run the simulation first.")
         return self._sparameters
 
-    def extract_and_save_log(self, log_text: str, mesh_size: int = None, study_type: str = "simulation") -> dict:
+    def extract_and_save_log(
+        self, log_text: str, mesh_size: int = None, study_type: str = "simulation"
+    ) -> dict:
         """
         Extract key metrics from simulation log and save to file.
-        
+
         Args:
             log_text: Raw simulation log text
             mesh_size: Mesh size for filename (optional)
             study_type: Type of study for filename (e.g., "mesh", "width", "depth")
-            
+
         Returns:
             dict: Extracted log metrics
         """
@@ -572,32 +595,34 @@ class fdtd_solver:
             # Create logs directory
             log_dir = os.path.join(self.working_dir, "logs")
             os.makedirs(log_dir, exist_ok=True)
-            
+
             # Generate filename
-            solver_type = self.__class__.__name__.replace('fdtd_solver_', '')
+            solver_type = self.__class__.__name__.replace("fdtd_solver_", "")
             if mesh_size is not None:
-                log_file = os.path.join(log_dir, f"{solver_type}_{study_type}_mesh{mesh_size}_log.txt")
+                log_file = os.path.join(
+                    log_dir, f"{solver_type}_{study_type}_mesh{mesh_size}_log.txt"
+                )
             else:
                 log_file = os.path.join(log_dir, f"{solver_type}_{study_type}_log.txt")
-            
+
             # Save full log to file
-            with open(log_file, 'w') as f:
+            with open(log_file, "w") as f:
                 f.write(f"=== {solver_type.upper()} Simulation Log ===\n")
                 f.write(f"Component: {self.component.name}\n")
                 if mesh_size is not None:
                     f.write(f"Mesh: {mesh_size} cells/λ\n")
                 f.write(f"Study Type: {study_type}\n")
                 f.write(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write("="*60 + "\n\n")
+                f.write("=" * 60 + "\n\n")
                 f.write(log_text)
-            
+
             # Extract metrics using solver-specific method
             log_metrics = self._extract_log_metrics(log_text)
-            log_metrics['log_file'] = log_file
-            
+            log_metrics["log_file"] = log_file
+
             self.logger.info(f"Log saved to: {log_file}")
             return log_metrics
-            
+
         except Exception as e:
             self.logger.error(f"Error extracting/saving log: {str(e)}")
             return {}
@@ -605,24 +630,24 @@ class fdtd_solver:
     def _extract_log_metrics(self, log_text: str) -> dict:
         """
         Extract key metrics from log text. Override in subclasses for solver-specific parsing.
-        
+
         Args:
             log_text: Raw log text
-            
+
         Returns:
             dict: Extracted metrics
         """
         # Base implementation - can be overridden by subclasses
         log_metrics = {
-            'log_length': len(log_text.split('\n')),
-            'timestamp': datetime.now().isoformat()
+            "log_length": len(log_text.split("\n")),
+            "timestamp": datetime.now().isoformat(),
         }
         return log_metrics
 
     def save_log_summary(self, log_metrics_list: list, study_type: str = "convergence"):
         """
         Save a summary of log metrics from multiple simulations.
-        
+
         Args:
             log_metrics_list: List of log metrics dictionaries
             study_type: Type of study for filename
@@ -630,29 +655,29 @@ class fdtd_solver:
         try:
             log_dir = os.path.join(self.working_dir, "logs")
             os.makedirs(log_dir, exist_ok=True)
-            
-            solver_type = self.__class__.__name__.replace('fdtd_solver_', '')
+
+            solver_type = self.__class__.__name__.replace("fdtd_solver_", "")
             summary_file = os.path.join(log_dir, f"{solver_type}_{study_type}_log_summary.txt")
-            
-            with open(summary_file, 'w') as f:
+
+            with open(summary_file, "w") as f:
                 f.write(f"=== {solver_type.upper()} {study_type.title()} Study Log Summary ===\n")
                 f.write(f"Component: {self.component.name}\n")
                 f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write("="*60 + "\n\n")
-                
+                f.write("=" * 60 + "\n\n")
+
                 for i, metrics in enumerate(log_metrics_list):
                     if not metrics:
                         continue
-                        
-                    f.write(f"Simulation {i+1}:\n")
+
+                    f.write(f"Simulation {i + 1}:\n")
                     for key, value in metrics.items():
-                        if key != 'log_file':  # Skip file path in summary
+                        if key != "log_file":  # Skip file path in summary
                             f.write(f"  {key}: {value}\n")
                     f.write("\n")
-            
+
             self.logger.info(f"Log summary saved to: {summary_file}")
             print(f"Log summary saved to: {summary_file}")
-            
+
         except Exception as e:
             self.logger.error(f"Error saving log summary: {str(e)}")
 
@@ -681,4 +706,3 @@ class fdtd_solver:
     def get_log(self) -> None:
         """Get the log of the simulation."""
         pass
-

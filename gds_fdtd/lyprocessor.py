@@ -5,9 +5,11 @@ Layout processing module.
 @author: Mustafa Hammood, 2025
 """
 
-from .core import layout, port, structure, region
 import logging
+
 import klayout.db as pya
+
+from .core import layout, port, region, structure
 
 
 def dilate(vertices, extension=1.0):
@@ -238,7 +240,7 @@ def load_structure(cell, name, layer, z_base, z_span, material, sidewall_angle=9
         s.next()
 
     r.merge()
-    polygons = [p for p in r.each_merged()]
+    polygons = list(r.each_merged())
     polygons_vertices = [
         [[vertex.x * dbu, vertex.y * dbu] for vertex in p.each_point()]
         for p in [p.to_simple_polygon() for p in polygons]
@@ -295,6 +297,7 @@ def load_ports(cell: pya.Cell, layer: list[int, int] = [1, 10]):
     Returns:
         list: List of extracted port objects.
     """
+
     def get_direction(path):
         """Determine orientation of a pin path."""
         if path.points > 2:

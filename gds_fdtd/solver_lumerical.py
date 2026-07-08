@@ -4,12 +4,16 @@ gds_fdtd simulation toolbox.
 Lumerical tools interface module.
 @author: Mustafa Hammood, 2025
 """
+
 import os
 import re
+
 from lumapi import FDTD
-from gds_fdtd.solver import fdtd_solver, fdtd_field_monitor
+
+from gds_fdtd.logging_config import log_simulation_complete, log_simulation_start
+from gds_fdtd.solver import fdtd_solver
 from gds_fdtd.sparams import process_dat
-from gds_fdtd.logging_config import log_simulation_start, log_simulation_complete
+
 
 class fdtd_solver_lumerical(fdtd_solver):
     """
@@ -28,10 +32,10 @@ class fdtd_solver_lumerical(fdtd_solver):
     def setup(self) -> None:
         """Setup the Lumerical simulation."""
         self.logger.info("Starting Lumerical solver setup")
-        
+
         # Validate simulation parameters
         self._validate_simulation_parameters()
-        
+
         # Export GDS with port extensions to working directory
         self._export_gds()
         self.logger.info(f"GDS exported to: {self._gds_filepath}")
@@ -64,7 +68,7 @@ class fdtd_solver_lumerical(fdtd_solver):
 
         # Get the resources used by the simulation
         self.get_resources()
-        
+
         # Print simulation summary
         self._print_simulation_summary()
 
@@ -76,15 +80,15 @@ class fdtd_solver_lumerical(fdtd_solver):
 
         reqs = self.fdtd.getv("reqs")
 
-        memory = reqs['Memory_Recommended']  # in Bytes
-        nodes = reqs['Total_FDTD_Yee_Nodes']  # in MNodes
-        print(f"Memory: {memory/1e9} GB")
+        memory = reqs["Memory_Recommended"]  # in Bytes
+        nodes = reqs["Total_FDTD_Yee_Nodes"]  # in MNodes
+        print(f"Memory: {memory / 1e9} GB")
         print(f"Nodes: {nodes} MNodes")
 
     def run(self) -> None:
         """Run the simulation."""
         log_simulation_start(self.logger, "Lumerical FDTD", self.component.name)
-        
+
         # note: this only works for Lumerical 2024.
         # For Lumerical 2025, Lumerical has changed the syntax for setting GPU.
         # I Don't have a 2025 license, so I can't test it.
@@ -96,7 +100,7 @@ class fdtd_solver_lumerical(fdtd_solver):
         else:
             self.fdtd.setresource("FDTD", "CPU", 1)
             self.logger.info("CPU processing selected")
-            
+
         self.logger.info("Starting S-parameter sweep")
         try:
             self.fdtd.runsweep("sparams")
@@ -131,23 +135,19 @@ class fdtd_solver_lumerical(fdtd_solver):
         # Create S-parameter sweep
         self.fdtd.addsweep(3)  # 3 is s-parameter sweep
         self.fdtd.setsweep("s-parameter sweep", "name", "sparams")
-        self.fdtd.setsweep(
-            "sparams", "Excite all ports", 0
-        )  # We'll manually set active ports
+        self.fdtd.setsweep("sparams", "Excite all ports", 0)  # We'll manually set active ports
 
         # Automatically generate indices based on sorted fdtd_ports and modes
         indices = []
 
-        for i, fdtd_port in enumerate(self.fdtd_ports):
+        for fdtd_port in self.fdtd_ports:
             port_name = fdtd_port.name
 
             # Determine if this port should be active
             is_active = fdtd_port.name in active_port_names
 
             for mode_idx in self.modes:
-                mode_name = (
-                    f"mode {mode_idx}"  # Lumerical uses "mode 1", "mode 2", etc.
-                )
+                mode_name = f"mode {mode_idx}"  # Lumerical uses "mode 1", "mode 2", etc.
 
                 indices.append(
                     {
@@ -161,8 +161,8 @@ class fdtd_solver_lumerical(fdtd_solver):
         while True:
             try:
                 self.fdtd.removesweepparameter("sparams", 1)
-            except Exception as e:
-                print(f"Done removing sweep parameters")
+            except Exception:
+                print("Done removing sweep parameters")
                 break
 
         # Add all port-mode combinations to the sweep
@@ -172,7 +172,7 @@ class fdtd_solver_lumerical(fdtd_solver):
         # Print summary of S-parameter sweep configuration
         active_combinations = [idx for idx in indices if idx["Active"] == 1]
         total_combinations = len(indices)
-        print(f"S-parameter sweep configured:")
+        print("S-parameter sweep configured:")
         print(f"  Total port-mode combinations: {total_combinations}")
         print(f"  Active combinations: {len(active_combinations)}")
         print(f"  Active ports: {active_port_names}")
@@ -192,17 +192,11 @@ class fdtd_solver_lumerical(fdtd_solver):
         """
         self.fdtd.addlayerbuilder()
 
-        self.fdtd.setnamed(
-            "layer group", "x", self.center[0] * 1e-6
-        )  # Convert to meters
+        self.fdtd.setnamed("layer group", "x", self.center[0] * 1e-6)  # Convert to meters
         self.fdtd.setnamed("layer group", "y", self.center[1] * 1e-6)
         self.fdtd.setnamed("layer group", "z", 0)
-        self.fdtd.setnamed(
-            "layer group", "x span", (self.span[0] + 2 * self.buffer) * 1e-6
-        )
-        self.fdtd.setnamed(
-            "layer group", "y span", (self.span[1] + 2 * self.buffer) * 1e-6
-        )
+        self.fdtd.setnamed("layer group", "x span", (self.span[0] + 2 * self.buffer) * 1e-6)
+        self.fdtd.setnamed("layer group", "y span", (self.span[1] + 2 * self.buffer) * 1e-6)
         self.fdtd.setnamed(
             "layer group", "gds position reference", "Centered at custom coordinates"
         )
@@ -246,22 +240,14 @@ class fdtd_solver_lumerical(fdtd_solver):
             # For negative thickness (downward growth), adjust z start position
             if substrate["z_span"] < 0:
                 # For downward growth, set z start to be at the top of the layer
-                z_start_adjusted = (
-                    z_start  # z_base is already at the top for negative growth
-                )
-                self.fdtd.eval(
-                    f'setlayer("substrate", "start position", {z_start_adjusted});'
-                )
+                z_start_adjusted = z_start  # z_base is already at the top for negative growth
+                self.fdtd.eval(f'setlayer("substrate", "start position", {z_start_adjusted});')
 
             if substrate["material"] and "lum_db" in substrate["material"]:
                 material_name = substrate["material"]["lum_db"]["model"]
-                self.fdtd.eval(
-                    f'setlayer("substrate", "background material", "{material_name}");'
-                )
+                self.fdtd.eval(f'setlayer("substrate", "background material", "{material_name}");')
             # Substrate typically covers the entire simulation domain
-            self.fdtd.eval(
-                'setlayer("substrate", "layer number", "");'
-            )  # No specific GDS layer
+            self.fdtd.eval('setlayer("substrate", "layer number", "");')  # No specific GDS layer
 
         # Set up superstrate layer (always add as it's a background layer)
         if tech_dict["superstrate"]:
@@ -270,9 +256,7 @@ class fdtd_solver_lumerical(fdtd_solver):
 
             # Set z start position and thickness
             z_start = superstrate["z_base"] * 1e-6  # Convert to meters
-            thickness = (
-                abs(superstrate["z_span"]) * 1e-6
-            )  # Always positive for superstrate
+            thickness = abs(superstrate["z_span"]) * 1e-6  # Always positive for superstrate
 
             self.fdtd.eval(f'setlayer("superstrate", "start position", {z_start});')
             self.fdtd.eval(f'setlayer("superstrate", "thickness", {thickness});')
@@ -283,9 +267,7 @@ class fdtd_solver_lumerical(fdtd_solver):
                     f'setlayer("superstrate", "background material", "{material_name}");'
                 )
             # Superstrate typically covers the entire simulation domain
-            self.fdtd.eval(
-                'setlayer("superstrate", "layer number", "");'
-            )  # No specific GDS layer
+            self.fdtd.eval('setlayer("superstrate", "layer number", "");')  # No specific GDS layer
 
         # Set up device layers from technology - only if they exist in GDS
         layers_added = 0
@@ -301,20 +283,14 @@ class fdtd_solver_lumerical(fdtd_solver):
 
                 # Set z start position and thickness
                 z_start = device_layer["z_base"] * 1e-6  # Convert to meters
-                thickness = (
-                    abs(device_layer["z_span"]) * 1e-6
-                )  # Always positive thickness
+                thickness = abs(device_layer["z_span"]) * 1e-6  # Always positive thickness
 
-                self.fdtd.eval(
-                    f'setlayer("{layer_name}", "start position", {z_start});'
-                )
+                self.fdtd.eval(f'setlayer("{layer_name}", "start position", {z_start});')
                 self.fdtd.eval(f'setlayer("{layer_name}", "thickness", {thickness});')
 
                 # Set GDS layer mapping
                 layer_spec = f"{gds_layer[0]}:{gds_layer[1]}"
-                self.fdtd.eval(
-                    f'setlayer("{layer_name}", "layer number", "{layer_spec}");'
-                )
+                self.fdtd.eval(f'setlayer("{layer_name}", "layer number", "{layer_spec}");')
 
                 # Set the angle
                 self.fdtd.eval(
@@ -370,14 +346,14 @@ class fdtd_solver_lumerical(fdtd_solver):
         self._setup_ports()
 
     def _setup_wavelength(self) -> None:
-        self.fdtd.setglobalsource("wavelength start", self.wavelength_start*1e-6)
-        self.fdtd.setglobalsource("wavelength stop", self.wavelength_end*1e-6)
+        self.fdtd.setglobalsource("wavelength start", self.wavelength_start * 1e-6)
+        self.fdtd.setglobalsource("wavelength stop", self.wavelength_end * 1e-6)
         self.fdtd.setglobalmonitor("frequency points", self.wavelength_points)
 
     def _setup_field_monitors(self) -> None:
         """Setup the field monitors."""
         self.logger.info(f"Setting up field monitors: {self.field_monitors}")
-        
+
         for m in self.field_monitors:
             if m == "z":
                 self.fdtd.addprofile(
@@ -391,7 +367,7 @@ class fdtd_solver_lumerical(fdtd_solver):
                 self.fdtd.set("y span", self.span[1] * 1e-6)
                 self.create_field_monitor_object(name="profile_z", monitor_type="z")
                 self.logger.debug("Created Z-normal field monitor")
-                
+
             if m == "x":
                 self.fdtd.addprofile(
                     name="profile_x",
@@ -404,7 +380,7 @@ class fdtd_solver_lumerical(fdtd_solver):
                 self.fdtd.set("z span", self.span[2] * 1e-6)
                 self.create_field_monitor_object(name="profile_x", monitor_type="x")
                 self.logger.debug("Created X-normal field monitor")
-                
+
             if m == "y":
                 self.fdtd.addprofile(
                     name="profile_y",
@@ -466,10 +442,10 @@ class fdtd_solver_lumerical(fdtd_solver):
         """Setup the appropriate simulation time span."""
         # Get the maximum dimension in meters
         max_span = max(self.span[0], self.span[1], self.span[2]) * 1e-6
-        
+
         # Use the common time calculation method from base class
         time_span = self._calculate_simulation_time(max_span)
-        
+
         # Set the time span
         self.fdtd.setnamed("FDTD", "simulation time", time_span)
 
@@ -537,7 +513,7 @@ class fdtd_solver_lumerical(fdtd_solver):
     def get_log(self) -> str:
         """Get the log of the simulation."""
         try:
-            if hasattr(self, 'fdtd') and self.fdtd:
+            if hasattr(self, "fdtd") and self.fdtd:
                 # Try to get the log from Lumerical FDTD
                 # Note: This may vary by Lumerical version
                 try:
@@ -565,40 +541,44 @@ class fdtd_solver_lumerical(fdtd_solver):
     def _extract_log_metrics(self, log_text: str) -> dict:
         """
         Extract Lumerical-specific metrics from log text.
-        
+
         Args:
             log_text: Raw Lumerical log text
-            
+
         Returns:
             dict: Extracted metrics specific to Lumerical
         """
         log_metrics = super()._extract_log_metrics(log_text)
-        
+
         try:
             # TODO: Implement Lumerical-specific log parsing
             # This will depend on the actual format of Lumerical logs
             # For now, we'll add basic parsing patterns
-            
+
             # Memory usage
-            memory_match = re.search(r'Memory.*?(\d+\.?\d*)\s*GB', log_text, re.IGNORECASE)
+            memory_match = re.search(r"Memory.*?(\d+\.?\d*)\s*GB", log_text, re.IGNORECASE)
             if memory_match:
-                log_metrics['memory_gb'] = float(memory_match.group(1))
-            
+                log_metrics["memory_gb"] = float(memory_match.group(1))
+
             # Simulation time
-            sim_time_match = re.search(r'simulation time.*?(\d+\.?\d*)\s*s', log_text, re.IGNORECASE)
+            sim_time_match = re.search(
+                r"simulation time.*?(\d+\.?\d*)\s*s", log_text, re.IGNORECASE
+            )
             if sim_time_match:
-                log_metrics['simulation_time'] = float(sim_time_match.group(1))
-            
+                log_metrics["simulation_time"] = float(sim_time_match.group(1))
+
             # Time steps
-            time_steps_match = re.search(r'time steps.*?(\d+)', log_text, re.IGNORECASE)
+            time_steps_match = re.search(r"time steps.*?(\d+)", log_text, re.IGNORECASE)
             if time_steps_match:
-                log_metrics['time_steps'] = int(time_steps_match.group(1))
-            
+                log_metrics["time_steps"] = int(time_steps_match.group(1))
+
             # Note: This is a placeholder implementation
             # Actual Lumerical log format will need to be analyzed for proper parsing
-            log_metrics['note'] = "Lumerical log parsing is placeholder - needs actual log format analysis"
-            
+            log_metrics["note"] = (
+                "Lumerical log parsing is placeholder - needs actual log format analysis"
+            )
+
         except Exception as e:
             self.logger.warning(f"Error extracting Lumerical log metrics: {e}")
-        
+
         return log_metrics

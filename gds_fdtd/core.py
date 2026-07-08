@@ -5,15 +5,17 @@ Core objects module.
 @author: Mustafa Hammood, 2025
 """
 
-import pya
 import logging
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pya
+import yaml
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
-import yaml
 
 c0_um = 299792458000000.0  # speed of light in um/s
+
 
 def is_point_inside_polygon(
     point: list[float, float], polygon_points: list[list[float, float]]
@@ -198,9 +200,7 @@ class port:
         Returns:
             list[list[float, float]]: Polygon extension as a list of [x,y] coordinates.
         """
-        return calculate_polygon_extension(
-            self.center, self.width, self.direction, buffer
-        )
+        return calculate_polygon_extension(self.center, self.width, self.direction, buffer)
 
 
 class structure:
@@ -247,15 +247,15 @@ class structure:
 class region:
     """
     Represents a 3D region defined by a 2D polygon and vertical extent.
-    
+
     This class defines a region with vertices in the x-y plane and a vertical
     extent defined by z_center and z_span.
     """
-    
+
     def __init__(self, vertices: list[list[float]], z_center: float, z_span: float):
         """
         Initialize a region with vertices and vertical dimensions.
-        
+
         Args:
             vertices (list[list[float]]): List of [x,y] coordinates defining the region's polygon.
             z_center (float): Center z-coordinate of the region in microns.
@@ -269,7 +269,7 @@ class region:
     def x(self) -> list[float]:
         """
         Get all x-coordinates of the vertices.
-        
+
         Returns:
             list[float]: List of x-coordinates.
         """
@@ -279,7 +279,7 @@ class region:
     def y(self) -> list[float]:
         """
         Get all y-coordinates of the vertices.
-        
+
         Returns:
             list[float]: List of y-coordinates.
         """
@@ -289,7 +289,7 @@ class region:
     def x_span(self) -> float:
         """
         Calculate the span (width) of the region in the x-direction.
-        
+
         Returns:
             float: Width of the region in microns.
         """
@@ -299,7 +299,7 @@ class region:
     def y_span(self) -> float:
         """
         Calculate the span (height) of the region in the y-direction.
-        
+
         Returns:
             float: Height of the region in microns.
         """
@@ -309,7 +309,7 @@ class region:
     def x_center(self) -> float:
         """
         Calculate the center x-coordinate of the region.
-        
+
         Returns:
             float: Center x-coordinate in microns.
         """
@@ -319,7 +319,7 @@ class region:
     def y_center(self) -> float:
         """
         Calculate the center y-coordinate of the region.
-        
+
         Returns:
             float: Center y-coordinate in microns.
         """
@@ -329,7 +329,7 @@ class region:
     def x_min(self) -> float:
         """
         Get the minimum x-coordinate of the region.
-        
+
         Returns:
             float: Minimum x-coordinate in microns.
         """
@@ -339,7 +339,7 @@ class region:
     def x_max(self) -> float:
         """
         Get the maximum x-coordinate of the region.
-        
+
         Returns:
             float: Maximum x-coordinate in microns.
         """
@@ -349,7 +349,7 @@ class region:
     def y_min(self) -> float:
         """
         Get the minimum y-coordinate of the region.
-        
+
         Returns:
             float: Minimum y-coordinate in microns.
         """
@@ -359,25 +359,24 @@ class region:
     def y_max(self) -> float:
         """
         Get the maximum y-coordinate of the region.
-        
+
         Returns:
             float: Maximum y-coordinate in microns.
         """
         return max(self.y)
 
 
-
 def initialize_ports_z(ports: list["port"], structures: list["structure"]) -> None:
     """
     Initialize the z-coordinate, height, material, and layer of ports based on their position within structures.
-    
+
     This function checks if each port is located within any structure and sets the port's z-coordinate,
     height, material, and layer accordingly.
-    
+
     Args:
         ports (list["port"]): List of port objects to initialize.
         structures (list["structure"]): List of structure objects to check against.
-        
+
     Returns:
         None
     """
@@ -400,22 +399,25 @@ def initialize_ports_z(ports: list["port"], structures: list["structure"]) -> No
                     p.height = s.z_span
                     p.material = s.material
                     p.layer = s.layer  # Store the layer information from the structure
-        if p.height == None:
+        if p.height is None:
             logging.warning(f"Cannot find height for port {p.name}")
     return
+
 
 class component:
     """
     A component consisting of structures, ports, and boundaries.
-    
+
     This class represents a complete photonic component that can be simulated
     or exported to GDS format.
     """
-    
-    def __init__(self, name: str, structures: list[structure], ports: list[port], bounds: list[region]):
+
+    def __init__(
+        self, name: str, structures: list[structure], ports: list[port], bounds: list[region]
+    ):
         """
         Initialize a photonic component.
-        
+
         Args:
             name: The name of the component.
             structures: List of structures (geometries) in the component.
@@ -426,12 +428,16 @@ class component:
         self.structures = structures
         self.ports = ports
         self.bounds = bounds
-        initialize_ports_z(ports = self.ports, structures = self.structures)  # initialize ports z center and z span
+        initialize_ports_z(
+            ports=self.ports, structures=self.structures
+        )  # initialize ports z center and z span
 
-    def export_gds(self, export_dir: str = None, dbu: float = 0.001, layer: list = [1, 0], buffer: float = 1.0) -> None:
+    def export_gds(
+        self, export_dir: str = None, dbu: float = 0.001, layer: list = [1, 0], buffer: float = 1.0
+    ) -> None:
         """
         Export the component to a GDS file.
-        
+
         Args:
             export_dir: Directory to export the GDS file to. Defaults to current working directory.
             dbu: Database unit in microns. Defaults to 0.001 (1 nm).
@@ -439,6 +445,7 @@ class component:
             buffer: Buffer distance to extend ports beyond their bounds in microns. Defaults to 1.0.
         """
         import os
+
         import klayout.db as pya
 
         layout = pya.Layout()
@@ -457,9 +464,9 @@ class component:
                     if layer_key not in created_layers:
                         layer_info = pya.LayerInfo(structure.layer[0], structure.layer[1])
                         created_layers[layer_key] = layout.layer(layer_info)
-                    
+
                     structure_layer_idx = created_layers[layer_key]
-                    
+
                     # Create and insert the polygon
                     pya_polygon = pya.Polygon(
                         [
@@ -474,18 +481,18 @@ class component:
             for port in self.ports:
                 # Use port's layer information if available, otherwise fallback to the layer parameter
                 port_layer = port.layer if port.layer is not None else layer
-                
+
                 # Get or create the layer for this port extension
                 port_layer_key = tuple(port_layer)
                 if port_layer_key not in created_layers:
                     layer_info = pya.LayerInfo(port_layer[0], port_layer[1])
                     created_layers[port_layer_key] = layout.layer(layer_info)
-                
+
                 port_layer_idx = created_layers[port_layer_key]
-                
+
                 # Get the port extension polygon
                 port_extension = port.polygon_extension(buffer=buffer)
-                
+
                 # Convert to KLayout polygon and add to the port's layer
                 pya_port_polygon = pya.Polygon(
                     [
@@ -511,7 +518,7 @@ class s_parameters:
 
     @property
     def S(self):
-        return dict(zip([i.label for i in self._entries], self._entries))
+        return dict(zip([i.label for i in self._entries], self._entries, strict=False))
 
     def add_param(self, sparam):
         self._entries.append(sparam)
@@ -525,7 +532,7 @@ class s_parameters:
 
     def entries_in_ports(self, input_entries=None, idx_in=0, idx_out=0):
         entries = []
-        if input_entries == None:
+        if input_entries is None:
             input_entries = self._entries
 
         for s in input_entries:
@@ -545,6 +552,7 @@ class s_parameters:
         ax.legend()
         fig.show()
         return fig, ax
+
 
 class sparam:
     def __init__(self, idx_in, idx_out, mode_in, mode_out, freq, s):
@@ -568,16 +576,17 @@ class sparam:
         fig.show()
         return fig, ax
 
+
 def parse_yaml_tech(file_path: str) -> dict:
     """
     Legacy function for parsing YAML technology files.
-    
+
     Args:
         file_path (str): Path to the YAML file.
-        
+
     Returns:
         dict: Parsed technology data in dictionary format.
-        
+
     Note:
         This function is deprecated. Use technology.from_yaml() instead.
     """
@@ -588,10 +597,10 @@ def parse_yaml_tech(file_path: str) -> dict:
 class technology:
     """
     Technology class for managing fabrication process definitions.
-    
+
     This class handles technology information including layer definitions,
     material properties, and process parameters from various sources like YAML files.
-    
+
     Attributes:
         name (str): Name of the technology.
         substrate (list): Substrate layer definitions.
@@ -600,11 +609,11 @@ class technology:
         devrec (list): Device recognition layer definitions.
         device (list): Device layer definitions with materials and geometry.
     """
-    
+
     def __init__(self, name: str = "Unknown"):
         """
         Initialize a technology object.
-        
+
         Args:
             name (str): Name of the technology. Defaults to "Unknown".
         """
@@ -614,52 +623,54 @@ class technology:
         self.pinrec = []
         self.devrec = []
         self.device = []
-    
+
     @classmethod
-    def from_yaml(cls, file_path: str) -> 'technology':
+    def from_yaml(cls, file_path: str) -> "technology":
         """
         Create a technology object from a YAML file.
-        
+
         Args:
             file_path (str): Path to the YAML technology file.
-            
+
         Returns:
             technology: Technology object parsed from the YAML file.
         """
-        with open(file_path, "r") as file:
+        with open(file_path) as file:
             data = yaml.safe_load(file)
 
         tech_data = data.get("technology", {})
         tech = cls(name=tech_data.get("name", "Unknown"))
-        
+
         # Parse substrate layer
         substrate = tech_data.get("substrate", {})
         if substrate:
-            tech.substrate.append({
-                "z_base": substrate.get("z_base"),
-                "z_span": substrate.get("z_span"),
-                "material": substrate.get("material"),
-            })
+            tech.substrate.append(
+                {
+                    "z_base": substrate.get("z_base"),
+                    "z_span": substrate.get("z_span"),
+                    "material": substrate.get("material"),
+                }
+            )
 
         # Parse superstrate layer
         superstrate = tech_data.get("superstrate", {})
         if superstrate:
-            tech.superstrate.append({
-                "z_base": superstrate.get("z_base"),
-                "z_span": superstrate.get("z_span"),
-                "material": superstrate.get("material"),
-            })
+            tech.superstrate.append(
+                {
+                    "z_base": superstrate.get("z_base"),
+                    "z_span": superstrate.get("z_span"),
+                    "material": superstrate.get("material"),
+                }
+            )
 
         # Parse pinrec layers
         tech.pinrec = [
-            {"layer": list(pinrec.get("layer"))}
-            for pinrec in tech_data.get("pinrec", [])
+            {"layer": list(pinrec.get("layer"))} for pinrec in tech_data.get("pinrec", [])
         ]
 
         # Parse devrec layers
         tech.devrec = [
-            {"layer": list(devrec.get("layer"))}
-            for devrec in tech_data.get("devrec", [])
+            {"layer": list(devrec.get("layer"))} for devrec in tech_data.get("devrec", [])
         ]
 
         # Parse device layers
@@ -673,13 +684,13 @@ class technology:
             }
             for device in tech_data.get("device", [])
         ]
-        
+
         return tech
-    
+
     def to_dict(self) -> dict:
         """
         Convert the technology object to a dictionary format.
-        
+
         Returns:
             dict: Technology data in dictionary format (compatible with legacy code).
         """
@@ -691,12 +702,18 @@ class technology:
             "devrec": self.devrec,
             "device": self.device,
         }
-    
-    def add_device_layer(self, layer: list[int], z_base: float, z_span: float, 
-                        material: dict, sidewall_angle: float = 90.0) -> None:
+
+    def add_device_layer(
+        self,
+        layer: list[int],
+        z_base: float,
+        z_span: float,
+        material: dict,
+        sidewall_angle: float = 90.0,
+    ) -> None:
         """
         Add a device layer to the technology.
-        
+
         Args:
             layer (list[int]): GDS layer specification as [layer_number, datatype].
             z_base (float): Base z-coordinate of the layer.
@@ -704,21 +721,23 @@ class technology:
             material (dict): Material properties dictionary.
             sidewall_angle (float, optional): Sidewall angle in degrees. Defaults to 90.0.
         """
-        self.device.append({
-            "layer": layer,
-            "z_base": z_base,
-            "z_span": z_span,
-            "material": material,
-            "sidewall_angle": sidewall_angle,
-        })
-    
+        self.device.append(
+            {
+                "layer": layer,
+                "z_base": z_base,
+                "z_span": z_span,
+                "material": material,
+                "sidewall_angle": sidewall_angle,
+            }
+        )
+
     def get_layer_by_gds(self, gds_layer: list[int]) -> dict:
         """
         Get device layer information by GDS layer specification.
-        
+
         Args:
             gds_layer (list[int]): GDS layer specification as [layer_number, datatype].
-            
+
         Returns:
             dict: Device layer information, or None if not found.
         """
@@ -726,7 +745,7 @@ class technology:
             if device["layer"] == gds_layer:
                 return device
         return None
-    
+
     def __repr__(self) -> str:
         """String representation of the technology object."""
         return f"technology(name='{self.name}', devices={len(self.device)} layers)"

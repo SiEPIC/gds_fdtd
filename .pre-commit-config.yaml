@@ -1,0 +1,35 @@
+# Run locally with prek (https://github.com/j178/prek):
+#   uv tool install prek && prek install && prek run --all-files
+# The classic `pre-commit` tool works identically with this config.
+# Hook revs are floors known to exist; run `prek autoupdate` periodically (or let CI advise).
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        # catches stray simulation artifacts (.gds fixtures are ~100 kB; sim outputs are huge)
+        args: ["--maxkb=2048"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+      - id: codespell
+        additional_dependencies: [tomli]
+        exclude: '\.gds$|\.hdf5$|\.dat$|docs/_build/|_autosummary/'
+
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.23
+    hooks:
+      - id: validate-pyproject

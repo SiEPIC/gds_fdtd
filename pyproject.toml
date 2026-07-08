@@ -13,7 +13,7 @@ description     = "Minimalist utilities for photonic FDTD workflows."
 authors         = [{ name = "Mustafa Hammood", email = "mustafa@siepic.com" }]
 license         = { text = "MIT" }
 readme          = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.11,<3.15"
 keywords        = [
   "python", "photonics", "fdtd", "simulation", "optics",
   "eda", "electromagnetics", "gds", "silicon-photonics"
@@ -22,8 +22,9 @@ keywords        = [
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Operating System :: OS Independent",
   "License :: OSI Approved :: MIT License",
 ]
@@ -56,13 +57,17 @@ dev = [
   "pytest-cov>=5.0",
   "coverage",
   "ruff>=0.4.3",
+  "mypy>=1.10",
+]
+
+docs = [
   "sphinx>=7.0",
   "sphinx-rtd-theme>=1.2.0",
   "docutils<0.23",
   "sphinx-toggleprompt>=0.1.0",
   "sphinx-copybutton>=0.5.2",
   "sphinx-design>=0.5.0",
-  "furo>=2024.08.06"
+  "furo>=2024.08.06",
 ]
 
 # ───────────────────────── project links ────────────────────────
@@ -73,7 +78,35 @@ Repository  = "https://github.com/SiEPIC/gds_fdtd"
 
 # ─────────────────────────── tooling ────────────────────────────
 [tool.pytest.ini_options]
-# addopts = "--cov=."  # Disabled - pytest-cov not available
+addopts = "-q"
+filterwarnings = [
+  "error::DeprecationWarning:gds_fdtd.*",
+]
 
-[tool.flake8]
-max-line-length = 88
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+# examples/ are legacy and get rewritten in WP6.1; they join lint scope there.
+extend-exclude = ["examples"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "A", "C4"]
+# Temporary ignores — each is scheduled for a proper fix in MODERNIZATION_PLAN.md.
+# Do NOT silently fix these in unrelated PRs; remove each ignore in its owning WP.
+ignore = [
+  "E501",  # long comments/strings; wrapped progressively as files are touched in Phase 1/2
+  "B006",  # mutable default arguments — fixed properly in WP1.2 (bug B17)
+  "E721",  # type(x) == list checks — the structure-list hack, removed in WP2.3 (bug B19)
+  "E722",  # bare except in solver_lumerical — hardened in WP3.2
+  "B904",  # raise-without-from — exception hierarchy lands in WP7.6
+  "F841",  # unused vars incl. catalogued bugs B8/B11/B13 — fixed in Phase 1, not here
+  "UP031", # %-formatting in .dat writer — rewritten in WP2.4b (numeric behavior risk)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011", "A003"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+check_untyped_defs = true

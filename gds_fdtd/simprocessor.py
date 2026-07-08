@@ -5,38 +5,44 @@ Simulation processing module.
 @author: Mustafa Hammood, 2025
 """
 
+from typing import TYPE_CHECKING
+
 import numpy as np
-from .core import structure, region, port, component
+
+from .core import component, port, region, structure
+
+if TYPE_CHECKING:
+    import gdsfactory as gf
 from .lyprocessor import (
-    load_structure,
-    load_region,
-    load_ports,
-    load_structure_from_bounds,
     dilate,
     dilate_1d,
+    load_ports,
+    load_region,
+    load_structure,
+    load_structure_from_bounds,
 )
 
 
 def get_material(device: dict):
     """
     Load material properties for different solvers.
-    
+
     Args:
         device: Device dictionary containing material specifications
-        
+
     Returns:
         dict: Material dictionary with solver-specific materials
     """
-    material = {'tidy3d': None, 'lum': None}
-    
+    material = {"tidy3d": None, "lum": None}
+
     if "tidy3d_db" in device["material"]:
-        material['tidy3d'] = _load_tidy3d_material(device["material"]["tidy3d_db"])
+        material["tidy3d"] = _load_tidy3d_material(device["material"]["tidy3d_db"])
 
     if "lum_db" in device["material"]:
         # load material from lumerical material database, format: material model name
         if "model" in device["material"]["lum_db"]:
             mat_lum = device["material"]["lum_db"]["model"]
-        material['lum'] = mat_lum
+        material["lum"] = mat_lum
 
     return material
 
@@ -44,18 +50,20 @@ def get_material(device: dict):
 def _load_tidy3d_material(material_spec: dict):
     """
     Load Tidy3D material from specification.
-    
+
     Args:
         material_spec: Material specification dictionary
-        
+
     Returns:
         tidy3d.Medium: Tidy3D material object
     """
     try:
         import tidy3d as td
     except ImportError:
-        raise ImportError("tidy3d is required for Tidy3D material loading. Install with: pip install tidy3d")
-    
+        raise ImportError(
+            "tidy3d is required for Tidy3D material loading. Install with: pip install tidy3d"
+        )
+
     # Handle simple refractive index specification
     if "nk" in material_spec:
         n_value = material_spec["nk"]
@@ -65,8 +73,8 @@ def _load_tidy3d_material(material_spec: dict):
         elif isinstance(n_value, list) and len(n_value) == 2:
             # Complex refractive index [n, k]
             n, k = n_value
-            return td.Medium(permittivity=(n + 1j*k)**2)
-    
+            return td.Medium(permittivity=(n + 1j * k) ** 2)
+
     # Handle material database model specification
     if "model" in material_spec:
         model_spec = material_spec["model"]
@@ -77,7 +85,9 @@ def _load_tidy3d_material(material_spec: dict):
                 return td.material_library[material_name][variant]
             except KeyError:
                 print(f"Warning: Material {material_name}[{variant}] not found in Tidy3D library")
-                print(f"Available variants for {material_name}: {list(td.material_library[material_name].keys()) if material_name in td.material_library else 'Material not found'}")
+                print(
+                    f"Available variants for {material_name}: {list(td.material_library[material_name].keys()) if material_name in td.material_library else 'Material not found'}"
+                )
                 # Fallback to silicon with warning
                 return td.material_library["cSi"]["Li1993_293K"]
         elif isinstance(model_spec, str):
@@ -91,7 +101,7 @@ def _load_tidy3d_material(material_spec: dict):
                 print(f"Warning: Material {model_spec} not found in Tidy3D library")
                 # Fallback to silicon
                 return td.material_library["cSi"]["Li1993_293K"]
-    
+
     # Fallback: return silicon if nothing else works
     print("Warning: Could not parse material specification, using default silicon")
     return td.material_library["cSi"]["Li1993_293K"]
@@ -99,11 +109,11 @@ def _load_tidy3d_material(material_spec: dict):
 
 def load_component_from_tech(cell, tech, z_span=4, z_center=None):
     # Convert technology object to dict if needed (for backward compatibility)
-    if hasattr(tech, 'to_dict'):
+    if hasattr(tech, "to_dict"):
         tech_dict = tech.to_dict()
     else:
         tech_dict = tech
-    
+
     # load the structures in the device
     device_wg = []
     for idx, d in enumerate(tech_dict["device"]):
@@ -159,24 +169,26 @@ def load_component_from_tech(cell, tech, z_span=4, z_center=None):
     )
 
 
-def from_gdsfactory(c: 'gf.Component', tech: dict, z_span: float = 4.) -> 'component':
+def from_gdsfactory(c: "gf.Component", tech: dict, z_span: float = 4.0) -> "component":
     """Convert gdsfactory Component to a component.
 
     Args:
         c (gf.Component): gdsfactory component.
-        tech (dict): dictionary technology stack (can be parsed from yaml) 
+        tech (dict): dictionary technology stack (can be parsed from yaml)
         z_span (float, optional): z bounds of the device (can be used to override simulation settings..). Defaults to 4..
 
     Returns:
         component: parsed gdsfactory component.
     """
     try:
-        import gdsfactory as gf
+        import gdsfactory  # noqa: F401  availability probe only
     except ImportError:
-        raise ImportError("gdsfactory is not installed. Please install it using 'pip install .[gdsfactory]'")
+        raise ImportError(
+            "gdsfactory is not installed. Please install it using 'pip install .[gdsfactory]'"
+        )
 
     # Convert technology object to dict if needed (for backward compatibility)
-    if hasattr(tech, 'to_dict'):
+    if hasattr(tech, "to_dict"):
         tech_dict = tech.to_dict()
     else:
         tech_dict = tech
@@ -186,14 +198,14 @@ def from_gdsfactory(c: 'gf.Component', tech: dict, z_span: float = 4.) -> 'compo
 
     # for each layer in the device
     for idx, layer in enumerate(c.get_polygons()):
-        l = c.extract(layers={layer})       
+        lyr = c.extract(layers={layer})
 
-        for i, s in enumerate(l.get_polygons()):
+        for i, _s in enumerate(lyr.get_polygons()):
             name = f"poly_{idx}_{i}"
             device_wg.append(
                 structure(
                     name=name,
-                    polygon=l.get_polygons()[1],
+                    polygon=lyr.get_polygons()[1],
                     z_base=tech_dict["device"][idx]["z_base"],
                     z_span=tech_dict["device"][idx]["z_span"],
                     material=get_material(tech_dict["device"][idx]),
@@ -205,9 +217,7 @@ def from_gdsfactory(c: 'gf.Component', tech: dict, z_span: float = 4.) -> 'compo
         # get device ports
         for p in c.ports:
             if p.layer == layer:
-                z_pos = (
-                    tech_dict["device"][idx]["z_base"] + tech_dict["device"][idx]["z_span"] / 2
-                )
+                z_pos = tech_dict["device"][idx]["z_base"] + tech_dict["device"][idx]["z_span"] / 2
                 ports.append(
                     port(
                         name=c.name,
