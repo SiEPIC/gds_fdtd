@@ -153,6 +153,12 @@ WP4.x verification, but not the executor env. Baseline test suite: 51 passed in 
   broken plugins surface via available_solvers(), not import errors. **Deviation D7:** legacy
   solver classes stay undeprecated until WP6.1 (they are the documented example API, and
   Tidy3DSolver composes the legacy tidy3d machinery internally).
+- **PR OPENED: SiEPIC/gds_fdtd#23** (base upstream main ← mustafacc:modernization) —
+  first-ever run of the new CI matrix. Note: gh resolved the base to the upstream org repo
+  (user is the SiEPIC maintainer, so kept). Fork PRs get no secrets: codecov upload will
+  warn-not-fail (v5 default). Pre-flight fixes: ci.yml build job got fetch-depth:0
+  (hatch-vcs); verified tidy3d 2.11 no longer needs undeclared pytz (F3 was 2.8-only);
+  lockfile fresh.
 - **WP4.2 DONE (validated live):** gdsfactory **9.45** in .venv; API
   re-verified live (ports um/degrees; `port.layer_info` → (layer,datatype);
   `get_polygons_points(by="tuple")` um arrays; `dbbox()` um; **gf 9.44+ requires explicit
