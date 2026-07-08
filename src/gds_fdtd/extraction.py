@@ -69,10 +69,10 @@ def mode_amplitude(
     if direction not in ("+", "-"):
         raise ValueError(f"direction must be '+' or '-'; got {direction!r}")
     eu, ev, hu, hv = _transverse(fields, normal)
-    meu, mev, mhu, mhv = _transverse(mode.fields, normal)
-    if eu.shape != meu.shape:
+    m_eu, m_ev, m_hu, m_hv = _transverse(mode.fields, normal)
+    if eu.shape != m_eu.shape:
         raise ValueError(
-            f"field grid {eu.shape} does not match mode grid {meu.shape}; "
+            f"field grid {eu.shape} does not match mode grid {m_eu.shape}; "
             "resample the fields onto the mode grid first"
         )
     n_m = mode_power(mode, du, dv, normal)
@@ -81,8 +81,8 @@ def mode_amplitude(
             f"mode carries no forward power through the plane (N_m = {n_m:g}); "
             "check the mode orientation/normal"
         )
-    c1 = _cross_flux(eu, ev, np.conj(mhu), np.conj(mhv), du, dv)
-    c2 = _cross_flux(np.conj(meu), np.conj(mev), hu, hv, du, dv)
+    c1 = _cross_flux(eu, ev, np.conj(m_hu), np.conj(m_hv), du, dv)
+    c2 = _cross_flux(np.conj(m_eu), np.conj(m_ev), hu, hv, du, dv)
     sign = 1.0 if direction == "+" else -1.0
     return (c1 + sign * c2) / (4.0 * n_m)
 
