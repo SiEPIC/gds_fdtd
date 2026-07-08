@@ -34,7 +34,7 @@
 | **3 — Solver contract** | 3.1a spec · 3.1b ABC+conformance · 3.1c tidy3d · 3.1d lumerical · 3.1e entry-points | ✅ all 5, adapters **validated live** | `7a14522` `d95f346` `b16debe` `ebc5b02` `78b59d2` |
 | 3 | 3.2 lumerical hardening | ✅ absorbed into 3.1d (script-gen build, F7 probe, quoting, fresh-project sweep) | — |
 | **4 — Ecosystem** | 4.1 tidy3d 2.11 · 4.2 gdsfactory 9 | ✅ both, **validated live** | `b98c106` `26e35a3` |
-| 4 | 4.3 dependency-floor refresh | ◐ partial (tidy3d+gf pins done; numpy/shapely floors + meep/beamz/fdtdz extras pending) | — |
+| 4 | 4.3 dependency-floor refresh | ✅ done (numpy≥1.26 + all pins current; beamz extra ✓; meep extra dropped w/ deprioritization, fdtdz extra lands with WP5.4; lower-bounds CI job → WP7.1) | (next commit) |
 | **5 — New solvers** | 5.3 beamz (owner priority) | ✅ **DONE, physics-validated live** (S21≡S12 reciprocal+passive, S11 −34 dB on a gf straight; finding F9 found+fixed) | `a1ad28c` |
   sources by ~+2 dB (S12 showed gain on a straight; their own example only ever excites a
   '+x' port so never hits it). Hypothesis 1 (swap source wave selectors) was tested live and
@@ -361,6 +361,9 @@ Jul–Aug 2025: 32, then dormant since Sep 2025). Four identities:
   −7 dB when stubs failed to reach PML). Gap closed: `plot_component` now DRAWS the stubs
   (hatched green outlines, `spec` required) so every example geometry plot shows them;
   legend assertion added to its unit test.
+- **F11 CONFIRMED FIXED IN CI (2026-07-08):** run 28926190430 fully green after the Agg
+  conftest — both windows-latest legs pass; only the advisory mypy leg remains non-green
+  (allowed-failure by design).
 - **Owner-env note (2026-07-08, authorized):** conda env `gdsfactory` → tidy3d 2.11.2 +
   gdsfactory 9.45 + editable gds_fdtd. Pre-existing `gplugins==1.4.2` (numpy==2.2 pin) and
   `meow-sim` (tidy3d<2.9 pin) now unsatisfied — flagged to owner; gds_fdtd unaffected.
