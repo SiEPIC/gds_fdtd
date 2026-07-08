@@ -58,6 +58,7 @@ dev = [
   "pytest-cov>=5.0",
   "coverage",
   "ruff>=0.4.3",
+  "codespell>=2.3",  # same spell check the CI prek hooks run
   "mypy>=1.10",
   "h5py>=3.10",  # SMatrix HDF5 I/O tests (optional at runtime)
 ]
