@@ -44,7 +44,8 @@
   reciprocal ✓ passive ✓. The validation script now asserts S21/S12 symmetry + reciprocity +
   passivity — the checks that catch this bug class on first contact | — |
 | 5 | 5.5 convergence + caching + cross-solver validation | ✅ done (convergence.py sweep/report, caching.py job-hash + run_cached, validation.py validate_across/compare_smatrices; 12 offline tests incl. recorded t3d-vs-lum 0.081 dB through the API; examples 04b live tidy3d mesh sweep + free cached rerun, 04c offline on recorded artifacts) | (next commit) |
-| 5 | 5.2 grid+modes · 5.4 fdtdz | ⬜ not started | — |
+| 5 | 5.2a grid.py rasterizer | ✅ done (PermittivityGrid + rasterize: per-z-slice shapely x-sections, sidewall angle as height-growing mitre offset, 4× supersample area-fraction blending; resolve_index for nk/rii/MaterialSpec/tidy3d-media offline, engine-DB names raise; 8 tests incl. 1e-3 analytic rectangle + 1% taper volume; real escalator validated in conda env: cSi→3.475@1.55) | (next commit) |
+| 5 | 5.2b modes.py · 5.2c extraction · 5.4 fdtdz | ⬜ not started | — |
 | 5 | 5.1 MEEP | ⏸ **DEPRIORITIZED per owner directive 2026-07-08** ("i dont care about meep") — moved to Part 7 backlog; beamz now fills the free-engine role incl. any future CI physics lane | — |
 | **6 — Examples/docs/release** | 6.1 examples rewrite | ✅ all rewritten to current APIs; import check ZERO xfails | `fd0edda` |
 | 6 | 6.2a–d docs · 6.2b citation · 6.3 v1.0 release | ⬜ not started | — |

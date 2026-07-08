@@ -3,7 +3,17 @@
 import logging as _logging
 from importlib.metadata import PackageNotFoundError, version
 
-from . import caching, convergence, core, geometry, lyprocessor, simprocessor, sparams, validation
+from . import (
+    caching,
+    convergence,
+    core,
+    geometry,
+    grid,
+    lyprocessor,
+    simprocessor,
+    sparams,
+    validation,
+)
 from .core import technology
 from .geometry import Component, LayoutSource, Port, Region, Structure
 from .smatrix import SMatrix
@@ -23,6 +33,7 @@ __all__ = [
     "convergence",
     "core",
     "geometry",
+    "grid",
     "lyprocessor",
     "simprocessor",
     "sparams",
