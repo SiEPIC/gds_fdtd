@@ -1,0 +1,45 @@
+name: cloud-smoke
+
+# WP7.5.1: tidy3d cloud smoke — HUMAN-TRIGGERED ONLY, budget-gated.
+# The `cloud-tests` environment must be configured with a required reviewer
+# so every run is explicitly approved (Settings -> Environments).
+
+on:
+  workflow_dispatch:
+    inputs:
+      budget_fc:
+        description: "abort if the total estimate exceeds this many FlexCredits"
+        default: "0.5"
+      refresh_fixtures:
+        description: "also produce tests/recorded/ artifacts for a human to commit"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    environment: cloud-tests
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          python-version: "3.13"
+      - run: uv sync --locked --extra dev --extra tidy3d
+      - name: Run budget-gated smoke
+        env:
+          TIDY3D_API_KEY: ${{ secrets.TIDY3D_API_KEY }}
+          BUDGET_FC: ${{ inputs.budget_fc }}
+        run: >
+          uv run python scripts/cloud_smoke.py --out smoke_out
+          ${{ inputs.refresh_fixtures && '--refresh-fixtures' || '' }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: cloud-smoke-results
+          path: smoke_out/
+          retention-days: 30
