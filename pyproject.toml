@@ -35,7 +35,8 @@ dependencies = [
   "klayout>=0.30.1",
   "matplotlib>=3.8",
   "shapely>=2.0",
-  "PyYAML>=6.0"
+  "PyYAML>=6.0",
+  "pydantic>=2.7"
 ]
 
 # ──────────────── optional feature / tool sets ────────────────
@@ -112,6 +113,7 @@ ignore = [
 "tests/*" = ["B011", "A003"]
 
 [tool.mypy]
+plugins = ["pydantic.mypy"]
 # no python_version pin: analyze under the running interpreter (numpy 2.x stubs need >=3.12)
 ignore_missing_imports = true
 check_untyped_defs = true

@@ -131,10 +131,12 @@ def parse_yaml_tech(file_path: str) -> dict:
         dict: Parsed technology data in dictionary format.
 
     Note:
-        This function is deprecated. Use technology.from_yaml() instead.
+        Routes through the validated pydantic model (gds_fdtd.technology.Technology,
+        WP2.2); the returned dict shape is identical to the legacy parser's.
     """
-    tech = technology.from_yaml(file_path)
-    return tech.to_dict()
+    from .technology import Technology
+
+    return Technology.from_yaml(file_path).to_legacy_dict()
 
 
 class technology:
