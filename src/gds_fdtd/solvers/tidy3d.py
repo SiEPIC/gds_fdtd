@@ -19,6 +19,7 @@ import tempfile
 
 import numpy as np
 
+from ..errors import JobValidationError, SolverError
 from ..smatrix import SMatrix
 from .base import (
     ResourceEstimate,
@@ -88,7 +89,7 @@ class Tidy3DSolver(Solver):
         """Construct the ModalComponentModeler (offline; no cloud access)."""
         problems = self.validate()
         if problems:
-            raise ValueError("cannot build: " + "; ".join(problems))
+            raise JobValidationError("cannot build: " + "; ".join(problems))
 
         from ..solver_tidy3d import fdtd_solver_tidy3d
 
@@ -168,7 +169,7 @@ class Tidy3DSolver(Solver):
         """Field profile from the first excitation's SimulationData."""
         data = getattr(self, "_modeler_data", None)
         if data is None:
-            raise RuntimeError("run() has not completed; no field data available")
+            raise SolverError("run() has not completed; no field data available")
         return plot_tidy3d_fields(data, axis=axis, savefig=savefig)
 
     # ---------------- conversion ----------------
@@ -212,7 +213,7 @@ def plot_tidy3d_fields(modeler_data, axis: str = "z", savefig: str | None = None
         else list(enumerate(sim_data_map))
     )
     if not items:
-        raise RuntimeError("modeler data contains no per-task simulation data")
+        raise SolverError("modeler data contains no per-task simulation data")
     task_name, sim_data = items[0]
     monitor_name = f"{axis}_field"
     # the monitor is broadband: select the center frequency for a 2D plot

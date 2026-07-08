@@ -19,6 +19,7 @@ import os
 import tempfile
 from pathlib import Path
 
+from ..errors import JobValidationError, SolverError, SolverUnavailableError
 from ..smatrix import SMatrix
 from .base import (
     ResourceEstimate,
@@ -113,7 +114,7 @@ class LumericalSolver(Solver):
         """Export the GDS and generate the full .lsf setup script (offline)."""
         problems = self.validate()
         if problems:
-            raise ValueError("cannot build: " + "; ".join(problems))
+            raise JobValidationError("cannot build: " + "; ".join(problems))
 
         if self.workdir is not None:
             workdir = Path(self.workdir)
@@ -318,17 +319,17 @@ class LumericalSolver(Solver):
         import numpy as np
 
         if axis not in self.spec.field_monitors:
-            raise ValueError(f"axis {axis!r} was not monitored (spec.field_monitors)")
+            raise JobValidationError(f"axis {axis!r} was not monitored (spec.field_monitors)")
         if self._artifacts is None:
-            raise RuntimeError("run() has not completed; no field data available")
+            raise SolverError("run() has not completed; no field data available")
         workdir = self._artifacts.summary["workdir"]
         fsp = os.path.join(workdir, f"{self.component.name}_sparams", "sparams_1.fsp")
         if not os.path.exists(fsp):
-            raise RuntimeError(f"sweep project not found ({fsp}); run() first")
+            raise SolverError(f"sweep project not found ({fsp}); run() first")
 
         reason = probe_lumapi()
         if reason:
-            raise RuntimeError(f"cannot plot fields: {reason}")
+            raise SolverUnavailableError(f"cannot plot fields: {reason}")
         import lumapi
 
         fdtd = lumapi.FDTD(hide=True)
@@ -358,7 +359,7 @@ class LumericalSolver(Solver):
         """Open a lumapi session (license checkout), replay the script, sweep."""
         reason = probe_lumapi()
         if reason:
-            raise RuntimeError(f"cannot run: {reason}")
+            raise SolverUnavailableError(f"cannot run: {reason}")
         import lumapi
 
         if self._artifacts is None:

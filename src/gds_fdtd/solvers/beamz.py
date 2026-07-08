@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from ..errors import JobValidationError
 from ..smatrix import SMatrix
 from .base import (
     ResourceEstimate,
@@ -196,7 +197,7 @@ class BeamzSolver(Solver):
         """Prepare the extruded design, grid, frequencies and pulse (offline)."""
         problems = self.validate()
         if problems:
-            raise ValueError("cannot build: " + "; ".join(problems))
+            raise JobValidationError("cannot build: " + "; ".join(problems))
 
         import beamz
         from beamz.design.io import gdsf
@@ -317,7 +318,7 @@ class BeamzSolver(Solver):
         import matplotlib.pyplot as plt
 
         if axis != "z":
-            raise ValueError("BeamzSolver v1 records the z-plane profile only")
+            raise JobValidationError("BeamzSolver v1 records the z-plane profile only")
         fields = getattr(self, "_field_z", None)
         if fields is None:
             raise RuntimeError(

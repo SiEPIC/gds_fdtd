@@ -26,6 +26,7 @@ from typing import Any, ClassVar, Literal
 import numpy as np
 from pydantic import BaseModel, ConfigDict
 
+from ..errors import JobValidationError
 from ..geometry import Component
 from ..smatrix import SMatrix
 from ..spec import SimulationSpec
@@ -105,16 +106,18 @@ class Solver(ABC):
 
     # ---------------- shared helpers ----------------
 
-    def run_cached(self, cache_dir: str | Path) -> SMatrix:
+    def run_cached(self, cache_dir: str | Path | None = None) -> SMatrix:
         """run() with result caching: repeat jobs load the stored SMatrix.
 
         The cache key hashes component geometry + technology + spec + solver
         name + engine version (gds_fdtd.caching); only a genuine miss spends
-        money/licenses/compute.
+        money/licenses/compute. Default directory: GDS_FDTD_CACHE_DIR
+        (see gds_fdtd.settings).
         """
         from ..caching import cached_run
+        from ..settings import settings
 
-        return cached_run(self, cache_dir)
+        return cached_run(self, cache_dir if cache_dir is not None else settings().cache_dir)
 
     def engine_version(self) -> str:
         """Version of the underlying engine, part of the cache key.
@@ -180,7 +183,9 @@ class Solver(ABC):
                 axis, direction = "x", ("forward" if p.direction == 180 else "backward")
                 size = [0.0, self.spec.width_ports, self.spec.depth_ports]
             else:
-                raise ValueError(f"Port direction {p.direction} not supported (0/90/180/270 only).")
+                raise JobValidationError(
+                    f"Port direction {p.direction} not supported (0/90/180/270 only)."
+                )
             plan.append(
                 {
                     "name": p.name,

@@ -5,11 +5,31 @@ Provides centralized logging setup with file output to working directory.
 @author: Mustafa Hammood, 2025
 """
 
+import json
 import logging
 import os
 import sys
 from datetime import datetime
 from pathlib import Path
+
+
+class JsonFormatter(logging.Formatter):
+    """One JSON object per line — for Modal/AWS/Batch log aggregation.
+
+    Selected with ``GDS_FDTD_LOG_FORMAT=json`` (see gds_fdtd.settings).
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        payload = {
+            "ts": self.formatTime(record, "%Y-%m-%dT%H:%M:%S%z"),
+            "level": record.levelname,
+            "logger": record.name,
+            "func": record.funcName,
+            "message": record.getMessage(),
+        }
+        if record.exc_info:
+            payload["exc"] = self.formatException(record.exc_info)
+        return json.dumps(payload)
 
 
 def setup_logging(working_dir: str = "./", component_name: str = "gds_fdtd"):
@@ -46,11 +66,17 @@ def setup_logging(working_dir: str = "./", component_name: str = "gds_fdtd"):
         package_logger.removeHandler(handler)
         handler.close()
 
-    detailed_formatter = logging.Formatter(
-        "%(asctime)s | %(levelname)-8s | %(name)-20s | %(funcName)-15s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-    console_formatter = logging.Formatter("%(levelname)-8s | %(name)-15s | %(message)s")
+    from .settings import settings
+
+    if settings().log_format == "json":
+        detailed_formatter: logging.Formatter = JsonFormatter()
+        console_formatter: logging.Formatter = JsonFormatter()
+    else:
+        detailed_formatter = logging.Formatter(
+            "%(asctime)s | %(levelname)-8s | %(name)-20s | %(funcName)-15s | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+        console_formatter = logging.Formatter("%(levelname)-8s | %(name)-15s | %(message)s")
 
     file_handler = logging.FileHandler(log_filepath, mode="w", encoding="utf-8")
     file_handler.setLevel(logging.DEBUG)
@@ -58,7 +84,7 @@ def setup_logging(working_dir: str = "./", component_name: str = "gds_fdtd"):
     package_logger.addHandler(file_handler)
 
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(getattr(logging, settings().log_level.upper(), logging.INFO))
     console_handler.setFormatter(console_formatter)
     package_logger.addHandler(console_handler)
 

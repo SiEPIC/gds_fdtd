@@ -36,7 +36,8 @@ dependencies = [
   "matplotlib>=3.8",
   "shapely>=2.0",
   "PyYAML>=6.0",
-  "pydantic>=2.7"
+  "pydantic>=2.7",
+  "pydantic-settings>=2.4"
 ]
 
 # ──────────────── optional feature / tool sets ────────────────

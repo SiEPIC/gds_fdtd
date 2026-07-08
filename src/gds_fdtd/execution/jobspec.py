@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from ..errors import BudgetExceededError, JobValidationError
 from ..spec import SimulationSpec
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -125,14 +126,14 @@ def run_job(job: JobSpec, out_dir: str | Path) -> JobResult:
 
     problems = solver.validate()
     if problems:
-        raise ValueError(f"job invalid: {problems}")
+        raise JobValidationError(f"job invalid: {problems}")
 
     if (
         job.budget is not None
         and job.budget.max_flexcredits == 0
         and solver.capabilities.cost_model != "free"
     ):
-        raise PermissionError(
+        raise BudgetExceededError(
             f"budget forbids spending (max_flexcredits=0) but solver "
             f"'{solver.name}' has cost model '{solver.capabilities.cost_model}'"
         )
