@@ -27,6 +27,16 @@ if __name__ == "__main__":
         technology=tech,
         spec=SimulationSpec(z_min=-1.0, z_max=1.11),
     )
+
+    # STANDARD VISUALIZATION STEP 1: geometry, ports, simulation region
+    from gds_fdtd.plotting import plot_component
+
+    plot_component(component, spec=solver.spec, savefig=f"{component.name}_geometry.png")
     artifacts = solver.build()  # offline .lsf + GDS
     print("setup script written:", artifacts.files["lsf"])
-    # smatrix = solver.run()  # requires a Lumerical license
+    smatrix = solver.run()  # requires a Lumerical license
+    #
+    # STEP 3: S-parameters   |   STEP 4: field profile
+    from gds_fdtd.plotting import plot_smatrix
+    plot_smatrix(smatrix, kind="db")[0].savefig(f"{component.name}_sparams.png", dpi=150)
+    solver.plot_fields(axis="z", savefig=f"{component.name}_fields.png")

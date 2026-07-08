@@ -197,3 +197,32 @@ def test_plot_smatrix_kinds():
         assert ax.get_title().startswith("dut")
     with pytest.raises(ValueError, match="kind"):
         plot_smatrix(sm, kind="bogus")
+
+
+def test_plot_component_geometry():
+    """Standard geometry view: polygons per layer, ports w/ arrows, regions."""
+    import pathlib
+
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from gds_fdtd.core import parse_yaml_tech
+    from gds_fdtd.lyprocessor import load_cell
+    from gds_fdtd.plotting import plot_component
+    from gds_fdtd.simprocessor import load_component_from_tech
+    from gds_fdtd.spec import SimulationSpec
+
+    tests_dir = pathlib.Path(__file__).parent
+    tech = parse_yaml_tech(str(tests_dir / "tech_lumerical.yaml"))
+    cell, layout = load_cell(str(tests_dir / "si_sin_escalator.gds"))
+    comp = load_component_from_tech(cell=cell, tech=tech)
+
+    fig, ax = plot_component(comp, spec=SimulationSpec())
+    labels = {t.get_text() for t in ax.get_legend().get_texts()}
+    assert any("layer 1/0" in label for label in labels)
+    assert any("layer 1/5" in label for label in labels)  # both device layers drawn
+    assert any("bounds" in label for label in labels)
+    assert any("FDTD region" in label for label in labels)
+    texts = {t.get_text() for t in ax.texts}
+    assert {"opt1", "opt2"} <= texts  # port names annotated
+    del layout

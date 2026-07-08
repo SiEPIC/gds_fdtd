@@ -305,6 +305,55 @@ class LumericalSolver(Solver):
             cost_hint="local compute; requires a Lumerical FDTD license",
         )
 
+    def plot_fields(self, axis: str = "z", savefig: str | None = None):
+        """Field profile from the first S-parameter sweep sub-project.
+
+        Opens a (headless) lumapi session, loads <name>_sparams/sparams_1.fsp
+        written by run(), and plots |E|^2 of the profile monitor at the center
+        frequency. Requires spec.field_monitors to include the axis.
+        """
+        import os
+
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        if axis not in self.spec.field_monitors:
+            raise ValueError(f"axis {axis!r} was not monitored (spec.field_monitors)")
+        if self._artifacts is None:
+            raise RuntimeError("run() has not completed; no field data available")
+        workdir = self._artifacts.summary["workdir"]
+        fsp = os.path.join(workdir, f"{self.component.name}_sparams", "sparams_1.fsp")
+        if not os.path.exists(fsp):
+            raise RuntimeError(f"sweep project not found ({fsp}); run() first")
+
+        reason = probe_lumapi()
+        if reason:
+            raise RuntimeError(f"cannot plot fields: {reason}")
+        import lumapi
+
+        fdtd = lumapi.FDTD(hide=True)
+        try:
+            fdtd.load(fsp)
+            res = fdtd.getresult(f"profile_{axis}", "E")
+        finally:
+            fdtd.close()
+
+        E = np.asarray(res["E"])  # (Nx, Ny, Nz, Nf, 3)
+        fi = E.shape[3] // 2
+        mag2 = np.sum(np.abs(E[:, :, 0, fi, :]) ** 2, axis=-1)
+        x = np.asarray(res["x"]).squeeze() * 1e6
+        y = np.asarray(res["y"]).squeeze() * 1e6
+        fig, ax = plt.subplots(figsize=(9, 5))
+        im = ax.pcolormesh(x, y, mag2.T, shading="auto", cmap="magma")
+        fig.colorbar(im, ax=ax, label="|E|²")
+        ax.set_xlabel("x [µm]")
+        ax.set_ylabel("y [µm]")
+        ax.set_aspect("equal")
+        ax.set_title(f"|E|² (profile_{axis}) — excitation port 1, center frequency")
+        if savefig:
+            fig.savefig(savefig, dpi=150, bbox_inches="tight")
+        return fig, ax
+
     def run(self) -> SMatrix:
         """Open a lumapi session (license checkout), replay the script, sweep."""
         reason = probe_lumapi()

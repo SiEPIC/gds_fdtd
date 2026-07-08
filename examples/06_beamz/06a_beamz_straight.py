@@ -30,9 +30,19 @@ if __name__ == "__main__":
         gf_component=gf_component,
         n_core=3.47,  # or put an rii: entry in the technology material
     )
+    # STANDARD VISUALIZATION STEP 1: geometry, ports, simulation region
+    from gds_fdtd.plotting import plot_component
+
+    plot_component(component, spec=solver.spec, savefig=f"{component.name}_geometry.png")
+
+    # STEP 2: offline setup
     assert solver.validate() == []
     print("build:", solver.build().summary)
 
-    # ~2 min per port on CPU; free.
+    # ~2 min per port on CPU; free. Uncomment to run:
     # smatrix = solver.run()
-    # print("S21 [dB]:", smatrix.magnitude_db(out=2, in_=1))
+    #
+    # STEP 3: S-parameters   |   STEP 4: field profile
+    # from gds_fdtd.plotting import plot_smatrix
+    # plot_smatrix(smatrix, kind="db")[0].savefig(f"{component.name}_sparams.png", dpi=150)
+    # solver.plot_fields(axis="z", savefig=f"{component.name}_fields.png")

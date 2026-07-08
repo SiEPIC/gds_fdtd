@@ -595,9 +595,18 @@ class fdtd_solver_tidy3d(fdtd_solver):
         # Export S-parameters to .dat file
         self.export_sparameters_dat()
 
-    def visualize_field_monitors(self, freq=None):
-        """Visualize field monitor data through field monitor objects."""
-        self.logger.info("Starting field monitor visualization")
+    def visualize_field_monitors(self, freq=None, axis: str = "z", savefig: str | None = None):
+        """Plot the run's field profile (redeems the WP1.9 deferral).
+
+        Uses the per-task SimulationData from the 2.11 modeler results.
+        """
+        data = getattr(self, "_modeler_data", None)
+        if data is None:
+            print("No field data: run() has not completed.")
+            return None
+        from gds_fdtd.solvers.tidy3d import plot_tidy3d_fields
+
+        return plot_tidy3d_fields(data, axis=axis, savefig=savefig)
 
         if not self.visualize:
             self.logger.debug("Visualization disabled, skipping field monitor visualization")

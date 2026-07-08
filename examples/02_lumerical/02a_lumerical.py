@@ -42,6 +42,11 @@ if __name__ == "__main__":
         field_monitors=["z"],
         working_dir=os.getcwd(),  # Files will be saved to ./crossing_te1550/ subdirectory
     )
+    # STANDARD VISUALIZATION STEP 1: geometry, ports, simulation region
+    from gds_fdtd.plotting import plot_component
+
+    plot_component(component, spec=solver.spec, savefig=f"{component.name}_geometry.png")
+
     solver.run()
     input("Proceed to terminate the GUI?")
 

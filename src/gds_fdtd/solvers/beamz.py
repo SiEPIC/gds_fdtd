@@ -96,8 +96,14 @@ class BeamzSolver(Solver):
         cost_model="free",
     )
 
-    def __init__(self, *args, gf_component=None, n_core: float | None = None,
-                 n_clad: float | None = None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        gf_component=None,
+        n_core: float | None = None,
+        n_clad: float | None = None,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.gf_component = gf_component
         self._n_core_kwarg = n_core
@@ -243,15 +249,20 @@ class BeamzSolver(Solver):
                 "z_span": z_span,
                 "z_center": z_center,
                 "monitor": _port_plane(
-                    port, span=span, z_span=z_span, z_center=z_center,
+                    port,
+                    span=span,
+                    z_span=z_span,
+                    z_center=z_center,
                     offset=_OUTPUT_MONITOR_OFFSET,
                 ),
             }
 
         max_dist_um = 0.0
         centers = {
-            n: (0.5 * (p["monitor"][0][0] + p["monitor"][1][0]),
-                0.5 * (p["monitor"][0][1] + p["monitor"][1][1]))
+            n: (
+                0.5 * (p["monitor"][0][0] + p["monitor"][1][0]),
+                0.5 * (p["monitor"][0][1] + p["monitor"][1][1]),
+            )
             for n, p in planes.items()
         }
         for a in centers.values():
@@ -301,6 +312,35 @@ class BeamzSolver(Solver):
             cost_hint="free local compute (JAX; CPU works, GPU if available)",
         )
 
+    def plot_fields(self, axis: str = "z", savefig: str | None = None):
+        """|E|² profile at the core-center z-plane (first excitation)."""
+        import matplotlib.pyplot as plt
+
+        if axis != "z":
+            raise ValueError("BeamzSolver v1 records the z-plane profile only")
+        fields = getattr(self, "_field_z", None)
+        if fields is None:
+            raise RuntimeError(
+                "no field data: include 'z' in spec.field_monitors and call run() first"
+            )
+        mag2 = sum(np.abs(np.squeeze(v)) ** 2 for v in fields.values())
+        meta = self._field_z_meta
+        fig, ax = plt.subplots(figsize=(9, 5))
+        im = ax.imshow(
+            np.asarray(mag2),  # rows are already y (see reshape note in run())
+            origin="lower",
+            extent=(0, meta["width_um"], 0, meta["height_um"]),
+            cmap="magma",
+            aspect="equal",
+        )
+        fig.colorbar(im, ax=ax, label="|E|²")
+        ax.set_xlabel("x [µm]")
+        ax.set_ylabel("y [µm]")
+        ax.set_title(f"|E|² (z-plane) — excitation {meta['source']}, center frequency")
+        if savefig:
+            fig.savefig(savefig, dpi=150, bbox_inches="tight")
+        return fig, ax
+
     def run(self) -> SMatrix:
         """One FDTD run per excited port; full S-matrix via modal DFT extraction."""
         if self._artifacts is None:
@@ -327,12 +367,13 @@ class BeamzSolver(Solver):
             src = ports[src_name]
             geo = planes[src_name]
             source_plane = _port_plane(
-                src, span=geo["span"], z_span=geo["z_span"], z_center=geo["z_center"],
+                src,
+                span=geo["span"],
+                z_span=geo["z_span"],
+                z_center=geo["z_center"],
                 offset=_SOURCE_OFFSET,
             )
-            src_center = tuple(
-                0.5 * (source_plane[0][i] + source_plane[1][i]) for i in range(3)
-            )
+            src_center = tuple(0.5 * (source_plane[0][i] + source_plane[1][i]) for i in range(3))
             source = ModeSource(
                 grid=grid,
                 center=src_center,
@@ -354,8 +395,11 @@ class BeamzSolver(Solver):
                 )
                 g = planes[name]
                 plane = _port_plane(
-                    ports[name], span=g["span"], z_span=g["z_span"],
-                    z_center=g["z_center"], offset=offset,
+                    ports[name],
+                    span=g["span"],
+                    z_span=g["z_span"],
+                    z_center=g["z_center"],
+                    offset=offset,
                 )
                 monitors.append(
                     ModeMonitor(
@@ -390,13 +434,34 @@ class BeamzSolver(Solver):
                     scattered_wave=port_obj.scattered_wave,
                 )
 
+            field_monitor = None
+            if "z" in self.spec.field_monitors and src_name == port_names[0]:
+                # standardized field profile: full-XY plane at the core center,
+                # DFT at the center frequency (first excitation only)
+                z_mid = planes[port_names[0]]["z_center"]
+                f0 = float(np.median(np.asarray(freqs, dtype=float)))
+                field_monitor = beamz.Monitor(
+                    start=(0.0, 0.0, z_mid),
+                    end=(float(design.width), float(design.height), z_mid),
+                    name="field_z",
+                    record_fields=False,
+                    dft_enabled=True,
+                    dft_frequencies=np.asarray([f0], dtype=np.float32),
+                    dft_components=("Ex", "Ey", "Ez"),
+                    dft_window="none",
+                    dft_record_every_step=True,
+                )
+
             sim = Simulation(
                 design=design,
                 sources=[source],
-                monitors=monitors,
+                monitors=monitors if field_monitor is None else [*monitors, field_monitor],
                 boundaries=[
-                    beamz.PML(edges=["left", "right", "top", "bottom"], thickness=_PML_XY,
-                              formulation="sigma"),
+                    beamz.PML(
+                        edges=["left", "right", "top", "bottom"],
+                        thickness=_PML_XY,
+                        formulation="sigma",
+                    ),
                     beamz.PML(edges=["front", "back"], thickness=_PML_Z, formulation="sigma"),
                 ],
                 time=pulse.time,
@@ -409,6 +474,29 @@ class BeamzSolver(Solver):
                 decay_ratio=_DECAY_RATIO,
                 progress=False,
             )
+            if field_monitor is not None:
+                # get_dft_component returns (nfreq, ncells) with the plane
+                # FLATTENED; recover (Nx, Ny) from the known plane extents,
+                # searching ±3 cells for grid snapping
+                raw = {
+                    c: np.asarray(field_monitor.get_dft_component(c)) for c in ("Ex", "Ey", "Ez")
+                }
+                ncells = int(np.asarray(raw["Ex"]).reshape(-1).shape[0])
+                nx0 = round(float(design.width) / dx)
+                nx = next((n for n in range(max(nx0 - 3, 1), nx0 + 4) if ncells % n == 0), None)
+                if nx is None:
+                    raise RuntimeError(f"cannot factor field plane: {ncells} cells vs Nx~{nx0}")
+                # beamz grids are (z, y, x)-ordered: the flattened plane is
+                # y-major with x fastest -> reshape to (Ny, Nx)
+                self._field_z = {
+                    c: np.asarray(v).reshape(-1)[:ncells].reshape(ncells // nx, nx)
+                    for c, v in raw.items()
+                }
+                self._field_z_meta = {
+                    "width_um": float(design.width) / UM,
+                    "height_um": float(design.height) / UM,
+                    "source": src_name,
+                }
             result = sim.get_S_matrix_modal_dft(
                 source_port=specs[src_name],
                 ports=list(specs.values()),
@@ -426,6 +514,4 @@ class BeamzSolver(Solver):
                 col = np.asarray(s_map[(out_name, src_name)], dtype=complex)
                 entries.append((src_name, out_name, 1, 1, f_asc[order], col[order]))
 
-        return SMatrix.from_entries(
-            entries, name=self.component.name, port_names=port_names
-        )
+        return SMatrix.from_entries(entries, name=self.component.name, port_names=port_names)

@@ -127,8 +127,6 @@ def test_web_submodule_resolves_in_fresh_interpreter():
         "assert callable(web.run)\n"
         "print('web-ok')\n"
     )
-    out = subprocess.run(
-        [sys.executable, "-c", code], capture_output=True, text=True, timeout=300
-    )
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=300)
     assert out.returncode == 0, out.stderr[-500:]
     assert "web-ok" in out.stdout

@@ -160,8 +160,16 @@ class Tidy3DSolver(Solver):
             path=os.path.join(workdir, f"{self.component.name}_modeler.hdf5"),
             verbose=True,
         )
+        self._modeler_data = modeler_data
         da = modeler_data.smatrix()
         return self._dataarray_to_smatrix(da)
+
+    def plot_fields(self, axis: str = "z", savefig: str | None = None):
+        """Field profile from the first excitation's SimulationData."""
+        data = getattr(self, "_modeler_data", None)
+        if data is None:
+            raise RuntimeError("run() has not completed; no field data available")
+        return plot_tidy3d_fields(data, axis=axis, savefig=savefig)
 
     # ---------------- conversion ----------------
 
@@ -187,3 +195,32 @@ class Tidy3DSolver(Solver):
                         )
         port_names = [str(p) for p in da.coords["port_in"].values]
         return SMatrix.from_entries(entries, name=self.component.name, port_names=port_names)
+
+
+def plot_tidy3d_fields(modeler_data, axis: str = "z", savefig: str | None = None):
+    """Plot |E| of the '{axis}_field' monitor from a ModalComponentModelerData.
+
+    Shared by Tidy3DSolver.plot_fields and the legacy solver's
+    visualize_field_monitors (the WP1.9/WP4.1 promise, redeemed here).
+    """
+    import matplotlib.pyplot as plt
+
+    sim_data_map = modeler_data.data
+    items = (
+        list(sim_data_map.items())
+        if hasattr(sim_data_map, "items")
+        else list(enumerate(sim_data_map))
+    )
+    if not items:
+        raise RuntimeError("modeler data contains no per-task simulation data")
+    task_name, sim_data = items[0]
+    monitor_name = f"{axis}_field"
+    # the monitor is broadband: select the center frequency for a 2D plot
+    freqs = sim_data[monitor_name].Ex.coords["f"].values
+    f0 = float(freqs[len(freqs) // 2])
+    fig, ax = plt.subplots(figsize=(9, 5))
+    sim_data.plot_field(monitor_name, "E", val="abs", f=f0, ax=ax)
+    ax.set_title(f"|E| ({monitor_name}) — excitation {task_name}")
+    if savefig:
+        fig.savefig(savefig, dpi=150, bbox_inches="tight")
+    return fig, ax

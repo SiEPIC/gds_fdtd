@@ -23,11 +23,24 @@ if __name__ == "__main__":
         spec=SimulationSpec(wavelength_points=51, mesh=10, z_min=-1.0, z_max=1.11),
         workdir=os.getcwd(),
     )
+
+    # STANDARD VISUALIZATION STEP 1: geometry, ports, simulation region
+    from gds_fdtd.plotting import plot_component
+
+    plot_component(component, spec=solver.spec, savefig=f"{component.name}_geometry.png")
+
+    # STEP 2: offline setup (free)
     assert solver.validate() == []
     solver.build()
 
-    # THE LINES BELOW SPEND FLEXCREDITS.
-    smatrix = solver.run()
-    thru_db = smatrix.magnitude_db(out="opt4", in_="opt1")
-    crosstalk_db = smatrix.magnitude_db(out="opt2", in_="opt1")
-    print(f"insertion loss @ center: {thru_db[len(thru_db)//2]:.2f} dB")
+    # THE LINES BELOW SPEND FLEXCREDITS (~0.3 FC for this example).
+    # smatrix = solver.run()
+    #
+    # STEP 3: S-parameters
+    # from gds_fdtd.plotting import plot_smatrix
+    # fig, _ = plot_smatrix(smatrix, kind="db")
+    # fig.savefig(f"{component.name}_sparams.png", dpi=150)
+    # print("thru:", smatrix.magnitude_db(out="opt4", in_="opt1").max(), "dB")
+    #
+    # STEP 4: field profile (z-plane, first excitation)
+    # solver.plot_fields(axis="z", savefig=f"{component.name}_fields.png")

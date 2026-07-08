@@ -316,6 +316,18 @@ Jul–Aug 2025: 32, then dormant since Sep 2025). Four identities:
 | 4.5 | solver-class rewrite | Jul–Aug 2025 | `75edfd0 "major refactor towards unified solver"`: `fdtd_solver` base + `solver_lumerical` + `solver_tidy3d`; `lum_tools.py` deleted (Jul 23), `t3d_tools.py` deleted (Aug 4) — **but examples 01/05/07/08 still import them**, and `tests/test_{solver,sparams,simprocessor}.py` were deleted without replacement |
 
 **Lessons that shape this plan:**
+- **STANDARDIZED VISUALIZATION FLOW (2026-07-08, owner directive):** every example follows
+  geometry → setup → S-params → fields. New `plotting.plot_component(component, spec)`
+  (device polygons per layer, ports with direction arrows + width ticks + names, devrec
+  bounds, FDTD region) — offline, engine-agnostic, unit-tested, visually verified on the
+  crossing. `Solver.plot_fields(axis, savefig)` on the ABC with per-engine implementations:
+  tidy3d (per-task SimulationData.plot_field at center frequency — redeems the WP1.9/4.1
+  deferral; legacy `visualize_field_monitors` rewired to the same helper), Lumerical
+  (loads the first sweep sub-project, |E|² of the profile monitor), beamz (full-XY z-plane
+  DFT monitor added to the first excitation). **Live-validated on all three engines**
+  (tidy3d +0.05 FC ⇒ ledger ≈0.58/10; Lumerical + beamz free); field PNGs physically
+  correct incl. the escalator's Si→SiN power transfer visible in both tidy3d and Lumerical
+  profiles. tidy3d fix found live: broadband monitors need `f=` selection in plot_field.
 - **FINDING F9 (fixed, `a1ad28c`):** beamz's reference-monitor normalization mis-scales
   '−'-directed sources by ~+2 dB (S12 showed gain on a straight; beamz's own example only
   ever excites a '+x' port so never hits it). Hypothesis 1 (swap source wave selectors)

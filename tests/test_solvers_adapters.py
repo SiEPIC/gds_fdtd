@@ -148,3 +148,32 @@ def test_beamz_resolves_index_from_rii(tmp_path, monkeypatch):
     n_core, _ = solver._indices()
     assert n_core == pytest.approx(3.4757, abs=0.01)
     del layout
+
+
+def test_beamz_field_plane_orientation():
+    """beamz grids are (z, y, x)-ordered: a synthetic along-x stripe injected
+    through the run() reshape convention must render along x (caught a real
+    transposed field plot during live validation)."""
+    pytest.importorskip("beamz")
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import numpy as np
+
+    from gds_fdtd.solvers.beamz import BeamzSolver
+
+    ny, nx = 116, 197
+    flat = np.zeros((1, ny * nx), dtype=complex)
+    flat.reshape(1, ny, nx)[0, ny // 2 - 5 : ny // 2 + 5, :] = 1.0
+
+    s = object.__new__(BeamzSolver)
+    ncells = ny * nx
+    s._field_z = {
+        c: flat.reshape(-1)[:ncells].reshape(ncells // nx, nx) for c in ("Ex", "Ey", "Ez")
+    }
+    s._field_z_meta = {"width_um": 11.0, "height_um": 6.5, "source": "o1"}
+    _, ax = s.plot_fields(axis="z")
+    img = np.asarray(ax.images[0].get_array())
+    assert img.shape == (ny, nx)
+    assert (img.sum(axis=1) > 0).sum() == 10  # stripe occupies 10 y-rows
+    assert (img.sum(axis=0) > 0).all()  # and spans every x column
