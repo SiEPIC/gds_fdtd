@@ -10,7 +10,7 @@ import re
 
 import numpy as np
 import tidy3d as td
-from tidy3d.plugins.smatrix import ComponentModeler, Port
+from tidy3d.plugins.smatrix import ModalComponentModeler, Port
 
 from gds_fdtd.logging_config import log_simulation_complete, log_simulation_start
 from gds_fdtd.solver import fdtd_field_monitor, fdtd_solver
@@ -65,15 +65,15 @@ class fdtd_solver_tidy3d(fdtd_solver):
         self.smatrix_ports = self._create_smatrix_ports()
         self.logger.info(f"Created base simulation with {len(self.smatrix_ports)} ports")
 
-        # Create ComponentModeler for S-matrix calculation
-        self.component_modeler = ComponentModeler(
+        # Create the modeler for S-matrix calculation.
+        # tidy3d >=2.9 renamed ComponentModeler -> ModalComponentModeler and
+        # moved web options (verbose/path_dir) to td.web.run (WP4.1).
+        self.component_modeler = ModalComponentModeler(
             simulation=self.base_simulation,
             ports=self.smatrix_ports,
             freqs=self.freqs,
-            verbose=True,
-            path_dir=self.working_dir,
         )
-        self.logger.info("ComponentModeler created successfully")
+        self.logger.info("ModalComponentModeler created successfully")
 
         # Print setup summary
         self._print_simulation_summary()
@@ -328,12 +328,18 @@ class fdtd_solver_tidy3d(fdtd_solver):
         log_simulation_start(self.logger, "Tidy3D ComponentModeler", self.component.name)
         print("Running S-matrix calculation with ComponentModeler...")
 
-        # Run the S-matrix calculation
+        # Run the S-matrix calculation through the tidy3d web API (2.11 workflow)
         try:
-            smatrix_result = self.component_modeler.run()
-            self.logger.info("ComponentModeler simulation completed successfully")
+            self._modeler_data = td.web.run(
+                self.component_modeler,
+                task_name=f"gdsfdtd_{self.component.name}",
+                path=os.path.join(self.working_dir, f"{self.component.name}_modeler.hdf5"),
+                verbose=True,
+            )
+            smatrix_result = self._modeler_data.smatrix()
+            self.logger.info("ModalComponentModeler simulation completed successfully")
         except Exception as e:
-            self.logger.error(f"ComponentModeler simulation failed: {e}")
+            self.logger.error(f"ModalComponentModeler simulation failed: {e}")
             raise
 
         # Convert results to sparameters format for interface compatibility
@@ -429,17 +435,17 @@ class fdtd_solver_tidy3d(fdtd_solver):
     def get_log(self) -> str:
         """Get the log of the simulation."""
         try:
-            if hasattr(self, "component_modeler") and self.component_modeler:
-                # Try to get log from ComponentModeler's simulation data
-                if hasattr(self.component_modeler, "sim_data") and self.component_modeler.sim_data:
-                    log_text = str(self.component_modeler.sim_data.log)
-                    return log_text
-                else:
-                    print("ComponentModeler simulation data not available for log extraction.")
-                    return "Log not available - ComponentModeler simulation data not accessible."
-            else:
-                print("ComponentModeler not initialized.")
-                return "Log not available - ComponentModeler not initialized."
+            data = getattr(self, "_modeler_data", None)
+            if data is None:
+                return "Log not available - run() has not completed."
+            logs = []
+            sim_data_map = getattr(data, "data", None) or {}
+            items = sim_data_map.items() if hasattr(sim_data_map, "items") else []
+            for task_name, sim_data in items:
+                log = getattr(sim_data, "log", None)
+                if log:
+                    logs.append(f"=== {task_name} ===\n{log}")
+            return "\n".join(logs) if logs else "No per-task logs exposed by this tidy3d version."
         except Exception as e:
             print(f"Error retrieving Tidy3D log: {e}")
             return f"Log retrieval error: {str(e)}"

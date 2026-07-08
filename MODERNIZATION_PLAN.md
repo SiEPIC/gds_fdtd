@@ -122,6 +122,20 @@ WP4.x verification, but not the executor env. Baseline test suite: 51 passed in 
   `tests/recorded/si_sin_escalator_lum_smatrix.h5` + `test_cross_solver_agreement` (the
   flagship replay test). Env note: reinstalling/pruning the venv drops the manually-added
   pytz/skrf/h5py — re-add after any `uv sync`.
+- **WP4.1 DONE (pulled forward, owner-approved):** solver migrated to tidy3d **2.11.2**
+  (`ModalComponentModeler`; web opts moved to `td.web.run(modeler, task_name=, path=)`;
+  results via `modeler_data.smatrix()` — dims unchanged; get_log reads per-task
+  `modeler_data.data`). Pin now `tidy3d>=2.11,<3`. Runs natively on **py3.13 + numpy 2**
+  (F5 resolved; all-extras CI leg healthy again). **Live cloud validation on 2.11:**
+  budget-guarded (estimate tasks uploaded, costed, deleted unstarted = free), then
+  `solver.run()`; physics identical and **agreement with the recorded 2.8 result:
+  mean |ΔS21| = 0.024 dB**. Facts for successors: 2.11 `ComponentModeler` is a pure alias
+  of `ModalComponentModeler`; `.run()`/`.sim_dict` still exist on the modeler;
+  `ModalPortDataArray` dims = (port_out, mode_index_out, port_in, mode_index_in, f);
+  tidy3d config moved to `~/.config/tidy3d` (key migrated there).
+  **FC LEDGER UPDATE: 0.15 spent, ≈9.85 remain (expires 2026-07-22).**
+- **Next:** WP3.1c/d (port both validated adapters onto the Solver ABC — live validation
+  now available for BOTH engines), then WP3.1e registry/shims, WP3.2, WP4.2 (gdsfactory).
 
 ---
 

@@ -90,6 +90,10 @@ def test_background_structures_centered_on_component(solver):
 def test_setup_is_offline(solver):
     """Constructing the solver must produce a serializable simulation without
     any cloud interaction (the artifact CI tests depend on this)."""
-    js = solver.base_simulation.json()
+    js = (
+        solver.base_simulation.model_dump_json()
+        if hasattr(solver.base_simulation, "model_dump_json")
+        else solver.base_simulation.json()
+    )
     assert len(js) > 100
     assert len(solver.smatrix_ports) == len(solver.component.ports)
