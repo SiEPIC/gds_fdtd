@@ -357,6 +357,10 @@ Jul–Aug 2025: 32, then dormant since Sep 2025). Four identities:
   hit `_tkinter.TclError` because matplotlib defaults to TkAgg on windows-latest runners
   whose Tk install is broken. Fix: `tests/conftest.py` forces `matplotlib.use("Agg")` for
   the whole suite (no test should open a GUI anyway). Deterministic across platforms.
+- **Gate lesson (2026-07-08):** WP5.2c briefly broke the CI lint leg — codespell (part of
+  the prek hooks) flagged variable names, and it wasn't installed locally so the pre-push
+  gate couldn't see it. codespell is now in the dev extra; the local gate is ruff check +
+  ruff format --check + codespell + pytest, same as CI.
 - **Buffer-waveguide audit (2026-07-08, owner asked):** port-extension stubs confirmed on
   ALL solver paths — tidy3d adds `td.Structure` per port via `polygon_extension(buffer=
   2*buffer)` (solver_tidy3d.py:259); Lumerical gets stubs baked into the exported GDS
