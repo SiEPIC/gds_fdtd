@@ -80,7 +80,12 @@ def test_apply_prefab_runs(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPat
 
     f = tmp_path / "dummy.gds"
     f.write_bytes(b"")
-    lp.apply_prefab(str(f), "TOP")  # should not raise
+    out = lp.apply_prefab(str(f), str(tmp_path / "out.gds"), "TOP")  # should not raise
+    assert out == str(tmp_path / "out.gds")
+
+    # WP1.8: apply_prefab must never overwrite its input
+    with pytest.raises(ValueError, match="never overwrites"):
+        lp.apply_prefab(str(f), str(f), "TOP")
 
 
 # =============================================================================
@@ -105,3 +110,23 @@ def test_load_region_happy_path(escalator_cell):
 def test_load_region_missing_devrec_layer_raises(escalator_cell):
     with pytest.raises(ValueError, match="No DevRec"):
         lp.load_region(escalator_cell, layer=[123, 45])
+
+
+# =============================================================================
+# load_device (WP1.8, bug B15) — returns the component, never touches the input
+# =============================================================================
+def test_load_device_returns_component_and_preserves_input(tmp_path):
+    from gds_fdtd.core import parse_yaml_tech
+
+    src = pathlib.Path(__file__).parent / "si_sin_escalator.gds"
+    gds = tmp_path / "device.gds"
+    gds.write_bytes(src.read_bytes())
+    before = gds.read_bytes()
+
+    tech = parse_yaml_tech(str(pathlib.Path(__file__).parent / "tech_lumerical.yaml"))
+    out_dir = tmp_path / "out"
+    comp = lp.load_device(str(gds), tech=tech, output_dir=str(out_dir))
+
+    assert comp is not None and len(comp.ports) == 2  # previously returned None
+    assert gds.read_bytes() == before, "input GDS was modified"
+    assert (out_dir / "si_sin_escalator_with_extensions.gds").exists()

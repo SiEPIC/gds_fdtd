@@ -9,7 +9,7 @@ import logging
 
 import klayout.db as pya
 
-from .core import layout, port, region, structure
+from .core import port, region, structure
 
 
 def dilate(vertices, extension=1.0):
@@ -57,65 +57,88 @@ def dilate_1d(vertices, extension=1, dim="y"):
     raise ValueError("Dimension must be 'x' or 'y' or 'xy'")
 
 
-def apply_prefab(fname, top_cell, MODEL_NAME="ANT_NanoSOI_ANF1_d9"):
+def apply_prefab(gds_in: str, gds_out: str, top_cell: str, model: str = "ANT_NanoSOI_ANF1_d9"):
+    """Run a PreFab lithography prediction and write the result to a NEW file.
+
+    Args:
+        gds_in: Path of the input GDS (never modified).
+        gds_out: Path to write the predicted GDS to (must differ from gds_in).
+        top_cell: Name of the cell to predict.
+        model: PreFab model name.
+
+    Returns:
+        str: gds_out.
+    """
+    import os
+
     import prefab as pf
 
-    device = pf.read.from_gds(gds_path=fname, cell_name=top_cell)
+    if os.path.abspath(gds_in) == os.path.abspath(gds_out):
+        raise ValueError("gds_out must differ from gds_in — apply_prefab never overwrites its input")
 
-    prediction = device.predict(model=pf.models[MODEL_NAME])
+    device = pf.read.from_gds(gds_path=gds_in, cell_name=top_cell)
+    prediction = device.predict(model=pf.models[model])
     prediction_bin = prediction.binarize()
-
-    prediction_bin.to_gds(gds_path=fname, cell_name=top_cell, gds_layer=(1, 0))
-    return
+    prediction_bin.to_gds(gds_path=gds_out, cell_name=top_cell, gds_layer=(1, 0))
+    return gds_out
 
 
 def load_device(
     fname: str,
     tech,
-    top_cell: str = None,
+    top_cell: str | None = None,
     z_span: float = 3.0,
     z_center: float | None = None,
-    prefab=None,
+    prefab_model: str | None = None,
+    output_dir: str | None = None,
 ):
+    """Load a GDS device into a component, writing derived GDS files to output_dir.
+
+    Writes ``<cell>_with_extensions.gds`` (the layout with port extension stubs)
+    and, when ``prefab_model`` is given, ``<cell>_predicted.gds`` into
+    ``output_dir`` (a temporary directory by default). The input file is never
+    modified (previously: derived files were written next to the input, the
+    built component was discarded, and the function returned None; bug B15).
+
+    Returns:
+        core.component: The parsed component.
+    """
+    import os
+    import tempfile
+
     from .simprocessor import load_component_from_tech
 
-    ly = pya.Layout()
-    ly.read(fname)
+    cell, ly = load_cell(fname, top_cell=top_cell)
 
-    if top_cell is None:
-        if len(ly.top_cells()) > 1:
-            err_msg = "More than one top cell found, ensure only 1 top cell exists. Otherwise, specify the cell using the top_cell argument."
-            logging.error(err_msg)
-            raise ValueError(err_msg)
-        else:
-            cell = ly.top_cell()
-            name = cell.name
-    else:
-        cell = ly.cell(top_cell)
-        if cell is None:
-            err_msg = f"Top cell with name {top_cell} not found."
-            logging.error(err_msg)
-            raise ValueError(err_msg)
-        name = cell.name
+    c = load_component_from_tech(cell=cell, tech=tech, z_span=z_span, z_center=z_center)
 
-    c = load_component_from_tech(
-        ly=layout(name, ly, cell), tech=tech, z_span=z_span, z_center=z_center
-    )
+    if output_dir is None:
+        output_dir = tempfile.mkdtemp(prefix="gds_fdtd_")
+    os.makedirs(output_dir, exist_ok=True)
 
-    dbu = ly.dbu  # Get the database unit (dbu) from the layout
-
+    # add port extension stubs so sources sit on straight waveguide
+    dbu = ly.dbu
+    layer_index = ly.layer(pya.LayerInfo(1, 0))
     for p in c.ports:
         polygon = p.polygon_extension(buffer=2)
-        layer_index = ly.layer(pya.LayerInfo(1, 0))
-        # Convert polygon vertices from um to dbu
         polygon_dbu = [pya.Point(int(pt[0] / dbu), int(pt[1] / dbu)) for pt in polygon]
         cell.shapes(layer_index).insert(pya.Polygon(polygon_dbu))
 
-    new_layout_path = fname.replace(".gds", "_with_extensions.gds")
-    ly.write(new_layout_path)
+    extended_path = os.path.join(output_dir, f"{cell.name}_with_extensions.gds")
+    ly.write(extended_path)
+    logging.info("Wrote extended layout to %s", extended_path)
 
-    if prefab is not None:
-        apply_prefab(fname=new_layout_path, top_cell=top_cell, MODEL_NAME=prefab)
+    if prefab_model is not None:
+        predicted_path = os.path.join(output_dir, f"{cell.name}_predicted.gds")
+        apply_prefab(
+            gds_in=extended_path,
+            gds_out=predicted_path,
+            top_cell=cell.name,
+            model=prefab_model,
+        )
+        logging.info("Wrote PreFab prediction to %s", predicted_path)
+
+    return c
 
 
 def load_cell(fname: str, top_cell: str = None) -> pya.Cell:
