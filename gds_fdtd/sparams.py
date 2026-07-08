@@ -12,7 +12,21 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 
-logger = logging.getLogger("dreamcompiler")
+logger = logging.getLogger(__name__)
+
+
+def _number_of(value) -> int:
+    """Derive a port/mode number from an int or a name with trailing digits.
+
+    "opt1" -> 1, "port 12" -> 12, 3 -> 3. Trailing digits only — never digit
+    concatenation, which made port indices >= 10 ambiguous (B6).
+    """
+    if isinstance(value, int):
+        return value
+    m = re.search(r"(\d+)\s*$", str(value).strip())
+    if m is None:
+        raise ValueError(f"Cannot derive a port/mode number from {value!r}")
+    return int(m.group(1))
 
 
 class s:
@@ -49,26 +63,28 @@ class s:
         return c / np.array(self.f)
 
     @property
+    def in_port_num(self) -> int:
+        return _number_of(self.in_port)
+
+    @property
+    def out_port_num(self) -> int:
+        return _number_of(self.out_port)
+
+    @property
+    def in_mode_num(self) -> int:
+        return _number_of(self.in_modeid)
+
+    @property
+    def out_mode_num(self) -> int:
+        return _number_of(self.out_modeid)
+
+    @property
     def idn_ports(self):
-        # Extract port indices from port names (e.g., "opt1" -> "1")
-        in_idn = "".join(char for char in str(self.in_port) if char.isdigit())
-        out_idn = "".join(char for char in str(self.out_port) if char.isdigit())
-        return f"{out_idn}{in_idn}"
+        return f"{self.out_port_num}{self.in_port_num}"
 
     @property
     def idn_modes(self):
-        # Handle both string and integer mode IDs
-        if isinstance(self.in_modeid, str):
-            in_idn = "".join(char for char in self.in_modeid if char.isdigit())
-        else:
-            in_idn = str(self.in_modeid)
-
-        if isinstance(self.out_modeid, str):
-            out_idn = "".join(char for char in self.out_modeid if char.isdigit())
-        else:
-            out_idn = str(self.out_modeid)
-
-        return f"{out_idn}{in_idn}"
+        return f"{self.out_mode_num}{self.in_mode_num}"
 
     @property
     def idn(self):
@@ -211,7 +227,12 @@ class sparameters:
             s: s_parameter entry
         """
         for d in self.data:
-            if d.idn == f"{out_port}{in_port}_{out_modeid}{in_modeid}":
+            if (
+                d.in_port_num == _number_of(in_port)
+                and d.out_port_num == _number_of(out_port)
+                and d.in_mode_num == _number_of(in_modeid)
+                and d.out_mode_num == _number_of(out_modeid)
+            ):
                 return d
         logger.warning("Cannot find specified S-parameter entry.")
 

@@ -202,8 +202,8 @@ def test_port_idx_extraction(dummy_port: port) -> None:
         dummy_port: A fixture providing a port instance.
     """
     logger.info("Testing port index extraction from name 'port42'")
-    # name "port42" → reversed digits "24" → idx = 24
-    assert dummy_port.idx == 24
+    # WP1.3: name "port42" → trailing digits → idx = 42
+    assert dummy_port.idx == 42
 
 
 def test_port_polygon_extension_delegation(dummy_port: port) -> None:
@@ -292,10 +292,14 @@ def test_port_coordinates(sample_port: port) -> None:
 @pytest.mark.parametrize(
     "name,expected",
     [
-        ("port42", 24),  # digits reversed → "24"
+        # WP1.3: expectations updated — idx is now the TRAILING digits of the
+        # name (was: all digits reversed, so "port42" -> 24 and "opt10" == "opt1").
+        ("port42", 42),
         ("p7", 7),
-        ("abc123", 321),  # digits reversed → "321"
+        ("abc123", 123),
         ("noDigits0", 0),
+        ("opt10", 10),
+        ("opt1", 1),
     ],
 )
 def test_port_idx(name: str, expected: int) -> None:

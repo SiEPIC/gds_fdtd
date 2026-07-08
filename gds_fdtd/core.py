@@ -6,6 +6,7 @@ Core objects module.
 """
 
 import logging
+import re
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -177,15 +178,23 @@ class port:
     @property
     def idx(self) -> int:
         """
-        Extract the index of the port from its name.
+        Extract the index of the port from its trailing digits.
 
-        The index is extracted by taking the digits in the name in reverse order.
-        For example, "port42" would yield an index of 24.
+        "opt1" -> 1, "port42" -> 42, "opt10" -> 10 (previously the digits were
+        reversed, so "port42" -> 24 and "opt10" collided with "opt1").
 
         Returns:
             int: The extracted port index.
+
+        Raises:
+            ValueError: If the port name has no trailing digits.
         """
-        return int("".join(char for char in reversed(self.name) if char.isdigit()))
+        m = re.search(r"(\d+)$", self.name)
+        if m is None:
+            raise ValueError(
+                f"Port name {self.name!r} has no trailing digits to derive an index from."
+            )
+        return int(m.group(1))
 
     def polygon_extension(self, buffer: float = 4.0) -> list[list[float, float]]:
         """
