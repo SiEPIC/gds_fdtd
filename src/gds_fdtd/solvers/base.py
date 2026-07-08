@@ -105,6 +105,33 @@ class Solver(ABC):
 
     # ---------------- shared helpers ----------------
 
+    def run_cached(self, cache_dir: str | Path) -> SMatrix:
+        """run() with result caching: repeat jobs load the stored SMatrix.
+
+        The cache key hashes component geometry + technology + spec + solver
+        name + engine version (gds_fdtd.caching); only a genuine miss spends
+        money/licenses/compute.
+        """
+        from ..caching import cached_run
+
+        return cached_run(self, cache_dir)
+
+    def engine_version(self) -> str:
+        """Version of the underlying engine, part of the cache key.
+
+        Default: the installed distribution named like the solver (works for
+        pip engines such as tidy3d/beamz); otherwise the gds_fdtd version.
+        """
+        from importlib.metadata import PackageNotFoundError, version
+
+        try:
+            return version(self.name)
+        except PackageNotFoundError:
+            try:
+                return f"gds_fdtd-{version('gds_fdtd')}"
+            except PackageNotFoundError:  # pragma: no cover - not installed
+                return "unknown"
+
     def plot_fields(self, axis: str = "z", savefig: str | None = None):
         """Plot the frequency-domain field profile recorded by the run.
 

@@ -19,6 +19,7 @@
 - **Canonical S-matrix:** one `SMatrix` type with NaN-aware partial matrices, reciprocity/passivity/power-balance checks, and I/O to Lumerical INTERCONNECT `.dat`, Touchstone `.sNp` (scikit-rf compatible), HDF5/npz, plus plotting.
 - **Cross-validated engines:** the tidy3d (>= 2.11, cloud) and Lumerical (2024/2025, local) adapters were validated live against each other on identical geometry (< 0.15 dB agreement, locked into CI via recorded artifacts). [beamz](https://github.com/beamzorg/beamz) provides a fully open-source, zero-cost local engine (JAX, CPU/GPU).
 - **Multimode/dual-polarization** simulations on the engines that support them (tidy3d, Lumerical).
+- **Convergence sweeps, caching, cross-solver validation:** `convergence.sweep()` steps any `SimulationSpec` field and recommends the converged value; `run_cached()` hashes the full job (geometry + technology + spec + engine version) so repeat runs are free; `validation.validate_across()` quantifies worst-case |ΔS| between engines on the same job.
 
 ## Supported solvers
 
@@ -34,7 +35,7 @@
 |---|---|
 | `01_basics/` | GDS -> tidy3d via the modern solver API (offline build, cloud run) |
 | `02_lumerical/`, `03_tidy3d/` | the documented legacy class interface (+ mesh convergence) |
-| `04_solvers/` | the engine-agnostic registry: one component, any solver |
+| `04_solvers/` | the engine-agnostic registry (04a); convergence sweeps + job caching (04b); cross-solver validation on recorded real results, runs offline (04c) |
 | `05_gdsfactory/` | gdsfactory >= 9 conversion -> any solver |
 | `06_beamz/` | the open-source zero-cost engine |
 | `07_prefab/` | lithography-predicted geometry ([PreFab](https://github.com/PreFab-Photonics/PreFab)) |

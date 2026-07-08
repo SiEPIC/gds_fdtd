@@ -43,7 +43,8 @@
   by construction). Final full-matrix validation: S21≡S12 within 0.01 dB mean, S11 −34 dB,
   reciprocal ✓ passive ✓. The validation script now asserts S21/S12 symmetry + reciprocity +
   passivity — the checks that catch this bug class on first contact | — |
-| 5 | 5.2 grid+modes · 5.4 fdtdz · 5.5 convergence+caching | ⬜ not started | — |
+| 5 | 5.5 convergence + caching + cross-solver validation | ✅ done (convergence.py sweep/report, caching.py job-hash + run_cached, validation.py validate_across/compare_smatrices; 12 offline tests incl. recorded t3d-vs-lum 0.081 dB through the API; examples 04b live tidy3d mesh sweep + free cached rerun, 04c offline on recorded artifacts) | (next commit) |
+| 5 | 5.2 grid+modes · 5.4 fdtdz | ⬜ not started | — |
 | 5 | 5.1 MEEP | ⏸ **DEPRIORITIZED per owner directive 2026-07-08** ("i dont care about meep") — moved to Part 7 backlog; beamz now fills the free-engine role incl. any future CI physics lane | — |
 | **6 — Examples/docs/release** | 6.1 examples rewrite | ✅ all rewritten to current APIs; import check ZERO xfails | `fd0edda` |
 | 6 | 6.2a–d docs · 6.2b citation · 6.3 v1.0 release | ⬜ not started | — |
@@ -364,6 +365,15 @@ Jul–Aug 2025: 32, then dormant since Sep 2025). Four identities:
 - **F11 CONFIRMED FIXED IN CI (2026-07-08):** run 28926190430 fully green after the Agg
   conftest — both windows-latest legs pass; only the advisory mypy leg remains non-green
   (allowed-failure by design).
+- **WP5.5 live validation (2026-07-08):** example 04b executed for real on tidy3d — 3-point
+  mesh sweep (6/8/10) of the escalator, ≤0.05 FC/point ("Maximum FlexCredit cost: 0.050"),
+  immediate rerun completed in 4.5 s with ZERO new runs (cache hits). **FC LEDGER: +≤0.15 ⇒
+  ≈0.7 spent, ≈9.3 remain (exp 2026-07-22).** FINDING F12 from that run: with the original
+  −60 dB comparison floor the sweep reported 17–22 dB "deltas" — entirely S11-type entries at
+  the −30…−55 dB noise floor swinging between meshes while the thru path moved 0.07 dB.
+  Default floor set to −30 dB everywhere (sweep + compare); recommend() then correctly picked
+  mesh=10 at 0.05 dB tolerance. Lesson: convergence metrics must exclude noise-floor entries
+  or they never converge.
 - **Owner-env note (2026-07-08, authorized):** conda env `gdsfactory` → tidy3d 2.11.2 +
   gdsfactory 9.45 + editable gds_fdtd. Pre-existing `gplugins==1.4.2` (numpy==2.2 pin) and
   `meow-sim` (tidy3d<2.9 pin) now unsatisfied — flagged to owner; gds_fdtd unaffected.

@@ -3,7 +3,7 @@
 import logging as _logging
 from importlib.metadata import PackageNotFoundError, version
 
-from . import core, geometry, lyprocessor, simprocessor, sparams
+from . import caching, convergence, core, geometry, lyprocessor, simprocessor, sparams, validation
 from .core import technology
 from .geometry import Component, LayoutSource, Port, Region, Structure
 from .smatrix import SMatrix
@@ -19,12 +19,15 @@ __all__ = [
     "Region",
     "SMatrix",
     "Structure",
+    "caching",
+    "convergence",
     "core",
     "geometry",
     "lyprocessor",
     "simprocessor",
     "sparams",
     "technology",
+    "validation",
 ]
 
 __author__ = """Mustafa Hammood"""
