@@ -18,12 +18,12 @@ What it does:
 .. code-block:: python
 
     from gds_fdtd.solver import fdtd_solver
-    
+
     class MyCustomSolver(fdtd_solver):
         def setup(self):
             # Implementation specific setup
             pass
-            
+
         def run(self):
             # Implementation specific simulation execution
             pass
@@ -60,12 +60,12 @@ What it does:
     from gds_fdtd.core import parse_yaml_tech
     from gds_fdtd.simprocessor import load_component_from_tech
     from gds_fdtd.lyprocessor import load_cell
-    
+
     # Load component and technology
     tech = parse_yaml_tech("tech_tidy3d.yaml")
     cell, layout = load_cell("device.gds", "crossing_te1550")
     component = load_component_from_tech(cell, tech)
-    
+
     # Create Tidy3D solver
     solver = fdtd_solver_tidy3d(
         component=component,
@@ -77,7 +77,7 @@ What it does:
         field_monitors=["z"],
         visualize=True
     )
-    
+
     # Run simulation
     solver.run()
 
@@ -99,7 +99,7 @@ What it can do:
 .. code-block:: python
 
     from gds_fdtd.solver_lumerical import fdtd_solver_lumerical
-    
+
     # Create Lumerical solver
     solver = fdtd_solver_lumerical(
         component=component,
@@ -112,7 +112,7 @@ What it can do:
         boundary=["PML", "PML", "Metal"],
         symmetry=[0, 0, 1]  # Mirror symmetry in z
     )
-    
+
     # Run simulation
     solver.run()
 
@@ -136,12 +136,12 @@ The :class:`~gds_fdtd.solver.fdtd_field_monitor` provides the base functionality
     # Access field monitors
     for monitor in solver.field_monitors_objs:
         print(f"Monitor: {monitor.name} ({monitor.monitor_type})")
-        
+
         # Check if data is available
         if monitor.has_data():
             # Visualize fields
             monitor.visualize(freq=freq, field_component='E')
-            
+
             # Get monitor information
             print(monitor.get_field_info())
 
@@ -154,7 +154,7 @@ Tidy3D solvers use field monitors that work with Tidy3D's plotting functions:
 
     # Visualize all field monitors
     solver.visualize_field_monitors()
-    
+
     # Access individual monitors
     z_monitor = solver.get_field_monitor("z_field")
     if z_monitor and z_monitor.has_data():
@@ -171,7 +171,7 @@ All solvers write detailed logs to files in the working directory:
     import os
     log_files = [f for f in os.listdir(solver.working_dir) if f.endswith('.log')]
     print(f"Log files: {log_files}")
-    
+
     # Manual logging
     solver.logger.info("Custom log message")
 
@@ -224,7 +224,7 @@ To add support for a new FDTD solver:
 .. code-block:: python
 
     from gds_fdtd.solver import fdtd_solver
-    
+
     class fdtd_solver_newsolver(fdtd_solver):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -239,19 +239,19 @@ To add support for a new FDTD solver:
         self._validate_simulation_parameters()
         self._export_gds()
         # Solver-specific setup
-        
+
     def run(self) -> None:
         """Run the simulation."""
         # Solver-specific execution
-        
+
     def get_resources(self) -> None:
         """Get simulation resource requirements."""
         # Resource estimation
-        
+
     def get_results(self) -> None:
         """Retrieve simulation results."""
         # Results processing
-        
+
     def get_log(self) -> None:
         """Get simulation logs."""
         # Log retrieval
@@ -262,10 +262,10 @@ To add support for a new FDTD solver:
 
     # Create field monitors
     field_monitor = self.create_field_monitor_object("my_monitor", "z")
-    
+
     # Access standardized ports
     for fdtd_port in self.fdtd_ports:
         # Port configuration using standardized interface
         pass
 
-This modular approach ensures consistency across different solver backends while allowing for solver-specific optimizations and features. 
+This modular approach ensures consistency across different solver backends while allowing for solver-specific optimizations and features.

@@ -58,7 +58,10 @@ def test_multimode_entries():
 def test_mismatched_frequency_grids_rejected():
     with pytest.raises(ValueError, match="frequency grid"):
         SMatrix.from_entries(
-            [("opt1", "opt2", 1, 1, F, np.ones(F.size)), ("opt2", "opt1", 1, 1, F * 2, np.ones(F.size))]
+            [
+                ("opt1", "opt2", 1, 1, F, np.ones(F.size)),
+                ("opt2", "opt1", 1, 1, F * 2, np.ones(F.size)),
+            ]
         )
 
 
@@ -120,7 +123,9 @@ def test_sparameters_to_smatrix_equivalence(tmp_path):
     spar = _make_multimode_sparams()
     sm = spar.to_smatrix()
     for d in spar.data:
-        got = sm.sel(out=d.out_port_num, in_=d.in_port_num, mode_out=d.out_mode_num, mode_in=d.in_mode_num)
+        got = sm.sel(
+            out=d.out_port_num, in_=d.in_port_num, mode_out=d.out_mode_num, mode_in=d.in_mode_num
+        )
         expected = np.asarray(d.s_mag) * np.exp(1j * np.asarray(d.s_phase))
         np.testing.assert_allclose(got, expected, rtol=1e-12)
 

@@ -74,7 +74,9 @@ def apply_prefab(gds_in: str, gds_out: str, top_cell: str, model: str = "ANT_Nan
     import prefab as pf
 
     if os.path.abspath(gds_in) == os.path.abspath(gds_out):
-        raise ValueError("gds_out must differ from gds_in — apply_prefab never overwrites its input")
+        raise ValueError(
+            "gds_out must differ from gds_in — apply_prefab never overwrites its input"
+        )
 
     device = pf.read.from_gds(gds_path=gds_in, cell_name=top_cell)
     prediction = device.predict(model=pf.models[model])
@@ -311,7 +313,7 @@ def load_structure_from_bounds(
         z_base (float): Z base of structure.
         z_span (float): Z span (thickness) of structure, can be negative for downward growth.
         material (tidy3d.Medium): Material of structure
-        extension (float, optional): Growth (or shrinkage), in um, of structure defintion relative to bounds. Defaults to 2 um.
+        extension (float, optional): Growth (or shrinkage), in um, of structure definition relative to bounds. Defaults to 2 um.
         layer (list[int], optional): GDS layer specification as [layer_number, datatype]. Defaults to [1, 0].
 
     Returns:

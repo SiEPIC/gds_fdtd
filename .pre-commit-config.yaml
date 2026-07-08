@@ -16,7 +16,7 @@ repos:
         args: ["--maxkb=2048"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.4
+    rev: v0.15.20  # keep in sync with the ruff version in dev deps/uv.lock
     hooks:
       - id: ruff
         args: ["--fix"]

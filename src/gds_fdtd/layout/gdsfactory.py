@@ -137,9 +137,8 @@ def from_gdsfactory(c, tech, z_span: float = 4.0) -> Component:
     def _side_margin(side_coord: float, axis: int, outward: int) -> float:
         for p_ in ports:
             on_side = abs(p_.center[axis] - side_coord) < tol
-            faces_out = (
-                (axis == 0 and p_.direction == (0 if outward > 0 else 180))
-                or (axis == 1 and p_.direction == (90 if outward > 0 else 270))
+            faces_out = (axis == 0 and p_.direction == (0 if outward > 0 else 180)) or (
+                axis == 1 and p_.direction == (90 if outward > 0 else 270)
             )
             if on_side and faces_out:
                 return 0.0

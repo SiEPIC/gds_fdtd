@@ -95,6 +95,11 @@ filterwarnings = [
   "error::DeprecationWarning:gds_fdtd.*",
 ]
 
+[tool.codespell]
+# TE/TM = transverse electric/magnetic (photonics); OD/TE show up in SVG path data
+ignore-words-list = "TE,te,TETM,tetm,subtrate,Subtrate"  # Subtrate: intentional legacy-typo tolerance in _is_background
+skip = "*.svg,*.gds,*.lock,*.ipynb,docs/_build,docs/_autosummary,MODERNIZATION_PLAN.md"
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"

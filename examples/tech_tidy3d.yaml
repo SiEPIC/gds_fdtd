@@ -14,7 +14,7 @@ technology:
       material:
         tidy3d_db:
           nk: 1.48
-  
+
   pinrec:
     - layer: [1, 10]
 

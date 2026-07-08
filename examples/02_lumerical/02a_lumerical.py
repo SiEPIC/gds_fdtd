@@ -1,4 +1,4 @@
-#%% 
+#%%
 """
 Example of simulating a component in lumerical.
 @author: Mustafa Hammood

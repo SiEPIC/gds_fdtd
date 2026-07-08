@@ -62,7 +62,7 @@ def test_bounds_ports_on_edge_margin_elsewhere(tech):
     """Port planes get NO margin (devrec convention — stubs must reach the
     PML); port-free sides get the 1.9 um evanescent margin."""
     comp = from_gdsfactory(gf.components.straight(length=10), tech)
-    assert comp.bounds.x_min == pytest.approx(0.0)   # port o1 plane
+    assert comp.bounds.x_min == pytest.approx(0.0)  # port o1 plane
     assert comp.bounds.x_max == pytest.approx(10.0)  # port o2 plane
     assert comp.bounds.y_min == pytest.approx(-0.25 - 1.9)
     assert comp.bounds.y_max == pytest.approx(0.25 + 1.9)
@@ -94,7 +94,9 @@ def test_gf_component_flows_into_solver_build(tech, tmp_path):
 
     comp = from_gdsfactory(gf.components.straight(length=10), tech)
     solver = get_solver("lumerical")(
-        comp, technology=tech, spec=SimulationSpec(z_min=-1.0, z_max=1.11),
+        comp,
+        technology=tech,
+        spec=SimulationSpec(z_min=-1.0, z_max=1.11),
         workdir=str(tmp_path),
     )
     assert solver.validate() == []

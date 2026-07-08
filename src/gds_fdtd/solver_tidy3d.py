@@ -164,9 +164,7 @@ class fdtd_solver_tidy3d(fdtd_solver):
                 )
             b = mapping[key]()
             axis_boundaries.append(td.Boundary(minus=b, plus=b))
-        return td.BoundarySpec(
-            x=axis_boundaries[0], y=axis_boundaries[1], z=axis_boundaries[2]
-        )
+        return td.BoundarySpec(x=axis_boundaries[0], y=axis_boundaries[1], z=axis_boundaries[2])
 
     def _create_smatrix_ports(self):
         """Create Tidy3D Port objects for S-matrix calculation with multi-modal support."""

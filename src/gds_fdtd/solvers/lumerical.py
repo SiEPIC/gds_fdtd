@@ -115,8 +115,10 @@ class LumericalSolver(Solver):
         if problems:
             raise ValueError("cannot build: " + "; ".join(problems))
 
-        workdir = Path(self.workdir) if self.workdir is not None else Path(
-            tempfile.mkdtemp(prefix="gds_fdtd_lum_")
+        workdir = (
+            Path(self.workdir)
+            if self.workdir is not None
+            else Path(tempfile.mkdtemp(prefix="gds_fdtd_lum_"))
         )
         workdir.mkdir(parents=True, exist_ok=True)
 
@@ -186,11 +188,11 @@ class LumericalSolver(Solver):
             spec_str = f"{d['layer'][0]}:{d['layer'][1]}"
             L += [
                 f"addlayer({_q(lname)});",
-                f"setlayer({_q(lname)}, \"start position\", {d['z_base'] * um});",
-                f"setlayer({_q(lname)}, \"thickness\", {abs(d['z_span']) * um});",
-                f"setlayer({_q(lname)}, \"layer number\", {_q(spec_str)});",
-                f"setlayer({_q(lname)}, \"sidewall angle\", {d['sidewall_angle']});",
-                f"setlayer({_q(lname)}, \"pattern material\", {_q(d['material']['lum_db']['model'])});",
+                f'setlayer({_q(lname)}, "start position", {d["z_base"] * um});',
+                f'setlayer({_q(lname)}, "thickness", {abs(d["z_span"]) * um});',
+                f'setlayer({_q(lname)}, "layer number", {_q(spec_str)});',
+                f'setlayer({_q(lname)}, "sidewall angle", {d["sidewall_angle"]});',
+                f'setlayer({_q(lname)}, "pattern material", {_q(d["material"]["lum_db"]["model"])});',
             ]
 
         # ---- FDTD region ----
@@ -281,7 +283,7 @@ class LumericalSolver(Solver):
                     "entry = struct;",  # fresh struct per entry (clear() on an
                     # undefined variable errors in LSF — found by live bisect)
                     f"entry.Port = {_q(e['name'])};",
-                    f'entry.Mode = {_q(f"mode {m}")};',
+                    f"entry.Mode = {_q(f'mode {m}')};",
                     f"entry.Active = {1 if e['name'] in active else 0};",
                     'addsweepparameter("sparams", entry);',
                 ]

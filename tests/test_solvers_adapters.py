@@ -84,8 +84,15 @@ def test_lum_build_deterministic(lum_artifacts):
 
 
 def test_lum_validate_flags_missing_materials():
-    comp, tech, layout = _job("tech_tidy3d.yaml")  # tidy3d materials only
-    solver = get_solver("lumerical")(comp, technology=tech)
+    """Runs in the base (no-tidy3d) profile: strip lum_db from a lum tech copy
+    instead of loading tech_tidy3d.yaml (whose materials import tidy3d)."""
+    import copy
+
+    comp, tech, layout = _job("tech_lumerical.yaml")
+    bad = copy.deepcopy(tech)
+    for d in bad["device"]:
+        d["material"].pop("lum_db", None)
+    solver = get_solver("lumerical")(comp, technology=bad)
     problems = solver.validate()
     assert any("lum_db" in p for p in problems)
     del layout

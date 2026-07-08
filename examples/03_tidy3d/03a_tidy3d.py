@@ -1,4 +1,4 @@
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #%% 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #%%
 """
 Example of simulating a component in Tidy3D using the new fdtd_solver_tidy3d class.
 
@@ -44,10 +44,10 @@ if __name__ == "__main__":
         field_monitors=["z"],
         working_dir=os.getcwd(),  # Files will be saved to ./crossing_te1550/ subdirectory
     )
-    
-    # This requires Tidy3D cloud credentials and will consume simulation credits   
+
+    # This requires Tidy3D cloud credentials and will consume simulation credits
     solver.run()
-    
+
     # Plot all the s-parameters
     solver.sparameters.plot()
     #%%
@@ -67,19 +67,19 @@ if __name__ == "__main__":
     ax.legend()
     plt.tight_layout()
     plt.show()
-    
+
         # Visualize results (S-parameters plots and export to .dat)
     solver.visualize_results()
-    
+
     # Show field monitor data
     print("\nField Monitor Visualization:")
     print("-" * 40)
     solver.visualize_field_monitors()
-    
+
     # Show field monitor information
     for monitor in solver.field_monitors_objs:
         print(f"Field Monitor Info: {monitor.get_field_info()}")
-        
+
     print("\nLogging Information:")
     print("-" * 40)
     log_files = [f for f in os.listdir(solver.working_dir) if f.endswith('.log')]
@@ -89,4 +89,4 @@ if __name__ == "__main__":
     else:
         print("No log files found")
 
-# %% 
+# %%

@@ -14,7 +14,7 @@ technology:
       material:
         lum_db:
           model: SiO2 (Glass) - Palik
-  
+
   pinrec:
     - layer: [1, 10]
 

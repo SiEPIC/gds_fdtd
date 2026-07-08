@@ -448,7 +448,11 @@ class Component:
         )  # initialize ports z center and z span
 
     def export_gds(
-        self, export_dir: str = None, dbu: float = 0.001, layer: list | None = None, buffer: float = 1.0
+        self,
+        export_dir: str = None,
+        dbu: float = 0.001,
+        layer: list | None = None,
+        buffer: float = 1.0,
     ) -> None:
         """
         Export the component to a GDS file.
@@ -524,5 +528,3 @@ class Component:
             export_dir = os.getcwd()
         layout.write(os.path.join(export_dir, f"{self.name}.gds"))
         return
-
-

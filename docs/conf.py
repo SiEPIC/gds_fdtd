@@ -1,11 +1,11 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('../src'))
+sys.path.insert(0, os.path.abspath("../src"))
 
 # Project details
-project = 'gds_fdtd'
-author = 'Mustafa Hammood'
+project = "gds_fdtd"
+author = "Mustafa Hammood"
 try:
     from importlib.metadata import version as _pkg_version
 
@@ -15,18 +15,18 @@ except Exception:  # pragma: no cover - docs built without install
 
 # Extensions
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.napoleon',  # Google-style docstrings
-    'sphinx.ext.viewcode',
-    'sphinx_toggleprompt',  # For interactive prompts
-    'sphinx_copybutton',    # Adds copy buttons to code blocks
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",  # Google-style docstrings
+    "sphinx.ext.viewcode",
+    "sphinx_toggleprompt",  # For interactive prompts
+    "sphinx_copybutton",  # Adds copy buttons to code blocks
 ]
 
 autosummary_generate = True
 
 # Theme
-html_theme = 'furo'
+html_theme = "furo"
 
 # Toggle Light/Dark mode (built into furo)
 html_theme_options = {
@@ -41,8 +41,7 @@ html_theme_options = {
 }
 
 
-
 # Paths
-templates_path = ['_templates']
+templates_path = ["_templates"]
 exclude_patterns = []
-html_static_path = ['_static']
+html_static_path = ["_static"]

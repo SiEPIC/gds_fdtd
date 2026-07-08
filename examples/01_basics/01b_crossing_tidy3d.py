@@ -12,7 +12,7 @@ import os
 # Define the path to the GDS file
 file_gds = os.path.join(os.path.dirname(os.path.dirname(__file__)), "devices.gds")
 
-# define 3D geometry paramters not captured in the 2D layout
+# define 3D geometry parameters not captured in the 2D layout
 thickness_si = 0.22
 thickness_sub = 2
 thickness_super = 3

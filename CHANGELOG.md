@@ -189,4 +189,4 @@ s41 = sparams.S(in_port=1, out_port=4, in_modeid=1, out_modeid=1)
 ## [0.1.0] - 2023-12-03
 
 ### Added
-- Base usable version of the package 
+- Base usable version of the package

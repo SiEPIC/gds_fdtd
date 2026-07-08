@@ -3,11 +3,11 @@
 
 .. automodule:: gds_fdtd.lyprocessor
 
-   
+
    .. rubric:: Functions
 
    .. autosummary::
-   
+
       apply_prefab
       dilate
       dilate_1d
@@ -17,4 +17,3 @@
       load_region
       load_structure
       load_structure_from_bounds
-   

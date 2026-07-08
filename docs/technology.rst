@@ -15,19 +15,19 @@ A technology file contains the following main sections:
 
     technology:
       name: "YourTechnology"
-      
+
       substrate:
         # Substrate definition
-        
+
       superstrate:
         # Superstrate definition
-        
+
       device:
         # Device layer definitions
-        
+
       pinrec:
         # Port layer definition
-        
+
       devrec:
         # Device region definition
 
@@ -51,13 +51,13 @@ For Tidy3D simulations, materials can be defined using:
     material:
       tidy3d_db:
         model: [cSi, Li1993_293K]  # [material, model]
-    
+
     # Constant refractive index
     material:
       tidy3d:
         nk: 3.48  # Real refractive index (lossless)
-    
-    # Complex refractive index  
+
+    # Complex refractive index
     material:
       tidy3d:
         nk: 3.48 + 0.01j  # Real + imaginary parts
@@ -79,7 +79,7 @@ For Lumerical simulations, materials reference the Lumerical material database:
     material:
       lum_db:
         model: Si (Silicon) - Palik
-    
+
     # Other Lumerical materials:
     # - SiO2 (Glass) - Palik
     # - Si3N4 (Silicon Nitride) - Luke
@@ -137,8 +137,8 @@ Device layers contain the patterned structures from your GDS file:
           tidy3d_db:
             model: [cSi, Li1993_293K]
         sidewall_angle: 85      # Sidewall angle (degrees)
-      
-      # Silicon nitride layer  
+
+      # Silicon nitride layer
       - layer: [4, 0]
         z_base: 0.3
         z_span: 0.4
@@ -150,7 +150,7 @@ Device layers contain the patterned structures from your GDS file:
 Device layer parameters:
 - ``layer``: GDS layer specification [layer_number, datatype]
 - ``z_base``: Base z-position of the layer
-- ``z_span``: Layer thickness  
+- ``z_span``: Layer thickness
 - ``material``: Material definition
 - ``sidewall_angle``: Etch angle (90° = vertical, <90° = tapered)
 
@@ -198,27 +198,27 @@ Complete example for Tidy3D simulations:
 
     technology:
       name: "SiPhotonics_Tidy3D"
-    
+
       substrate:
         z_base: 0.0
         z_span: -2.0
         material:
           tidy3d_db:
             nk: 1.44  # SiO2 substrate
-    
+
       superstrate:
         z_base: 0.0
         z_span: 3.0
         material:
           tidy3d_db:
             nk: 1.0   # Air cladding
-      
+
       pinrec:
         - layer: [1, 10]  # Port layer
-    
+
       devrec:
         - layer: [68, 0]  # Device region layer
-    
+
       device:
         # Silicon device layer
         - layer: [1, 0]
@@ -228,7 +228,7 @@ Complete example for Tidy3D simulations:
             tidy3d_db:
               model: [cSi, Li1993_293K]  # Crystalline silicon
           sidewall_angle: 85
-        
+
         # Silicon nitride layer (if present)
         - layer: [4, 0]
           z_base: 0.3
@@ -247,27 +247,27 @@ Equivalent technology file for Lumerical:
 
     technology:
       name: "SiPhotonics_Lumerical"
-    
+
       substrate:
         z_base: 0.0
         z_span: -2.0
         material:
           lum_db:
             model: SiO2 (Glass) - Palik
-    
+
       superstrate:
         z_base: 0.0
         z_span: 3.0
         material:
           lum_db:
             model: SiO2 (Glass) - Palik  # Same as substrate for cladding
-      
+
       pinrec:
         - layer: [1, 10]
-    
+
       devrec:
         - layer: [68, 0]
-    
+
       device:
         - layer: [1, 0]
           z_base: 0.0
@@ -276,7 +276,7 @@ Equivalent technology file for Lumerical:
             lum_db:
               model: Si (Silicon) - Palik
           sidewall_angle: 85
-        
+
         - layer: [4, 0]
           z_base: 0.3
           z_span: 0.4
@@ -304,16 +304,16 @@ Define complex layer stacks:
           tidy3d_db:
             model: [cSi, Li1993_293K]
         sidewall_angle: 85
-      
+
       # Intermediate oxide
-      - layer: [2, 0] 
+      - layer: [2, 0]
         z_base: 0.22
         z_span: 0.5
         material:
           tidy3d_db:
             nk: 1.44
         sidewall_angle: 90
-      
+
       # Top silicon nitride
       - layer: [3, 0]
         z_base: 0.72
@@ -334,7 +334,7 @@ Define custom material properties:
     material:
       tidy3d_db:
         nk: 3.48 + 0.01j  # n + ik format
-    
+
     # Temperature-dependent material (conceptual)
     material:
       tidy3d_db:
@@ -352,7 +352,7 @@ Different Substrate Types
       material:
         tidy3d_db:
           nk: 1.44  # SiO2 BOX layer
-    
+
     # Silicon-on-sapphire (SOS)
     substrate:
       z_base: 0.0
@@ -372,11 +372,11 @@ Load technology files in your simulation scripts:
 .. code-block:: python
 
     from gds_fdtd.core import parse_yaml_tech
-    
+
     # Load technology file
     tech_path = "examples/tech_tidy3d.yaml"
     technology = parse_yaml_tech(tech_path)
-    
+
     # Inspect loaded technology
     print(f"Technology name: {technology.name}")
     print(f"Device layers: {len(technology.device)}")
@@ -392,7 +392,7 @@ Validate technology definitions:
         """Validate technology file completeness."""
         print("Technology Validation:")
         print("-" * 30)
-        
+
         # Check required sections
         required_sections = ['substrate', 'superstrate', 'device', 'pinrec', 'devrec']
         for section in required_sections:
@@ -400,13 +400,13 @@ Validate technology definitions:
                 print(f"✓ {section} defined")
             else:
                 print(f"✗ {section} missing")
-        
+
         # Check device layers
         if hasattr(tech, 'device') and tech.device:
             print(f"Device layers: {len(tech.device)}")
             for i, layer in enumerate(tech.device):
                 print(f"  Layer {i}: GDS {layer['layer']} at z={layer['z_base']}μm")
-        
+
         print()
 
 Technology Debugging
@@ -420,7 +420,7 @@ Debug material and layer issues:
         """Debug material assignments in loaded component."""
         print("Material Debug:")
         print("-" * 20)
-        
+
         for structure in component.structures:
             if isinstance(structure, list):
                 for s in structure:
@@ -458,27 +458,27 @@ Create a template for your technology:
         """Create a basic technology template."""
         template = f"""technology:
       name: "{name}"
-    
+
       substrate:
         z_base: 0.0
         z_span: -2.0
         material:
           tidy3d_db:
             nk: 1.44  # {substrate_material}
-    
+
       superstrate:
         z_base: 0.0
         z_span: 3.0
         material:
           tidy3d_db:
             nk: 1.0  # Air
-      
+
       pinrec:
         - layer: [1, 10]  # Port layer
-    
+
       devrec:
         - layer: [68, 0]  # Device region
-    
+
       device:
         - layer: [1, 0]  # Main device layer
           z_base: 0.0
@@ -488,12 +488,12 @@ Create a template for your technology:
               model: [cSi, Li1993_293K]  # {device_material}
           sidewall_angle: 85
     """
-        
+
         with open(f"{name.lower()}_tech.yaml", 'w') as f:
             f.write(template)
-        
+
         print(f"Technology template created: {name.lower()}_tech.yaml")
-    
+
     # Create a template
     create_tech_template("MyPhotonics", "SiO2", "Silicon")
 
@@ -532,4 +532,4 @@ Common Issues and Solutions
 - Check port width and text label formatting
 - Ensure port positions align with device features
 
-Technology files are crucial for accurate simulations - spend time getting them right for your specific fabrication process and material system. 
+Technology files are crucial for accurate simulations - spend time getting them right for your specific fabrication process and material system.

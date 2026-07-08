@@ -92,8 +92,10 @@ class Tidy3DSolver(Solver):
 
         from ..solver_tidy3d import fdtd_solver_tidy3d
 
-        workdir = str(self.workdir) if self.workdir is not None else tempfile.mkdtemp(
-            prefix="gds_fdtd_t3d_"
+        workdir = (
+            str(self.workdir)
+            if self.workdir is not None
+            else tempfile.mkdtemp(prefix="gds_fdtd_t3d_")
         )
         s = self.spec
         legacy = fdtd_solver_tidy3d(
@@ -147,8 +149,10 @@ class Tidy3DSolver(Solver):
             self.build()
         import tidy3d.web as web
 
-        workdir = str(self.workdir) if self.workdir is not None else os.path.dirname(
-            str(self._artifacts.files["gds"])
+        workdir = (
+            str(self.workdir)
+            if self.workdir is not None
+            else os.path.dirname(str(self._artifacts.files["gds"]))
         )
         modeler_data = web.run(
             self._artifacts.native,

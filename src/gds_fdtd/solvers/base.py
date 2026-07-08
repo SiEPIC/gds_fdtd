@@ -141,9 +141,7 @@ class Solver(ABC):
                 axis, direction = "x", ("forward" if p.direction == 180 else "backward")
                 size = [0.0, self.spec.width_ports, self.spec.depth_ports]
             else:
-                raise ValueError(
-                    f"Port direction {p.direction} not supported (0/90/180/270 only)."
-                )
+                raise ValueError(f"Port direction {p.direction} not supported (0/90/180/270 only).")
             plan.append(
                 {
                     "name": p.name,
@@ -228,6 +226,4 @@ def get_solver(name: str) -> type[Solver]:
     try:
         return _REGISTRY[name]
     except KeyError:
-        raise KeyError(
-            f"No solver named {name!r}; registered: {sorted(_REGISTRY)}"
-        ) from None
+        raise KeyError(f"No solver named {name!r}; registered: {sorted(_REGISTRY)}") from None

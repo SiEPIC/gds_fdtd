@@ -3,20 +3,20 @@
 
 .. automodule:: gds_fdtd.core
 
-   
+
    .. rubric:: Functions
 
    .. autosummary::
-   
+
       calculate_polygon_extension
       initialize_ports_z
       is_point_inside_polygon
       parse_yaml_tech
-   
+
    .. rubric:: Classes
 
    .. autosummary::
-   
+
       component
       layout
       port
@@ -25,4 +25,3 @@
       sparam
       structure
       technology
-   

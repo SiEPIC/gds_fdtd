@@ -25,8 +25,18 @@ EXAMPLES_DIR = TESTS_DIR.parent / "examples"
 
 FIXTURES = [
     # (fixture id, gds path, top cell or None, tech yaml path)
-    ("si_sin_escalator", TESTS_DIR / "si_sin_escalator.gds", None, TESTS_DIR / "tech_lumerical.yaml"),
-    ("crossing_te1550", EXAMPLES_DIR / "devices.gds", "crossing_te1550", TESTS_DIR / "tech_lumerical.yaml"),
+    (
+        "si_sin_escalator",
+        TESTS_DIR / "si_sin_escalator.gds",
+        None,
+        TESTS_DIR / "tech_lumerical.yaml",
+    ),
+    (
+        "crossing_te1550",
+        EXAMPLES_DIR / "devices.gds",
+        "crossing_te1550",
+        TESTS_DIR / "tech_lumerical.yaml",
+    ),
     (
         "directional_coupler_te1550",
         EXAMPLES_DIR / "devices.gds",
@@ -109,11 +119,15 @@ def _assert_close(actual, expected, path=""):
     if isinstance(expected, float):
         assert actual == pytest.approx(expected, abs=1e-9), f"mismatch at {path}"
     elif isinstance(expected, list):
-        assert isinstance(actual, list) and len(actual) == len(expected), f"length mismatch at {path}"
+        assert isinstance(actual, list) and len(actual) == len(expected), (
+            f"length mismatch at {path}"
+        )
         for i, (a, e) in enumerate(zip(actual, expected, strict=True)):
             _assert_close(a, e, f"{path}[{i}]")
     elif isinstance(expected, dict):
-        assert isinstance(actual, dict) and sorted(actual) == sorted(expected), f"keys mismatch at {path}"
+        assert isinstance(actual, dict) and sorted(actual) == sorted(expected), (
+            f"keys mismatch at {path}"
+        )
         for k in expected:
             _assert_close(actual[k], expected[k], f"{path}.{k}")
     else:

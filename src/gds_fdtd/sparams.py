@@ -167,9 +167,9 @@ class sparameters:
         mode_label : string
             Mode label.
         in_modeid : int
-            Input mode ID (or othogonal identifier).
+            Input mode ID (or orthogonal identifier).
         out_modeid : int
-            Output mode ID (or othogonal identifier).
+            Output mode ID (or orthogonal identifier).
         data_type : string
             S-parameter data type. Typically "Transmission" unless "Modulation"
         group_delay : float

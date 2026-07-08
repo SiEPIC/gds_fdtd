@@ -55,7 +55,8 @@ BASE = """technology:
 
 def test_missing_z_span_names_field(tmp_path):
     path = _tech_yaml(
-        tmp_path, BASE.format(device="{layer: [1, 0], z_base: 0.0, material: {lum_db: {model: Si}}}")
+        tmp_path,
+        BASE.format(device="{layer: [1, 0], z_base: 0.0, material: {lum_db: {model: Si}}}"),
     )
     with pytest.raises(ValueError, match="z_span"):
         Technology.from_yaml(path)
@@ -64,7 +65,9 @@ def test_missing_z_span_names_field(tmp_path):
 def test_bad_layer_length_names_field(tmp_path):
     path = _tech_yaml(
         tmp_path,
-        BASE.format(device="{layer: [1, 0, 7], z_base: 0.0, z_span: 0.22, material: {lum_db: {model: Si}}}"),
+        BASE.format(
+            device="{layer: [1, 0, 7], z_base: 0.0, z_span: 0.22, material: {lum_db: {model: Si}}}"
+        ),
     )
     with pytest.raises(ValueError, match="layer"):
         Technology.from_yaml(path)
@@ -73,7 +76,9 @@ def test_bad_layer_length_names_field(tmp_path):
 def test_lum_db_without_model_names_key(tmp_path):
     path = _tech_yaml(
         tmp_path,
-        BASE.format(device="{layer: [1, 0], z_base: 0.0, z_span: 0.22, material: {lum_db: {oops: Si}}}"),
+        BASE.format(
+            device="{layer: [1, 0], z_base: 0.0, z_span: 0.22, material: {lum_db: {oops: Si}}}"
+        ),
     )
     with pytest.raises(ValueError, match="lum_db"):
         Technology.from_yaml(path)
@@ -103,7 +108,11 @@ def test_rii_material_loads_offline_and_matches_silicon(tmp_path):
     assert mat.nk_at(1.55) == pytest.approx(3.4757 + 0j, abs=0.05)
     # legacy dict carries the rii mapping through
     legacy = tech.to_legacy_dict()
-    assert legacy["device"][0]["material"]["rii"] == {"shelf": "main", "book": "Si", "page": "Li-293"}
+    assert legacy["device"][0]["material"]["rii"] == {
+        "shelf": "main",
+        "book": "Si",
+        "page": "Li-293",
+    }
 
 
 def test_rii_out_of_range_raises():
