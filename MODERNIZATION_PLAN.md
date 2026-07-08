@@ -24,6 +24,28 @@
 - All modernization work happens on the **`modernization` branch** — never commit to `main`
   (`main` sits at origin/main `ab2cd9b`).
 
+### MASTER SCOREBOARD (single source of truth — keep current)
+
+| Phase | Work packages | Status | Commit(s) |
+|---|---|---|---|
+| **0 — Safety net & tooling** | 0.1 tooling · 0.2 CI · 0.5 Pages fix · 0.6 release pipeline · 0.3 goldens · 0.4 example-rot check | ✅ all 6 | `3fe9984` `e04b03f` `3ceddef` `15b5a79` `394c1ee` `a3aac21`+`86125bf` |
+| **1 — Bug fixes (B1–B19)** | 1.1–1.9 | ✅ all 9 | `317ede5` `985fa8d` `b63ab94` `4ecb85a` `78672c6` `4654c4d` `76154b5` `b235df3` |
+| **2 — Core refactor** | 2.1 src+rename · 2.2 pydantic Technology **+rii** · 2.3 flat structures · 2.4a–d SMatrix | ✅ all | `dfa4b9b` `7bb9bc9` `d88aff8` `041c018` `c428182` `6edfd3d` `5b33799` |
+| **3 — Solver contract** | 3.1a spec · 3.1b ABC+conformance · 3.1c tidy3d · 3.1d lumerical · 3.1e entry-points | ✅ all 5, adapters **validated live** | `7a14522` `d95f346` `b16debe` `ebc5b02` `78b59d2` |
+| 3 | 3.2 lumerical hardening | ✅ absorbed into 3.1d (script-gen build, F7 probe, quoting, fresh-project sweep) | — |
+| **4 — Ecosystem** | 4.1 tidy3d 2.11 · 4.2 gdsfactory 9 | ✅ both, **validated live** | `b98c106` `26e35a3` |
+| 4 | 4.3 dependency-floor refresh | ◐ partial (tidy3d+gf pins done; numpy/shapely floors + meep/beamz/fdtdz extras pending) | — |
+| **5 — New solvers** | 5.3 beamz (owner priority) | 🔄 IN PROGRESS (API introspected; adapter next) | — |
+| 5 | 5.1 MEEP · 5.2 grid+modes · 5.4 fdtdz · 5.5 convergence+caching | ⬜ not started | — |
+| **6 — Examples/docs/release** | 6.1 examples rewrite | 🔜 queued this session (owner priority) | — |
+| 6 | 6.2a–d docs · 6.2b citation · 6.3 v1.0 release | ⬜ not started | — |
+| **7 — Hardening** | 7.1 test taxonomy | ◐ partial (conformance ✓, recorded artifacts ✓; markers/coverage-ratchet/lower-bounds ⬜) | — |
+| 7 | 7.5 cloud/licensed CI lanes | ◐ partial (secret set ✓, procedures proven manually; workflows ⬜) | — |
+| 7 | 7.2 supply-chain · 7.3 JobSpec+CLI · 7.4 containers · 7.6 polish | ⬜ not started | — |
+| **Milestones** | **PR SiEPIC/gds_fdtd#23 fully green** (9-leg matrix + gate) · live validation on BOTH engines · cross-solver agreement locked in tests · findings F1–F8 · FC ledger ≈0.20/10 | ✅ | `a718011` |
+
+Detailed per-WP notes, findings (F1–F8), and deviations (D1–D7) follow below.
+
 **Executor environment:** dedicated venv at `.venv/` (Python 3.13.5, gitignored) created to
 avoid touching the user's `gdsfactory` conda env; `uv` is installed *inside* it
 (`.venv/bin/uv`). Gate: `.venv/bin/ruff check . && .venv/bin/python -m pytest -q tests`.
