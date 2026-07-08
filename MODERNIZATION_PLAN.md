@@ -36,8 +36,10 @@ Commits are local only — nothing pushed without the user's say-so.
 | WP0.2 | ✅ done | (next commit) | ci.yml (SHA-pinned, uv, alls-green `pass` gate); fake-coverage test + commented blocks deleted; README fence/badges fixed; **honest coverage measured: 16%** (core 90%, lyprocessor 21%, sparams 11%, simprocessor 6%, solvers+logging 0%) — this is the WP7.1 `fail_under` baseline |
 | WP0.5 | ✅ done (code) / ⏸ cleanup+settings pending owner | (next commit) | jekyll + python-publish workflows deleted; build_docs.yml → official artifact Pages flow. **NEW FINDING (F1):** Pages source is the `main` BRANCH — the live site is a *Jekyll render of the README*; the Sphinx docs pushed to `gh-pages` were never served at all. **Owner actions at merge: (1) flip Pages source to "GitHub Actions" (`gh api -X PUT repos/SiEPIC/gds_fdtd/pages -f build_type=workflow`), (2) delete `gh-pages` branch, (3) approve the deployment-deletion pass** (list-only pass done: 80 rows = 75×main + 5×tags; newest id 2827934461). |
 | WP0.6 | ✅ done (code) / ⏸ PyPI setup pending owner | (next commit) | hatchling+hatch-vcs (version from tags — verified `0.4.1.dev13+g…` locally); `__version__` via importlib.metadata; deleted .bumpversion.cfg, scripts/release.sh, Makefile (justfile replaces it; README updated); new release.yml (check-CI-pass guard → build-and-inspect → trusted publishing w/ attestations → gh-release auto-notes) + .github/release.yml label categories. **Owner: register PyPI Trusted Publisher (workflow release.yml, env `pypi`), create `pypi` environment, then delete PYPI_API_TOKEN secret.** All new action SHAs verified via `gh api` (download-artifact@d3f86a10…, pypa/publish@cef22109…, softprops@3bb12739…, configure-pages@983d7736…, upload-pages-artifact@7b1f4a76…, deploy-pages@d6db9016…). |
-| WP0.3, WP0.4 | pending | — | next |
-| Phase 1+ | not started | — | |
+| WP0.3 | ✅ done | `394c1ee` | goldens for 3 fixtures (lumerical tech, raw-YAML materials, port idx included); regeneration deterministic, gated behind `--regenerate` |
+| WP0.4 | ✅ done | (next commit) | AST import check; 6 xfails (broken legacy examples), tidy3d-importing ones skip in base profile / run in all-extras leg |
+| **Phase 0** | **✅ COMPLETE** | — | Phase 1 (bug fixes WP1.1–WP1.9) is next; all need WP0.3's goldens which now exist |
+| Phase 1+ | not started | — | WP1.x are mutually independent — any order |
 
 **WP0.2 execution notes for successors:** `dev` is an *extra*, not a PEP 735 group — CI must
 `uv sync --locked --extra dev` (plain `uv sync` gives no pytest). The old
