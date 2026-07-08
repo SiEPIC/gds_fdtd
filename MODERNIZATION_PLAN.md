@@ -35,7 +35,7 @@
 | 3 | 3.2 lumerical hardening | ✅ absorbed into 3.1d (script-gen build, F7 probe, quoting, fresh-project sweep) | — |
 | **4 — Ecosystem** | 4.1 tidy3d 2.11 · 4.2 gdsfactory 9 | ✅ both, **validated live** | `b98c106` `26e35a3` |
 | 4 | 4.3 dependency-floor refresh | ◐ partial (tidy3d+gf pins done; numpy/shapely floors + meep/beamz/fdtdz extras pending) | — |
-| **5 — New solvers** | 5.3 beamz (owner priority) | 🔄 adapter+conformance+offline tests DONE; physics: S21/S11 ✓, **S12 normalization bug on '−'-directed sources found by live run** — selector-swap experiment executing | — |
+| **5 — New solvers** | 5.3 beamz (owner priority) | 🔄 adapter+conformance+offline tests DONE; physics: S21/S11 ✓, **S12 +2dB normalization bug on '−'-directed sources found by live run.** Hypothesis 1 (swap source-port wave selectors) REJECTED (made it +8.7dB — selectors are correct). Hypothesis 2 executing: drop the reference monitor, take incident from the source port's own ModeMonitor via modal wave separation (symmetric by construction; the example's reference monitor is a conditioning aid, not a correctness requirement) | — |
 | 5 | 5.1 MEEP · 5.2 grid+modes · 5.4 fdtdz · 5.5 convergence+caching | ⬜ not started | — |
 | **6 — Examples/docs/release** | 6.1 examples rewrite | ✅ all rewritten to current APIs; import check ZERO xfails | `fd0edda` |
 | 6 | 6.2a–d docs · 6.2b citation · 6.3 v1.0 release | ⬜ not started | — |
