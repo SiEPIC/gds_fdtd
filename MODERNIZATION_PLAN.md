@@ -34,7 +34,8 @@ Commits are local only — nothing pushed without the user's say-so.
 |---|---|---|---|
 | WP0.1 | ✅ done | `3fe9984` | see deviations D1–D4 |
 | WP0.2 | ✅ done | (next commit) | ci.yml (SHA-pinned, uv, alls-green `pass` gate); fake-coverage test + commented blocks deleted; README fence/badges fixed; **honest coverage measured: 16%** (core 90%, lyprocessor 21%, sparams 11%, simprocessor 6%, solvers+logging 0%) — this is the WP7.1 `fail_under` baseline |
-| WP0.5, WP0.6, WP0.3, WP0.4 | pending | — | in that intended order |
+| WP0.5 | ✅ done (code) / ⏸ cleanup+settings pending owner | (next commit) | jekyll + python-publish workflows deleted; build_docs.yml → official artifact Pages flow. **NEW FINDING (F1):** Pages source is the `main` BRANCH — the live site is a *Jekyll render of the README*; the Sphinx docs pushed to `gh-pages` were never served at all. **Owner actions at merge: (1) flip Pages source to "GitHub Actions" (`gh api -X PUT repos/SiEPIC/gds_fdtd/pages -f build_type=workflow`), (2) delete `gh-pages` branch, (3) approve the deployment-deletion pass** (list-only pass done: 80 rows = 75×main + 5×tags; newest id 2827934461). |
+| WP0.6, WP0.3, WP0.4 | pending | — | in that intended order |
 | Phase 1+ | not started | — | |
 
 **WP0.2 execution notes for successors:** `dev` is an *extra*, not a PEP 735 group — CI must
