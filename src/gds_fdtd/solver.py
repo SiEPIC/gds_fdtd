@@ -21,6 +21,7 @@ from gds_fdtd.logging_config import (
     setup_logging,
 )
 from gds_fdtd.sparams import sparameters
+from gds_fdtd.spec import SimulationSpec
 
 
 class fdtd_port:
@@ -277,21 +278,40 @@ class fdtd_solver:
                     f"Invalid port object in port_input: {p!r}. Expected component "
                     "port objects (or None for all ports)."
                 )
-        self.wavelength_start = wavelength_start
-        self.wavelength_end = wavelength_end
-        self.wavelength_points = wavelength_points
-        self.mesh = mesh
-        self.boundary = list(boundary) if boundary is not None else ["PML", "PML", "PML"]
-        self.symmetry = list(symmetry) if symmetry is not None else [0, 0, 0]
-        self.z_min = z_min
-        self.z_max = z_max
-        self.width_ports = width_ports
-        self.depth_ports = depth_ports
-        self.buffer = buffer
-        self.modes = list(modes) if modes is not None else [1]
-        self.mode_freq_pts = mode_freq_pts
-        self.run_time_factor = run_time_factor
-        self.field_monitors = list(field_monitors) if field_monitors is not None else ["z"]
+        # WP3.1a: all numeric settings are validated through one SimulationSpec;
+        # the legacy attribute surface below is kept identical (mutable lists).
+        self.spec = SimulationSpec(
+            wavelength_start=wavelength_start,
+            wavelength_end=wavelength_end,
+            wavelength_points=wavelength_points,
+            mesh=mesh,
+            boundary=tuple(boundary) if boundary is not None else ("PML", "PML", "PML"),
+            symmetry=tuple(symmetry) if symmetry is not None else (0, 0, 0),
+            z_min=z_min,
+            z_max=z_max,
+            width_ports=width_ports,
+            depth_ports=depth_ports,
+            buffer=buffer,
+            modes=tuple(modes) if modes is not None else (1,),
+            mode_freq_pts=mode_freq_pts,
+            run_time_factor=run_time_factor,
+            field_monitors=tuple(field_monitors) if field_monitors is not None else ("z",),
+        )
+        self.wavelength_start = self.spec.wavelength_start
+        self.wavelength_end = self.spec.wavelength_end
+        self.wavelength_points = self.spec.wavelength_points
+        self.mesh = self.spec.mesh
+        self.boundary = list(self.spec.boundary)
+        self.symmetry = list(self.spec.symmetry)
+        self.z_min = self.spec.z_min
+        self.z_max = self.spec.z_max
+        self.width_ports = self.spec.width_ports
+        self.depth_ports = self.spec.depth_ports
+        self.buffer = self.spec.buffer
+        self.modes = list(self.spec.modes)
+        self.mode_freq_pts = self.spec.mode_freq_pts
+        self.run_time_factor = self.spec.run_time_factor
+        self.field_monitors = list(self.spec.field_monitors)
         self.working_dir = working_dir
 
         # Create component-specific working directory under the base working directory
@@ -457,43 +477,36 @@ class fdtd_solver:
         return [p.name for p in self.port_input]
 
     def _validate_simulation_parameters(self) -> None:
-        """Validate simulation parameters for consistency."""
+        """Re-validate the (possibly mutated) legacy attributes through SimulationSpec.
+
+        WP3.1a: the hand-written checks moved into gds_fdtd.spec.SimulationSpec
+        validators. Rebuilding the spec here keeps setup()-time validation
+        meaningful for callers that mutated the legacy list attributes after
+        construction, and refreshes self.spec to match.
+        """
         self.logger.info("Validating simulation parameters")
-
-        # Wavelength validation
-        if self.wavelength_start >= self.wavelength_end:
-            error_msg = "wavelength_start must be less than wavelength_end"
-            self.logger.error(error_msg)
-            raise ValueError(error_msg)
-        if self.wavelength_points < 2:
-            error_msg = "wavelength_points must be at least 2"
-            self.logger.error(error_msg)
-            raise ValueError(error_msg)
-
-        # Geometry validation
-        if self.z_min >= self.z_max:
-            error_msg = "z_min must be less than z_max"
-            self.logger.error(error_msg)
-            raise ValueError(error_msg)
-        if any(s <= 0 for s in [self.width_ports, self.depth_ports, self.buffer]):
-            error_msg = "width_ports, depth_ports, and buffer must be positive"
-            self.logger.error(error_msg)
-            raise ValueError(error_msg)
-
-        # Mode validation
-        if not self.modes or any(m <= 0 for m in self.modes):
-            error_msg = "modes must be a non-empty list of positive integers"
-            self.logger.error(error_msg)
-            raise ValueError(error_msg)
-
-        # Mesh validation
-        if self.mesh <= 0:
-            error_msg = "mesh must be positive"
-            self.logger.error(error_msg)
-            raise ValueError(error_msg)
-
+        try:
+            self.spec = SimulationSpec(
+                wavelength_start=self.wavelength_start,
+                wavelength_end=self.wavelength_end,
+                wavelength_points=self.wavelength_points,
+                mesh=self.mesh,
+                boundary=tuple(self.boundary),
+                symmetry=tuple(self.symmetry),
+                z_min=self.z_min,
+                z_max=self.z_max,
+                width_ports=self.width_ports,
+                depth_ports=self.depth_ports,
+                buffer=self.buffer,
+                modes=tuple(self.modes),
+                mode_freq_pts=self.mode_freq_pts,
+                run_time_factor=self.run_time_factor,
+                field_monitors=tuple(self.field_monitors),
+            )
+        except Exception as e:
+            self.logger.error(str(e))
+            raise ValueError(str(e)) from e
         self.logger.info("Simulation parameters validated successfully")
-        print("Simulation parameters validated successfully")
 
     def _calculate_simulation_time(
         self, max_dimension: float, max_group_index: float = 4.5
