@@ -40,6 +40,9 @@ dependencies = [
 ]
 
 # ──────────────── optional feature / tool sets ────────────────
+[project.scripts]
+gds-fdtd = "gds_fdtd.cli:main"
+
 [project.optional-dependencies]
 
 tidy3d      = ["tidy3d>=2.11,<3"]              # enables gds_fdtd.solver_tidy3d (2.8.x is numpy<2/py<=3.12 only; F5)
