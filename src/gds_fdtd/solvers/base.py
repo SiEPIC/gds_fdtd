@@ -168,6 +168,35 @@ class Solver(ABC):
 # ---------------------------------------------------------------------------
 
 _REGISTRY: dict[str, type[Solver]] = {}
+_EP_SCANNED = False
+
+
+def _scan_entry_points() -> None:
+    """Merge adapters advertised via the 'gds_fdtd.solvers' entry-point group.
+
+    External packages can ship solvers by declaring
+    [project.entry-points."gds_fdtd.solvers"] name = "pkg.mod:Class".
+    In-package adapters also declare entry points, but they self-register on
+    import first; loading is idempotent. Broken plugins are skipped (their
+    load error is reported by available_solvers, not raised at import).
+    """
+    global _EP_SCANNED
+    if _EP_SCANNED:
+        return
+    _EP_SCANNED = True
+    from importlib.metadata import entry_points
+
+    for ep in entry_points(group="gds_fdtd.solvers"):
+        if ep.name in _REGISTRY:
+            continue
+        try:
+            cls = ep.load()
+            _REGISTRY[ep.name] = cls
+        except Exception as e:
+            _REGISTRY_ERRORS[ep.name] = f"entry point failed to load: {e}"
+
+
+_REGISTRY_ERRORS: dict[str, str] = {}
 
 
 def register_solver(cls: type[Solver]) -> type[Solver]:
@@ -182,7 +211,8 @@ def available_solvers() -> dict[str, str]:
     Entry-point discovery (external plugins) is wired in WP3.1e; for now this
     reports the in-package registrations.
     """
-    out = {}
+    _scan_entry_points()
+    out = dict(_REGISTRY_ERRORS)
     for name, cls in _REGISTRY.items():
         try:
             probe = getattr(cls, "probe_available", None)
@@ -193,7 +223,8 @@ def available_solvers() -> dict[str, str]:
 
 
 def get_solver(name: str) -> type[Solver]:
-    """Fetch a registered solver class by name."""
+    """Fetch a registered solver class by name (registry + entry points)."""
+    _scan_entry_points()
     try:
         return _REGISTRY[name]
     except KeyError:

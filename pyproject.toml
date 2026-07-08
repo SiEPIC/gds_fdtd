@@ -71,6 +71,11 @@ docs = [
   "furo>=2024.08.06",
 ]
 
+# ─────────────── solver plugin entry points (WP3.1e) ───────────────
+[project.entry-points."gds_fdtd.solvers"]
+tidy3d    = "gds_fdtd.solvers.tidy3d:Tidy3DSolver"
+lumerical = "gds_fdtd.solvers.lumerical:LumericalSolver"
+
 # ───────────────────────── project links ────────────────────────
 [project.urls]
 Homepage    = "https://github.com/SiEPIC/gds_fdtd"

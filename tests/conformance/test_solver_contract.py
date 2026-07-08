@@ -241,3 +241,13 @@ def test_fake_solver_runs_to_valid_smatrix(component):
     assert sm.port_names == [p.name for p in component.ports]
     assert sm.is_reciprocal()
     assert sm.is_passive()
+
+
+def test_entry_point_discovery():
+    """The installed package advertises its adapters via entry points (WP3.1e)."""
+    from importlib.metadata import entry_points
+
+    eps = {ep.name for ep in entry_points(group="gds_fdtd.solvers")}
+    assert {"tidy3d", "lumerical"} <= eps
+    avail = available_solvers()
+    assert "tidy3d" in avail and "lumerical" in avail
