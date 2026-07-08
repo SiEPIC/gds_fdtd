@@ -97,3 +97,38 @@ def test_setup_is_offline(solver):
     )
     assert len(js) > 100
     assert len(solver.smatrix_ports) == len(solver.component.ports)
+
+
+def test_web_submodule_resolves_in_fresh_interpreter():
+    """Regression for finding F10: tidy3d.web is a LAZY submodule — `import
+    tidy3d as td` does not provide td.web. The validation scripts masked this
+    by importing tidy3d.web themselves; a user running an example hit
+    AttributeError. Run the check in a FRESH interpreter so nothing in this
+    test session can mask it, and statically forbid the td.web idiom.
+    """
+    import inspect
+    import subprocess
+    import sys
+
+    import gds_fdtd.solver_tidy3d as legacy
+    import gds_fdtd.solvers.tidy3d as adapter
+
+    # static: the lazy-import-unsafe idiom must not reappear
+    for module in (legacy, adapter):
+        assert "td.web" not in inspect.getsource(module).replace("tidy3d.web", ""), (
+            f"{module.__name__} uses td.web — tidy3d.web must be imported explicitly"
+        )
+
+    # dynamic, unmasked: fresh interpreter imports the solver module only, then
+    # verifies the exact import run() performs is resolvable
+    code = (
+        "import gds_fdtd.solver_tidy3d\n"
+        "import tidy3d.web as web\n"
+        "assert callable(web.run)\n"
+        "print('web-ok')\n"
+    )
+    out = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, timeout=300
+    )
+    assert out.returncode == 0, out.stderr[-500:]
+    assert "web-ok" in out.stdout

@@ -67,7 +67,7 @@ class fdtd_solver_tidy3d(fdtd_solver):
 
         # Create the modeler for S-matrix calculation.
         # tidy3d >=2.9 renamed ComponentModeler -> ModalComponentModeler and
-        # moved web options (verbose/path_dir) to td.web.run (WP4.1).
+        # moved web options (verbose/path_dir) to tidy3d.web.run (WP4.1).
         self.component_modeler = ModalComponentModeler(
             simulation=self.base_simulation,
             ports=self.smatrix_ports,
@@ -326,9 +326,15 @@ class fdtd_solver_tidy3d(fdtd_solver):
         log_simulation_start(self.logger, "Tidy3D ComponentModeler", self.component.name)
         print("Running S-matrix calculation with ComponentModeler...")
 
-        # Run the S-matrix calculation through the tidy3d web API (2.11 workflow)
+        # Run the S-matrix calculation through the tidy3d web API (2.11 workflow).
+        # tidy3d.web is a LAZILY imported submodule: `import tidy3d as td` does
+        # NOT provide the web attribute — import it explicitly (finding F10; the
+        # original validation scripts masked this by importing tidy3d.web
+        # themselves).
+        import tidy3d.web as web
+
         try:
-            self._modeler_data = td.web.run(
+            self._modeler_data = web.run(
                 self.component_modeler,
                 task_name=f"gdsfdtd_{self.component.name}",
                 path=os.path.join(self.working_dir, f"{self.component.name}_modeler.hdf5"),

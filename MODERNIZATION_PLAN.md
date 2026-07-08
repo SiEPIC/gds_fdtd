@@ -43,7 +43,8 @@
   by construction). Final full-matrix validation: S21≡S12 within 0.01 dB mean, S11 −34 dB,
   reciprocal ✓ passive ✓. The validation script now asserts S21/S12 symmetry + reciprocity +
   passivity — the checks that catch this bug class on first contact | — |
-| 5 | 5.1 MEEP · 5.2 grid+modes · 5.4 fdtdz · 5.5 convergence+caching | ⬜ not started | — |
+| 5 | 5.2 grid+modes · 5.4 fdtdz · 5.5 convergence+caching | ⬜ not started | — |
+| 5 | 5.1 MEEP | ⏸ **DEPRIORITIZED per owner directive 2026-07-08** ("i dont care about meep") — moved to Part 7 backlog; beamz now fills the free-engine role incl. any future CI physics lane | — |
 | **6 — Examples/docs/release** | 6.1 examples rewrite | ✅ all rewritten to current APIs; import check ZERO xfails | `fd0edda` |
 | 6 | 6.2a–d docs · 6.2b citation · 6.3 v1.0 release | ⬜ not started | — |
 | **7 — Hardening** | 7.1 test taxonomy | ◐ partial (conformance ✓, recorded artifacts ✓; markers/coverage-ratchet/lower-bounds ⬜) | — |

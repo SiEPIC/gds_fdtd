@@ -40,7 +40,7 @@ if __name__ == "__main__":
         depth_ports=1.5,
         buffer=1.0,
         modes=[1, 2],  # TE and TM modes
-        run_time_factor=50,
+        run_time_factor=10,  # runtime is group-index-aware since WP1.5; 50 would be ~5x overkill
         field_monitors=["z"],
         working_dir=os.getcwd(),  # Files will be saved to ./crossing_te1550/ subdirectory
     )
