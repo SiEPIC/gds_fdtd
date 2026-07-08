@@ -153,6 +153,14 @@ WP4.x verification, but not the executor env. Baseline test suite: 51 passed in 
   broken plugins surface via available_solvers(), not import errors. **Deviation D7:** legacy
   solver classes stay undeprecated until WP6.1 (they are the documented example API, and
   Tidy3DSolver composes the legacy tidy3d machinery internally).
+- **✅ PR #23 FULLY GREEN (2026-07-08):** the complete CI matrix passes on GitHub runners —
+  9 test legs (ubuntu/macos/windows × py3.11–3.13, base + all-extras profiles), lint (prek),
+  build (hatch-vcs versioned), docs smoke, CodeQL, and the alls-green `pass` gate. mypy
+  remains advisory-red as designed (D4; Phase-2 burn-down pending). First-run fixes:
+  ruff hook version skew (now synced to dev ruff 0.15.20 with a keep-in-sync comment),
+  one test made base-profile-safe, codespell configured for photonics vocab (TE/TM) —
+  which also caught 3 real docstring typos. LESSON: the local gate now includes
+  `pre-commit run --all-files`, not just ruff.
 - **PR OPENED: SiEPIC/gds_fdtd#23** (base upstream main ← mustafacc:modernization) —
   first-ever run of the new CI matrix. Note: gh resolved the base to the upstream org repo
   (user is the SiEPIC maintainer, so kept). Fork PRs get no secrets: codecov upload will
