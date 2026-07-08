@@ -8,7 +8,6 @@ Tidy3D FDTD solver interface module.
 import os
 import re
 
-import matplotlib.pyplot as plt
 import numpy as np
 import tidy3d as td
 from tidy3d.plugins.smatrix import ComponentModeler, Port
@@ -19,106 +18,13 @@ from gds_fdtd.sparams import sparameters
 
 
 class tidy3d_field_monitor(fdtd_field_monitor):
+    """Tidy3D-specific field monitor.
+
+    NOTE (WP1.9): the previous set_tidy3d_data/_create_field_plots plumbing
+    probed ComponentModeler internals that do not exist in this form and was
+    dead code. Field visualization returns properly with the tidy3d 2.11
+    migration (WP4.1), built on the modeler's result data.
     """
-    Tidy3D-specific field monitor with visualization capabilities.
-    """
-
-    def __init__(self, name: str, monitor_type: str, logger=None):
-        super().__init__(name, monitor_type, logger)
-        self.tidy3d_data = None
-
-    def set_tidy3d_data(self, sim_data, freq_data=None):
-        """
-        Set Tidy3D-specific field data.
-
-        Args:
-            sim_data: Tidy3D simulation data containing field monitors
-            freq_data: Frequency data for visualization
-        """
-        self.tidy3d_data = sim_data
-        self.freq_data = freq_data
-
-        # Extract field data for this monitor
-        field_name = f"{self.monitor_type}_field"
-        if hasattr(sim_data, field_name):
-            self.field_data = getattr(sim_data, field_name)
-            self.logger.debug(f"Tidy3D field data set for monitor {self.name}")
-        else:
-            self.logger.warning(f"Field monitor {field_name} not found in simulation data")
-
-    def _create_field_plots(self, freq, field_component, figsize):
-        """Create Tidy3D-specific field visualization plots."""
-        if not self.has_data() or self.tidy3d_data is None:
-            self.logger.error("No Tidy3D field data available for visualization")
-            return
-
-        field_name = f"{self.monitor_type}_field"
-
-        try:
-            # Use center frequency if not specified
-            if freq is None:
-                if hasattr(self.freq_data, "__len__") and len(self.freq_data) > 0:
-                    freq = self.freq_data[len(self.freq_data) // 2]  # Center frequency
-                else:
-                    self.logger.warning("No frequency data available, using first available")
-
-            fig, axes = plt.subplots(2, 2, figsize=figsize)
-            fig.suptitle(
-                f"Field Monitor: {self.name} ({self.monitor_type}-axis) at {freq / 1e12:.2f} THz"
-            )
-
-            # Plot field components
-            field_components = ["Ex", "Ey", "Ez"] if field_component == "E" else [field_component]
-
-            for i, component in enumerate(field_components[:3]):
-                if i < 3:
-                    ax = axes[i // 2, i % 2]
-                    try:
-                        self.tidy3d_data.plot_field(field_name, component, freq=freq, ax=ax)
-                        ax.set_title(f"{component} field")
-                    except Exception as e:
-                        self.logger.warning(f"Could not plot {component}: {e}")
-                        ax.text(
-                            0.5,
-                            0.5,
-                            f"{component} field\n(Error: {str(e)})",
-                            ha="center",
-                            va="center",
-                            transform=ax.transAxes,
-                        )
-                        ax.set_title(f"{component} field")
-
-            # Plot field magnitude
-            ax = axes[1, 1]
-            try:
-                # Calculate field magnitude from components
-                Ex = self.tidy3d_data[field_name].Ex.sel(f=freq, method="nearest")
-                Ey = self.tidy3d_data[field_name].Ey.sel(f=freq, method="nearest")
-                Ez = self.tidy3d_data[field_name].Ez.sel(f=freq, method="nearest")
-                E_mag = np.sqrt(np.abs(Ex) ** 2 + np.abs(Ey) ** 2 + np.abs(Ez) ** 2)
-
-                # Simple plot of magnitude
-                im = ax.imshow(np.real(E_mag), cmap="hot", origin="lower")
-                ax.set_title("|E| magnitude")
-                plt.colorbar(im, ax=ax)
-            except Exception as e:
-                self.logger.warning(f"Could not plot field magnitude: {e}")
-                ax.text(
-                    0.5,
-                    0.5,
-                    f"|E| magnitude\n(Error: {str(e)})",
-                    ha="center",
-                    va="center",
-                    transform=ax.transAxes,
-                )
-                ax.set_title("|E| magnitude")
-
-            plt.tight_layout()
-            plt.show()
-
-        except Exception as e:
-            self.logger.error(f"Error creating Tidy3D field plots: {e}")
-            super()._create_field_plots(freq, field_component, figsize)  # Fallback
 
 
 class fdtd_solver_tidy3d(fdtd_solver):
@@ -213,11 +119,14 @@ class fdtd_solver_tidy3d(fdtd_solver):
         # simulation domain size (in microns)
         sim_size = [self.span[0], self.span[1], self.span[2]]
 
-        # run time calculation
-        run_time = self.run_time_factor * max(sim_size) / td.C_0
+        # Run time from the shared base-class helper (includes the group-index
+        # slowdown factor) so run_time_factor means the same physics as in the
+        # Lumerical solver (bug B11). max dimension converted um -> m.
+        run_time = self._calculate_simulation_time(max(sim_size) * 1e-6)
 
-        # Create boundary spec
-        boundary_spec = td.BoundarySpec.all_sides(boundary=td.PML())
+        # Honor the user's boundary settings (previously hardcoded to PML on
+        # all sides while the Lumerical solver obeyed them; bug B10).
+        boundary_spec = self._create_boundary_spec()
 
         # Create base simulation (no sources - ComponentModeler adds them)
         base_sim = td.Simulation(
@@ -233,6 +142,31 @@ class fdtd_solver_tidy3d(fdtd_solver):
         )
 
         return base_sim
+
+    def _create_boundary_spec(self) -> "td.BoundarySpec":
+        """Map the solver's boundary strings to a tidy3d BoundarySpec.
+
+        Supported names (case-insensitive, matching the Lumerical adapter):
+        "PML", "Metal" (perfect electric conductor), "Periodic".
+        """
+        mapping = {
+            "pml": td.PML,
+            "metal": td.PECBoundary,
+            "periodic": td.Periodic,
+        }
+        axis_boundaries = []
+        for axis_name, boundary_name in zip("xyz", self.boundary, strict=True):
+            key = str(boundary_name).lower()
+            if key not in mapping:
+                raise ValueError(
+                    f"Unsupported boundary {boundary_name!r} for axis {axis_name}. "
+                    f"Supported: {sorted(mapping)}"
+                )
+            b = mapping[key]()
+            axis_boundaries.append(td.Boundary(minus=b, plus=b))
+        return td.BoundarySpec(
+            x=axis_boundaries[0], y=axis_boundaries[1], z=axis_boundaries[2]
+        )
 
     def _create_smatrix_ports(self):
         """Create Tidy3D Port objects for S-matrix calculation with multi-modal support."""
@@ -250,9 +184,6 @@ class fdtd_solver_tidy3d(fdtd_solver):
                 raise ValueError(f"Invalid span configuration for port {fdtd_port.name}")
 
             # Create Tidy3D Port object with multi-modal support
-            # Convert 1-based mode indices to 0-based for Tidy3D
-            mode_indices = [m - 1 for m in self.modes]
-
             port = Port(
                 center=fdtd_port.position,
                 size=size,
@@ -266,100 +197,59 @@ class fdtd_solver_tidy3d(fdtd_solver):
 
         return ports
 
+    def _background_polygon(self):
+        """Rectangle flush with the port extensions, CENTERED ON THE COMPONENT.
+
+        Previously this square was centered at the origin (sized via
+        abs(center)+span/2), so off-origin components got an oversized,
+        origin-anchored substrate/superstrate (bug B9).
+        """
+        b = self.component.bounds
+        half_x = b.x_span / 2 + 2 * self.buffer
+        half_y = b.y_span / 2 + 2 * self.buffer
+        cx, cy = b.x_center, b.y_center
+        return [
+            (cx - half_x, cy - half_y),
+            (cx + half_x, cy - half_y),
+            (cx + half_x, cy + half_y),
+            (cx - half_x, cy + half_y),
+        ]
+
+    @staticmethod
+    def _is_background(name: str) -> bool:
+        n = name.lower()
+        return "substrate" in n or "superstrate" in n or "subtrate" in n
+
+    def _to_td_structure(self, s):
+        """Convert one core.structure into a td.Structure."""
+        if s.z_span < 0:
+            bounds = (s.z_base + s.z_span, s.z_base)
+        else:
+            bounds = (s.z_base, s.z_base + s.z_span)
+
+        polygon = self._background_polygon() if self._is_background(s.name) else s.polygon
+
+        return td.Structure(
+            geometry=td.PolySlab(
+                vertices=polygon,
+                slab_bounds=bounds,
+                axis=2,
+                sidewall_angle=(90 - s.sidewall_angle) * (np.pi / 180),
+            ),
+            medium=s.material["tidy3d"] if isinstance(s.material, dict) else s.material,
+            name=s.name,
+        )
+
     def _create_structures(self):
         """Create Tidy3D structure objects from the component."""
         device = self.component
 
         structures = []
         for s in device.structures:
-            if type(s) == list:
-                for i in s:
-                    if i.z_span < 0:
-                        bounds = (i.z_base + i.z_span, i.z_base)
-                    else:
-                        bounds = (i.z_base, i.z_base + i.z_span)
-
-                    # Check if this is substrate/superstrate and extend to be flush with port extensions
-                    if (
-                        "substrate" in i.name.lower()
-                        or "superstrate" in i.name.lower()
-                        or "subtrate" in i.name.lower()
-                    ):
-                        # Extend substrate/superstrate to be flush with port extensions (2*buffer from component edge)
-                        component_max_extent = max(
-                            abs(device.bounds.x_center) + device.bounds.x_span / 2,
-                            abs(device.bounds.y_center) + device.bounds.y_span / 2,
-                        )
-                        substrate_half_size = (
-                            component_max_extent + 2 * self.buffer
-                        )  # Flush with port extensions
-                        extended_vertices = [
-                            (-substrate_half_size, -substrate_half_size),
-                            (substrate_half_size, -substrate_half_size),
-                            (substrate_half_size, substrate_half_size),
-                            (-substrate_half_size, substrate_half_size),
-                        ]
-                        polygon = extended_vertices
-                    else:
-                        polygon = i.polygon
-
-                    structures.append(
-                        td.Structure(
-                            geometry=td.PolySlab(
-                                vertices=polygon,
-                                slab_bounds=bounds,
-                                axis=2,
-                                sidewall_angle=(90 - i.sidewall_angle) * (np.pi / 180),
-                            ),
-                            medium=i.material["tidy3d"]
-                            if isinstance(i.material, dict)
-                            else i.material,
-                            name=i.name,
-                        )
-                    )
+            if type(s) == list:  # noqa: E721  # removed with the flat-structure refactor (WP2.3)
+                structures.extend(self._to_td_structure(i) for i in s)
             else:
-                if s.z_span < 0:
-                    bounds = (s.z_base + s.z_span, s.z_base)
-                else:
-                    bounds = (s.z_base, s.z_base + s.z_span)
-
-                # Check if this is substrate/superstrate and extend to be flush with port extensions
-                if (
-                    "substrate" in s.name.lower()
-                    or "superstrate" in s.name.lower()
-                    or "subtrate" in s.name.lower()
-                ):
-                    # Extend substrate/superstrate to be flush with port extensions (2*buffer from component edge)
-                    component_max_extent = max(
-                        abs(device.bounds.x_center) + device.bounds.x_span / 2,
-                        abs(device.bounds.y_center) + device.bounds.y_span / 2,
-                    )
-                    substrate_half_size = (
-                        component_max_extent + 2 * self.buffer
-                    )  # Flush with port extensions
-                    extended_vertices = [
-                        (-substrate_half_size, -substrate_half_size),
-                        (substrate_half_size, -substrate_half_size),
-                        (substrate_half_size, substrate_half_size),
-                        (-substrate_half_size, substrate_half_size),
-                    ]
-                    polygon = extended_vertices
-                else:
-                    polygon = s.polygon
-
-                print(s.material["tidy3d"] if isinstance(s.material, dict) else s.material)
-                structures.append(
-                    td.Structure(
-                        geometry=td.PolySlab(
-                            vertices=polygon,
-                            slab_bounds=bounds,
-                            axis=2,
-                            sidewall_angle=(90 - s.sidewall_angle) * (np.pi / 180),
-                        ),
-                        medium=s.material["tidy3d"] if isinstance(s.material, dict) else s.material,
-                        name=s.name,
-                    )
-                )
+                structures.append(self._to_td_structure(s))
 
         # extend ports beyond sim region with 2*buffer
         for p in device.ports:
@@ -390,17 +280,21 @@ class fdtd_solver_tidy3d(fdtd_solver):
                     s = s[0]
                     z_center.append(s.z_base + s.z_span / 2)
             z_center = np.average(z_center)
+        # center the monitor on the component, not the origin (bug B9)
+        cx, cy = device.bounds.x_center, device.bounds.y_center
         if axis == "z":
-            center = [0, 0, z_center]
+            center = [cx, cy, z_center]
             size = [td.inf, td.inf, 0]
         elif axis == "y":
-            center = [0, 0, z_center]
+            center = [cx, cy, z_center]
             size = [td.inf, 0, td.inf]
         elif axis == "x":
-            center = [0, 0, z_center]
+            center = [cx, cy, z_center]
             size = [0, td.inf, td.inf]
         else:
-            Exception("Invalid axis for field monitor. Valid selections are 'x', 'y', 'z'.")
+            raise ValueError(
+                f"Invalid axis {axis!r} for field monitor. Valid selections are 'x', 'y', 'z'."
+            )
         return td.FieldMonitor(
             center=center,
             size=size,
@@ -443,46 +337,8 @@ class fdtd_solver_tidy3d(fdtd_solver):
         # Convert results to sparameters format for interface compatibility
         self._convert_smatrix_to_sparameters(smatrix_result)
 
-        # Set field data in field monitor objects if available
-        self._set_field_data_in_monitors()
-
         log_simulation_complete(self.logger, "Tidy3D ComponentModeler")
         print("S-matrix calculation completed successfully!")
-
-    def _set_field_data_in_monitors(self):
-        """Set field data in field monitor objects from ComponentModeler results."""
-        if not hasattr(self, "field_monitors_objs") or not self.field_monitors_objs:
-            self.logger.debug("No field monitor objects to populate with data")
-            return
-
-        if not hasattr(self, "smatrix_result") or self.smatrix_result is None:
-            self.logger.warning("No simulation results available for field monitors")
-            return
-
-        self.logger.info("Setting field data in monitor objects")
-
-        # Access field data from ComponentModeler results
-        # ComponentModeler may store results differently than direct simulation
-        try:
-            # Try to access individual simulation results from the batch
-            # This depends on how ComponentModeler structures its results
-            if hasattr(self.component_modeler, "batch_data") and self.component_modeler.batch_data:
-                # Use the first simulation result that has field data
-                for job_result in self.component_modeler.batch_data.values():
-                    if hasattr(job_result, "simulation"):
-                        # Found a simulation result with field data
-                        for monitor_obj in self.field_monitors_objs:
-                            monitor_obj.set_tidy3d_data(job_result, self.freqs)
-                            self.logger.debug(f"Set field data for monitor: {monitor_obj.name}")
-                        break
-            else:
-                self.logger.warning(
-                    "ComponentModeler batch data not accessible for field visualization"
-                )
-
-        except Exception as e:
-            self.logger.error(f"Error setting field data in monitors: {e}")
-            self.logger.info("Field monitors will not have visualization data available")
 
     def _convert_smatrix_to_sparameters(self, smatrix_result):
         """Convert Tidy3D S-matrix results to sparameters format with multi-modal support."""
