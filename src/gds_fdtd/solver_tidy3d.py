@@ -216,8 +216,15 @@ class fdtd_solver_tidy3d(fdtd_solver):
         ]
 
     @staticmethod
-    def _is_background(name: str) -> bool:
-        n = name.lower()
+    def _is_background(structure) -> bool:
+        """Background = substrate/superstrate, by ROLE (WP2.3), with a
+        name-sniffing fallback only for td.Structure objects in tests."""
+        role = getattr(structure, "role", None)
+        if role is not None:
+            return role in ("substrate", "superstrate")
+        n = structure.name.lower()
+        # name fallback (td.Structure has no role); tolerate the historical
+        # "Subtrate" typo present in components built by older versions
         return "substrate" in n or "superstrate" in n or "subtrate" in n
 
     def _to_td_structure(self, s):
@@ -227,7 +234,7 @@ class fdtd_solver_tidy3d(fdtd_solver):
         else:
             bounds = (s.z_base, s.z_base + s.z_span)
 
-        polygon = self._background_polygon() if self._is_background(s.name) else s.polygon
+        polygon = self._background_polygon() if self._is_background(s) else s.polygon
 
         return td.Structure(
             geometry=td.PolySlab(
@@ -244,12 +251,7 @@ class fdtd_solver_tidy3d(fdtd_solver):
         """Create Tidy3D structure objects from the component."""
         device = self.component
 
-        structures = []
-        for s in device.structures:
-            if type(s) == list:  # noqa: E721  # removed with the flat-structure refactor (WP2.3)
-                structures.extend(self._to_td_structure(i) for i in s)
-            else:
-                structures.append(self._to_td_structure(s))
+        structures = [self._to_td_structure(s) for s in device.structures]
 
         # extend ports beyond sim region with 2*buffer
         for p in device.ports:
@@ -274,12 +276,12 @@ class fdtd_solver_tidy3d(fdtd_solver):
         """Create a field monitor for the specified axis."""
         # identify a device field z_center if None
         if z_center is None:
-            z_center = []
+            # per-LAYER average (matching the old per-list semantics)
+            z_by_layer = {}
             for s in device.structures:
-                if type(s) == list:  # i identify non sub/superstrate if s is a list
-                    s = s[0]
-                    z_center.append(s.z_base + s.z_span / 2)
-            z_center = np.average(z_center)
+                if s.role == "device":
+                    z_by_layer.setdefault(tuple(s.layer), s.z_base + s.z_span / 2)
+            z_center = np.average(list(z_by_layer.values()))
         # center the monitor on the component, not the origin (bug B9)
         cx, cy = device.bounds.x_center, device.bounds.y_center
         if axis == "z":

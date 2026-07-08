@@ -445,7 +445,7 @@ def make_square(
 # We need a double‑nested list because the production code
 # treats `[struct]` as a *region* (cladding hack).
 @pytest.fixture
-def region() -> list[list[structure]]:
+def region() -> list[structure]:
     """
     Create a region (nested list of structures) for testing.
 
@@ -453,7 +453,7 @@ def region() -> list[list[structure]]:
         A region containing a single square structure.
     """
     logger.debug("Creating region with single square structure")
-    return [[make_square()]]  # ⟨region⟩ -> list[list[structure]]
+    return [make_square()]  # WP2.3: flat list of structures
 
 
 @pytest.fixture
@@ -485,7 +485,7 @@ def p_outside() -> port:
 # ------------------------------------------------------------------------------
 
 
-def test_initialize_ports_sets_attributes(region: list[list[structure]], p_inside: port) -> None:
+def test_initialize_ports_sets_attributes(region: list[structure], p_inside: port) -> None:
     """
     Test that initialize_ports_z correctly sets port attributes.
 
@@ -503,7 +503,7 @@ def test_initialize_ports_sets_attributes(region: list[list[structure]], p_insid
 
 
 def test_initialize_ports_warns_for_unmatched(
-    region: list[list[structure]], p_outside: port, caplog: pytest.LogCaptureFixture
+    region: list[structure], p_outside: port, caplog: pytest.LogCaptureFixture
 ) -> None:
     """
     Test that initialize_ports_z warns for ports outside any structure.
@@ -527,7 +527,7 @@ def test_initialize_ports_warns_for_unmatched(
 
 
 def test_component_init_calls_initialize(
-    monkeypatch: pytest.MonkeyPatch, region: list[list[structure]], p_inside: port
+    monkeypatch: pytest.MonkeyPatch, region: list[structure], p_inside: port
 ) -> None:
     """
     Test that component.__init__ calls initialize_ports_z.
@@ -541,7 +541,7 @@ def test_component_init_calls_initialize(
     # Spy on initialise‑call count
     calls: dict[str, int] = {"n": 0}
 
-    def spy(ports: list[port], structures: list[list[structure]]) -> None:
+    def spy(ports: list[port], structures: list[structure]) -> None:
         calls["n"] += 1
         initialize_ports_z(ports, structures)  # keep behaviour
 
@@ -605,7 +605,7 @@ class _DummyLayerInfo:
 def test_export_gds_creates_file(
     tmp_path: pytest.TempPathFactory,
     monkeypatch: pytest.MonkeyPatch,
-    region: list[list[structure]],
+    region: list[structure],
 ) -> None:
     """
     Test that component.export_gds creates a GDS file.
@@ -949,3 +949,34 @@ def test_parse_yaml_lumerical(lumerical_yaml: str) -> None:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     pytest.main([__file__])
+
+
+# ------------------------------------------------------------------------------
+# WP2.3: flat structures with roles; legacy nested input warns and flattens
+# ------------------------------------------------------------------------------
+
+
+def test_component_flattens_legacy_nested_structures(p_inside: port) -> None:
+    s = structure("wg", [[0, 0], [10, 0], [10, 5], [0, 5]], z_base=0, z_span=0.22, material="Si")
+    with pytest.warns(DeprecationWarning, match="nested lists"):
+        comp = component("demo", structures=[[s]], ports=[p_inside], bounds=[])
+    assert comp.structures == [s]
+
+
+def test_structure_role_validation() -> None:
+    s = structure("bg", [[0, 0], [1, 0], [1, 1], [0, 1]], 0, 2, "SiO2", role="substrate")
+    assert s.role == "substrate"
+    with pytest.raises(ValueError, match="role"):
+        structure("bad", [[0, 0], [1, 0], [1, 1], [0, 1]], 0, 2, "SiO2", role="cladding")
+
+
+def test_ports_outside_devices_warn_not_claimed_by_background(caplog) -> None:
+    """Substrate no longer silently claims a port outside every device polygon."""
+    import logging as _logging
+
+    bg = structure("sub", [[-5, -5], [15, -5], [15, 10], [-5, 10]], -2, 2, "SiO2", role="substrate")
+    far_port = port("opt9", [100.0, 100.0, None], 0.5, 0)
+    with caplog.at_level(_logging.WARNING):
+        component("demo", structures=[bg], ports=[far_port], bounds=[])
+    assert far_port.height is None
+    assert "Cannot find height for port opt9" in caplog.text

@@ -102,7 +102,6 @@ select = ["E", "F", "W", "I", "UP", "B", "A", "C4"]
 ignore = [
   "E501",  # long comments/strings; wrapped progressively as files are touched in Phase 1/2
   "B006",  # mutable default arguments — fixed properly in WP1.2 (bug B17)
-  "E721",  # type(x) == list checks — the structure-list hack, removed in WP2.3 (bug B19)
   "E722",  # bare except in solver_lumerical — hardened in WP3.2
   "B904",  # raise-without-from — exception hierarchy lands in WP7.6
   "F841",  # unused vars incl. catalogued bugs B8/B11/B13 — fixed in Phase 1, not here

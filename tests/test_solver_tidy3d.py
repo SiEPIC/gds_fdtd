@@ -79,7 +79,7 @@ def test_background_structures_centered_on_component(solver):
     b = solver.component.bounds
     checked = 0
     for structure in solver.base_simulation.structures:
-        if solver._is_background(structure.name):
+        if solver._is_background(structure):  # WP2.3: takes the object (role or name fallback)
             verts = np.asarray(structure.geometry.vertices)
             assert verts[:, 0].mean() == pytest.approx(b.x_center, abs=1e-9)
             assert verts[:, 1].mean() == pytest.approx(b.y_center, abs=1e-9)

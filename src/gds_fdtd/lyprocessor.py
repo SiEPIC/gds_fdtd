@@ -300,7 +300,9 @@ def load_structure(cell, name, layer, z_base, z_span, material, sidewall_angle=9
     return structures
 
 
-def load_structure_from_bounds(bounds, name, z_base, z_span, material, extension=0.0, layer=[1, 0]):
+def load_structure_from_bounds(
+    bounds, name, z_base, z_span, material, extension=0.0, layer=None, role="device"
+):
     """Load a structure from a region definition
 
     Args:
@@ -321,7 +323,8 @@ def load_structure_from_bounds(bounds, name, z_base, z_span, material, extension
         z_base=z_base,
         z_span=z_span,
         material=material,
-        layer=layer,
+        layer=layer if layer is not None else [1, 0],
+        role=role,
     )
 
 

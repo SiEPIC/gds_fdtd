@@ -143,12 +143,17 @@ def load_component_from_tech(cell, tech, z_span=4, z_center=None):
                 material=get_material(d),
             )
         )
-    # Removing empty lists due to no structures existing in an input layer
-    device_wg = [dev for dev in device_wg if dev]
+    # Removing empty lists due to no structures existing in an input layer,
+    # then flatten: Component.structures is a flat list with roles (WP2.3)
+    device_wg = [s for dev in device_wg if dev for s in dev]
 
-    # get z_center based on structures center (minimize symmetry failures)
+    # get z_center based on structures center (minimize symmetry failures);
+    # averaged PER LAYER (matching the old per-list semantics), not per polygon
     if not z_center:
-        z_center = np.average([d[0].z_base + d[0].z_span / 2 for d in device_wg])
+        z_by_layer: dict[tuple, float] = {}
+        for s in device_wg:
+            z_by_layer.setdefault(tuple(s.layer), s.z_base + s.z_span / 2)
+        z_center = np.average(list(z_by_layer.values()))
 
     # load all the ports in the device and (optional) initialize each to have a center
     ports = load_ports(cell, layer=tech_dict["pinrec"][0]["layer"])
@@ -166,20 +171,22 @@ def load_component_from_tech(cell, tech, z_span=4, z_center=None):
         z_span=tech_dict["superstrate"][0]["z_span"],
         material=get_material(tech_dict["superstrate"][0]),
         layer=[999, 1],  # Use a special layer for superstrate
+        role="superstrate",
     )
     device_sub = load_structure_from_bounds(
         bounds,
-        name="Subtrate",
+        name="Substrate",
         z_base=tech_dict["substrate"][0]["z_base"],
         z_span=tech_dict["substrate"][0]["z_span"],
         material=get_material(tech_dict["substrate"][0]),
         layer=[999, 0],  # Use a special layer for substrate
+        role="substrate",
     )
 
-    # create the device by loading the structures
+    # create the device by loading the structures (flat, role-tagged)
     return Component(
         name=cell.name,
-        structures=[device_sub, device_super] + device_wg,
+        structures=[device_sub, device_super, *device_wg],
         ports=ports,
         bounds=bounds,
     )
@@ -272,20 +279,22 @@ def from_gdsfactory(c: "gf.Component", tech: dict, z_span: float = 4.0) -> "Comp
         z_span=tech_dict["superstrate"][0]["z_span"],
         material=get_material(tech_dict["superstrate"][0]),
         layer=[999, 1],  # Use a special layer for superstrate
+        role="superstrate",
     )
     device_sub = load_structure_from_bounds(
         bounds,
-        name="Subtrate",
+        name="Substrate",
         z_base=tech_dict["substrate"][0]["z_base"],
         z_span=tech_dict["substrate"][0]["z_span"],
         material=get_material(tech_dict["substrate"][0]),
         layer=[999, 0],  # Use a special layer for substrate
+        role="substrate",
     )
 
     # create the device by loading the structures
     return Component(
         name=c.name,
-        structures=[device_sub, device_super] + [device_wg],
+        structures=[device_sub, device_super, *device_wg],
         ports=ports,
         bounds=bounds,
     )

@@ -228,6 +228,7 @@ class Structure:
         material: str,
         sidewall_angle: float = 90.0,
         layer: list[int] | None = None,
+        role: str = "device",
     ):
         """
         Initialize a structure with geometric and material properties.
@@ -250,6 +251,11 @@ class Structure:
         self.material = material
         self.sidewall_angle = sidewall_angle
         self.layer = list(layer) if layer is not None else [1, 0]
+        if role not in ("device", "substrate", "superstrate"):
+            raise ValueError(
+                f"Invalid structure role {role!r}; expected 'device', 'substrate' or 'superstrate'."
+            )
+        self.role = role
 
 
 class Region:
@@ -376,37 +382,23 @@ class Region:
 
 def initialize_ports_z(ports: list["Port"], structures: list["Structure"]) -> None:
     """
-    Initialize the z-coordinate, height, material, and layer of ports based on their position within structures.
+    Initialize each port's z-center, height, material, and layer from the DEVICE
+    structure containing it (last match wins, as before).
 
-    This function checks if each port is located within any structure and sets the port's z-coordinate,
-    height, material, and layer accordingly.
-
-    Args:
-        ports (list["Port"]): List of port objects to initialize.
-        structures (list["Structure"]): List of structure objects to check against.
-
-    Returns:
-        None
+    WP2.3: structures are a flat list discriminated by Structure.role; the old
+    list-nesting convention (type(s) == list) is gone. Substrate/superstrate no
+    longer silently claim ports that sit outside every device structure — those
+    now warn and keep height=None.
     """
-    # iterate through each port
     for p in ports:
-        # check if port location is within any structure
         for s in structures:
-            # TODO: hack: if s is a list then it's not a box/clad region, find a better way to identify this..
-            if type(s) == list:
-                for poly in s:
-                    if is_point_inside_polygon(p.center[:2], poly.polygon):
-                        p.center[2] = s[0].z_base + s[0].z_span / 2
-                        p.height = s[0].z_span
-                        p.material = s[0].material
-                        p.layer = s[0].layer  # Store the layer information from the structure
-            else:
-                # Handle individual structures (not in a list)
-                if is_point_inside_polygon(p.center[:2], s.polygon):
-                    p.center[2] = s.z_base + s.z_span / 2
-                    p.height = s.z_span
-                    p.material = s.material
-                    p.layer = s.layer  # Store the layer information from the structure
+            if s.role != "device":
+                continue
+            if is_point_inside_polygon(p.center[:2], s.polygon):
+                p.center[2] = s.z_base + s.z_span / 2
+                p.height = s.z_span
+                p.material = s.material
+                p.layer = s.layer
         if p.height is None:
             logging.warning(f"Cannot find height for port {p.name}")
     return
@@ -433,7 +425,22 @@ class Component:
             bounds: Boundaries of the component.
         """
         self.name = name
-        self.structures = structures
+        flat: list[Structure] = []
+        for entry in structures:
+            if isinstance(entry, list):  # legacy nested convention (pre-WP2.3)
+                import warnings
+
+                warnings.warn(
+                    "Passing nested lists in Component.structures is deprecated; "
+                    "pass a flat list of Structure objects with role= set "
+                    "(flattened automatically, removal at v1.0).",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                flat.extend(entry)
+            else:
+                flat.append(entry)
+        self.structures = flat
         self.ports = ports
         self.bounds = bounds
         initialize_ports_z(
@@ -441,7 +448,7 @@ class Component:
         )  # initialize ports z center and z span
 
     def export_gds(
-        self, export_dir: str = None, dbu: float = 0.001, layer: list = [1, 0], buffer: float = 1.0
+        self, export_dir: str = None, dbu: float = 0.001, layer: list | None = None, buffer: float = 1.0
     ) -> None:
         """
         Export the component to a GDS file.
@@ -456,6 +463,9 @@ class Component:
 
         import klayout.db as pya
 
+        if layer is None:
+            layer = [1, 0]
+
         layout = pya.Layout()
         layout.dbu = dbu  # Set the database unit to 0.001 um
         top_cell = layout.create_cell(self.name)
@@ -463,26 +473,26 @@ class Component:
         # Dictionary to store created layers to avoid duplicates
         created_layers = {}
 
-        # Export component structures using their individual layer information
-        for structure_group in self.structures:
-            if isinstance(structure_group, list):
-                for structure in structure_group:
-                    # Get or create the layer for this structure
-                    layer_key = tuple(structure.layer)
-                    if layer_key not in created_layers:
-                        layer_info = pya.LayerInfo(structure.layer[0], structure.layer[1])
-                        created_layers[layer_key] = layout.layer(layer_info)
+        # Export DEVICE structures using their individual layer information
+        # (substrate/superstrate are background media, not layout geometry —
+        # the old nested-only loop skipped them too)
+        for structure in self.structures:
+            if structure.role != "device":
+                continue
+            layer_key = tuple(structure.layer)
+            if layer_key not in created_layers:
+                layer_info = pya.LayerInfo(structure.layer[0], structure.layer[1])
+                created_layers[layer_key] = layout.layer(layer_info)
 
-                    structure_layer_idx = created_layers[layer_key]
+            structure_layer_idx = created_layers[layer_key]
 
-                    # Create and insert the polygon
-                    pya_polygon = pya.Polygon(
-                        [
-                            pya.Point(int(point[0] / layout.dbu), int(point[1] / layout.dbu))
-                            for point in structure.polygon
-                        ]
-                    )
-                    top_cell.shapes(structure_layer_idx).insert(pya_polygon)
+            pya_polygon = pya.Polygon(
+                [
+                    pya.Point(int(point[0] / layout.dbu), int(point[1] / layout.dbu))
+                    for point in structure.polygon
+                ]
+            )
+            top_cell.shapes(structure_layer_idx).insert(pya_polygon)
 
         # Export port extensions if buffer > 0 (using each port's layer information)
         if buffer > 0.0:

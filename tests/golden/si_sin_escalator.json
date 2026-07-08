@@ -18,7 +18,7 @@
     -1.9
    ]
   ],
-  "z_center": 0.11,
+  "z_center": 0.305,
   "z_span": 4.0
  },
  "name": "si_sin_escalator",
@@ -39,10 +39,10 @@
    "center": [
     18.0,
     0.0,
-    1.5
+    0.5
    ],
    "direction": 0,
-   "height": 3.0,
+   "height": 0.4,
    "idx": 2,
    "name": "opt2",
    "width": 1.6
@@ -58,7 +58,7 @@
     "lum": "SiO2 (Glass) - Palik",
     "tidy3d": null
    },
-   "name": "Subtrate",
+   "name": "Substrate",
    "polygon": [
     [
      0.0,
@@ -156,6 +156,50 @@
    "sidewall_angle": 90.0,
    "z_base": 0.0,
    "z_span": 0.22
+  },
+  {
+   "layer": [
+    1,
+    5
+   ],
+   "material": {
+    "lum": "Si3N4 (Silicon Nitride) - Luke",
+    "tidy3d": null
+   },
+   "name": "dev_1_0",
+   "polygon": [
+    [
+     17.99,
+     -0.8
+    ],
+    [
+     0.1,
+     -0.05
+    ],
+    [
+     0.05,
+     0.0
+    ],
+    [
+     0.1,
+     0.05
+    ],
+    [
+     17.99,
+     0.8
+    ],
+    [
+     18.0,
+     0.8
+    ],
+    [
+     18.0,
+     -0.8
+    ]
+   ],
+   "sidewall_angle": 90.0,
+   "z_base": 0.3,
+   "z_span": 0.4
   }
  ]
 }

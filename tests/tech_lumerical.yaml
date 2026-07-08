@@ -30,7 +30,7 @@ technology:
           model: Si (Silicon) - Palik
       sidewall_angle: 85
 
-    - layer: [4, 0]
+    - layer: [1, 5]
       z_base: .3
       z_span: 0.4
       material:
