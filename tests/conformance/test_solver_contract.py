@@ -97,6 +97,20 @@ class FakeSolver(Solver):
 # ---------------------------------------------------------------------------
 
 
+def _make_job(cls):
+    """Build a valid (component, technology) job for the given solver class.
+
+    Solvers that resolve materials need the tech whose entries they understand;
+    FakeSolver accepts anything.
+    """
+    tech_file = "tech_tidy3d.yaml" if cls.name == "tidy3d" else "tech_lumerical.yaml"
+    tech_dict = parse_yaml_tech(str(TESTS_DIR / tech_file))
+    cell, layout = load_cell(str(TESTS_DIR / "si_sin_escalator.gds"))
+    comp = load_component_from_tech(cell=cell, tech=tech_dict)
+    technology = tech_dict if cls.name != "fake" else None
+    return comp, technology, layout
+
+
 @pytest.fixture(scope="module")
 def component():
     tech = parse_yaml_tech(str(TESTS_DIR / "tech_lumerical.yaml"))
@@ -111,8 +125,15 @@ def all_solver_classes():
 
 
 @pytest.fixture(params=all_solver_classes(), ids=lambda c: c.name)
-def solver(request, component):
-    return request.param(component, technology=None, spec=SimulationSpec())
+def solver(request):
+    cls = request.param
+    probe = getattr(cls, "probe_available", None)
+    if probe is not None and probe():
+        pytest.skip(f"{cls.name}: {probe()}")
+    comp, technology, layout = _make_job(cls)
+    s = cls(comp, technology=technology, spec=SimulationSpec())
+    s._keepalive = layout  # klayout layout must outlive the cell
+    return s
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +146,7 @@ def test_declares_name_and_capabilities(solver):
     assert isinstance(solver.capabilities, SolverCapabilities)
 
 
-def test_constructor_is_pure(component, tmp_path, monkeypatch):
+def test_constructor_is_pure(tmp_path, monkeypatch):
     """No files, no sockets during construction."""
     monkeypatch.chdir(tmp_path)
 
@@ -134,8 +155,13 @@ def test_constructor_is_pure(component, tmp_path, monkeypatch):
 
     monkeypatch.setattr(socket.socket, "connect", _no_net)
     for cls in all_solver_classes():
-        cls(component, technology=None)
+        probe = getattr(cls, "probe_available", None)
+        if probe is not None and probe():
+            continue
+        comp, technology, layout = _make_job(cls)
+        cls(comp, technology=technology)
         assert list(tmp_path.iterdir()) == [], f"{cls.name} constructor wrote files"
+        del layout
 
 
 def test_validate_returns_list_of_str(solver):

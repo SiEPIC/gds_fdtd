@@ -5,6 +5,8 @@ legacy gds_fdtd.solver_tidy3d / solver_lumerical modules keep working until
 then.
 """
 
+import contextlib
+
 from .base import (
     ResourceEstimate,
     SetupArtifacts,
@@ -24,3 +26,7 @@ __all__ = [
     "get_solver",
     "register_solver",
 ]
+
+# Adapters register themselves on import; missing optional engines are fine.
+with contextlib.suppress(ImportError):
+    from .tidy3d import Tidy3DSolver  # noqa: F401
