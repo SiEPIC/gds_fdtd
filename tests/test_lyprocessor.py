@@ -81,3 +81,27 @@ def test_apply_prefab_runs(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPat
     f = tmp_path / "dummy.gds"
     f.write_bytes(b"")
     lp.apply_prefab(str(f), "TOP")  # should not raise
+
+
+# =============================================================================
+# load_region (WP1.4, bug B8) — real KLayout on the shipped test GDS
+# =============================================================================
+@pytest.fixture
+def escalator_cell():
+    fname = str(pathlib.Path(__file__).parent / "si_sin_escalator.gds")
+    # keep the layout alive for the duration of the test: the cell's layout()
+    # is destroyed when the pya.Layout object is garbage collected
+    cell, layout = lp.load_cell(fname)
+    yield cell
+    del layout
+
+
+def test_load_region_happy_path(escalator_cell):
+    region = lp.load_region(escalator_cell, layer=[68, 0], z_center=0.11, z_span=4)
+    assert len(region.vertices) >= 4
+    assert region.x_span > 0 and region.y_span > 0
+
+
+def test_load_region_missing_devrec_layer_raises(escalator_cell):
+    with pytest.raises(ValueError, match="No DevRec"):
+        lp.load_region(escalator_cell, layer=[123, 45])

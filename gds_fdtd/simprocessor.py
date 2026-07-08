@@ -35,14 +35,30 @@ def get_material(device: dict):
     """
     material = {"tidy3d": None, "lum": None}
 
-    if "tidy3d_db" in device["material"]:
-        material["tidy3d"] = _load_tidy3d_material(device["material"]["tidy3d_db"])
+    mat_spec = device.get("material")
+    if not isinstance(mat_spec, dict):
+        raise ValueError(
+            f"Invalid technology entry: expected a 'material' mapping, got {mat_spec!r} "
+            f"in device entry {device!r}"
+        )
 
-    if "lum_db" in device["material"]:
-        # load material from lumerical material database, format: material model name
-        if "model" in device["material"]["lum_db"]:
-            mat_lum = device["material"]["lum_db"]["model"]
-        material["lum"] = mat_lum
+    if "tidy3d_db" in mat_spec:
+        tidy3d_db = mat_spec["tidy3d_db"]
+        if not isinstance(tidy3d_db, dict) or not ("nk" in tidy3d_db or "model" in tidy3d_db):
+            raise ValueError(
+                "Invalid technology material: 'tidy3d_db' must be a mapping containing "
+                f"'nk' or 'model'; got {tidy3d_db!r}"
+            )
+        material["tidy3d"] = _load_tidy3d_material(tidy3d_db)
+
+    if "lum_db" in mat_spec:
+        lum_db = mat_spec["lum_db"]
+        if not isinstance(lum_db, dict) or "model" not in lum_db:
+            raise ValueError(
+                "Invalid technology material: 'lum_db' must be a mapping containing "
+                f"'model'; got {lum_db!r}"
+            )
+        material["lum"] = lum_db["model"]
 
     return material
 

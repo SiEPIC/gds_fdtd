@@ -176,22 +176,48 @@ def load_region(
     """
 
     dbu = cell.layout().dbu
-    layer = cell.layout().layer(layer[0], layer[1])
-    iter1 = cell.begin_shapes_rec(layer)
-    # DevRec must be either a Box or a Polygon:
-    if iter1.shape().is_box():
-        box = iter1.shape().box.transformed(iter1.itrans())
-        polygon = pya.Polygon(box)  # Save the component outline polygon
-        DevRec_polygon = pya.Polygon(iter1.shape().box)
-    if iter1.shape().is_polygon():
-        polygon = iter1.shape().polygon.transformed(
-            iter1.itrans()
-        )  # Save the component outline polygon
-        DevRec_polygon = iter1.shape().polygon
+    layer_spec = list(layer)
+    layer_idx = cell.layout().layer(layer_spec[0], layer_spec[1])
+
+    # Collect every box/polygon DevRec shape on the layer (previously only the
+    # first shape was inspected, and a non-box/non-polygon first shape left the
+    # polygon variables undefined -> NameError; bug B8).
+    devrec_polygons = []
+    it = cell.begin_shapes_rec(layer_idx)
+    while not it.at_end():
+        shape = it.shape()
+        if shape.is_box():
+            devrec_polygons.append(pya.Polygon(shape.box))
+        elif shape.is_polygon():
+            devrec_polygons.append(shape.polygon)
+        it.next()
+
+    if not devrec_polygons:
+        raise ValueError(
+            f"No DevRec box/polygon found on layer {layer_spec[0]}:{layer_spec[1]} "
+            f"in cell {cell.name!r}. Check the technology 'devrec' layer."
+        )
+
+    devrec_polygon = devrec_polygons[0]
+    if len(devrec_polygons) > 1:
+        logging.warning(
+            "Multiple DevRec shapes found on layer %s:%s in cell %r; using the "
+            "bounding box of their union.",
+            layer_spec[0],
+            layer_spec[1],
+            cell.name,
+        )
+        union = pya.Region()
+        for p in devrec_polygons:
+            union.insert(p)
+        union.merge()
+        bbox = union.bbox()
+        devrec_polygon = pya.Polygon(bbox)
+
     polygons_vertices = [
-        [[vertex.x * dbu, vertex.y * dbu] for vertex in p.each_point()]
-        for p in [p.to_simple_polygon() for p in [DevRec_polygon]]
-    ][0]
+        [vertex.x * dbu, vertex.y * dbu]
+        for vertex in devrec_polygon.to_simple_polygon().each_point()
+    ]
 
     if extension != 0:
         polygons_vertices = dilate(polygons_vertices, extension)
