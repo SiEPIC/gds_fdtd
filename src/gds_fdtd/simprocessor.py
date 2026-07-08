@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from .core import component, port, region, structure
+from .geometry import Component, Port, Region, Structure
 
 if TYPE_CHECKING:
     import gdsfactory as gf
@@ -177,7 +177,7 @@ def load_component_from_tech(cell, tech, z_span=4, z_center=None):
     )
 
     # create the device by loading the structures
-    return component(
+    return Component(
         name=cell.name,
         structures=[device_sub, device_super] + device_wg,
         ports=ports,
@@ -185,7 +185,7 @@ def load_component_from_tech(cell, tech, z_span=4, z_center=None):
     )
 
 
-def from_gdsfactory(c: "gf.Component", tech: dict, z_span: float = 4.0) -> "component":
+def from_gdsfactory(c: "gf.Component", tech: dict, z_span: float = 4.0) -> "Component":
     """Convert gdsfactory Component to a component.
 
     Args:
@@ -219,7 +219,7 @@ def from_gdsfactory(c: "gf.Component", tech: dict, z_span: float = 4.0) -> "comp
         for i, _s in enumerate(lyr.get_polygons()):
             name = f"poly_{idx}_{i}"
             device_wg.append(
-                structure(
+                Structure(
                     name=name,
                     polygon=lyr.get_polygons()[1],
                     z_base=tech_dict["device"][idx]["z_base"],
@@ -235,7 +235,7 @@ def from_gdsfactory(c: "gf.Component", tech: dict, z_span: float = 4.0) -> "comp
             if p.layer == layer:
                 z_pos = tech_dict["device"][idx]["z_base"] + tech_dict["device"][idx]["z_span"] / 2
                 ports.append(
-                    port(
+                    Port(
                         name=c.name,
                         center=list(p.center) + [z_pos],
                         width=p.width,
@@ -261,7 +261,7 @@ def from_gdsfactory(c: "gf.Component", tech: dict, z_span: float = 4.0) -> "comp
     bbox_poly = [[c.bbox().p1.x, c.bbox().p1.y], [c.bbox().p2.x, c.bbox().p2.y]]
     bbox = dilate_1d(bbox_poly, extension=0, dim=min_dim(bbox_poly))
     bbox_dilated = dilate(bbox, extension=1.9)
-    bounds = region(vertices=bbox_dilated, z_center=z_center, z_span=z_span)
+    bounds = Region(vertices=bbox_dilated, z_center=z_center, z_span=z_span)
 
     # make the superstrate and substrate based on device bounds
     # this information isn't typically captured in a 2D layer stack
@@ -283,7 +283,7 @@ def from_gdsfactory(c: "gf.Component", tech: dict, z_span: float = 4.0) -> "comp
     )
 
     # create the device by loading the structures
-    return component(
+    return Component(
         name=c.name,
         structures=[device_sub, device_super] + [device_wg],
         ports=ports,

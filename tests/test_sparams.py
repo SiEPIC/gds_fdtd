@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from gds_fdtd.core import port
+from gds_fdtd.geometry import Port
 from gds_fdtd.sparams import _number_of, s, sparameters
 
 
@@ -37,7 +37,7 @@ def test_number_of_rejects_digitless():
 
 
 def test_port_idx_rejects_digitless():
-    p = port("optA", [0, 0, 0], 1.0, 0)
+    p = Port("optA", [0, 0, 0], 1.0, 0)
     with pytest.raises(ValueError):
         _ = p.idx
 

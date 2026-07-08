@@ -9,7 +9,7 @@ import logging
 
 import klayout.db as pya
 
-from .core import port, region, structure
+from .geometry import Port, Region, Structure
 
 
 def dilate(vertices, extension=1.0):
@@ -244,7 +244,7 @@ def load_region(
 
     if extension != 0:
         polygons_vertices = dilate(polygons_vertices, extension)
-    return region(vertices=polygons_vertices, z_center=z_center, z_span=z_span)
+    return Region(vertices=polygons_vertices, z_center=z_center, z_span=z_span)
 
 
 def load_structure(cell, name, layer, z_base, z_span, material, sidewall_angle=90):
@@ -287,7 +287,7 @@ def load_structure(cell, name, layer, z_base, z_span, material, sidewall_angle=9
     for idx, s in enumerate(polygons_vertices):
         structure_name = f"{name}_{idx}"
         structures.append(
-            structure(
+            Structure(
                 name=structure_name,
                 polygon=s,
                 z_base=z_base,
@@ -315,7 +315,7 @@ def load_structure_from_bounds(bounds, name, z_base, z_span, material, extension
     Returns:
         core.structure: Structure generated from input region.
     """
-    return structure(
+    return Structure(
         name=name,
         polygon=dilate(bounds.vertices, extension=extension),
         z_base=z_base,
@@ -388,7 +388,7 @@ def load_ports(cell: pya.Cell, layer: list[int, int] = [1, 10]):
             center = list(get_center(s.shape().path, cell.layout().dbu)) + [None]
             name = get_name(cell, center[0], center[1], cell.layout().dbu)
             ports.append(
-                port(
+                Port(
                     name=name,
                     center=center,
                     width=width,

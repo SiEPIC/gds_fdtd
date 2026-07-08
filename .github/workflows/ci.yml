@@ -34,7 +34,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
           python-version: "3.13"
       - run: uv sync --locked --extra dev
-      - run: uv run mypy gds_fdtd
+      - run: uv run mypy src/gds_fdtd
 
   test:
     name: test (py${{ matrix.python-version }}, ${{ matrix.os }}, ${{ matrix.profile }})

@@ -3,14 +3,27 @@
 import logging as _logging
 from importlib.metadata import PackageNotFoundError, version
 
-from . import core, lyprocessor, simprocessor, sparams
+from . import core, geometry, lyprocessor, simprocessor, sparams
 from .core import technology
+from .geometry import Component, LayoutSource, Port, Region, Structure
 
 # Library logging etiquette: emit nothing unless the application (or
 # logging_config.setup_logging) configures handlers.
 _logging.getLogger("gds_fdtd").addHandler(_logging.NullHandler())
 
-__all__ = ["core", "lyprocessor", "simprocessor", "sparams", "technology"]
+__all__ = [
+    "Component",
+    "LayoutSource",
+    "Port",
+    "Region",
+    "Structure",
+    "core",
+    "geometry",
+    "lyprocessor",
+    "simprocessor",
+    "sparams",
+    "technology",
+]
 
 __author__ = """Mustafa Hammood"""
 __email__ = "mustafa@siepic.com"

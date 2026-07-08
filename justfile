@@ -21,7 +21,7 @@ fix:
 
 # Type check (advisory during Phase 0/1)
 typecheck:
-    mypy gds_fdtd
+    mypy src/gds_fdtd
 
 # Run the test suite with coverage
 test:

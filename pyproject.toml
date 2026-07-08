@@ -80,7 +80,7 @@ Repository  = "https://github.com/SiEPIC/gds_fdtd"
 source = "vcs"
 
 [tool.hatch.build.targets.wheel]
-packages = ["gds_fdtd"]
+packages = ["src/gds_fdtd"]
 
 [tool.pytest.ini_options]
 addopts = "-q"

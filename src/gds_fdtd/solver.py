@@ -12,7 +12,8 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-from gds_fdtd.core import component, port, technology
+from gds_fdtd.core import technology
+from gds_fdtd.geometry import Component, Port
 from gds_fdtd.logging_config import (
     get_logger,
     log_dict,
@@ -214,9 +215,9 @@ class fdtd_solver:
 
     def __init__(
         self,
-        component: component,
+        component: Component,
         tech: technology,
-        port_input: port | list[port] | None = None,
+        port_input: Port | list[Port] | None = None,
         wavelength_start: float = 1.5,
         wavelength_end: float = 1.6,
         wavelength_points: int = 100,

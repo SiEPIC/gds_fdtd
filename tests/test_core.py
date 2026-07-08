@@ -15,18 +15,22 @@ import numpy as np
 import pytest
 
 from gds_fdtd.core import (
-    calculate_polygon_extension,
-    component,
-    initialize_ports_z,
-    is_point_inside_polygon,
-    layout,
     parse_yaml_tech,
-    port,
     s_parameters,
     sparam,
-    structure,
 )
-from gds_fdtd.core import region as Region  # <-- alias
+
+# WP2.1: geometry classes renamed; tests alias them to keep the body unchanged
+from gds_fdtd.geometry import Component as component
+from gds_fdtd.geometry import LayoutSource as layout
+from gds_fdtd.geometry import Port as port
+from gds_fdtd.geometry import (
+    Region,  # <-- alias
+    calculate_polygon_extension,
+    initialize_ports_z,
+    is_point_inside_polygon,
+)
+from gds_fdtd.geometry import Structure as structure
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -541,7 +545,7 @@ def test_component_init_calls_initialize(
         calls["n"] += 1
         initialize_ports_z(ports, structures)  # keep behaviour
 
-    monkeypatch.setattr("gds_fdtd.core.initialize_ports_z", spy)
+    monkeypatch.setattr("gds_fdtd.geometry.initialize_ports_z", spy)
 
     comp = component("demo", structures=region, ports=[p_inside], bounds=[])
 
