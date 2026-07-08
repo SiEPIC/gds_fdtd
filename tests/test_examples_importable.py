@@ -23,14 +23,7 @@ import pytest
 EXAMPLES_DIR = pathlib.Path(__file__).parent.parent / "examples"
 
 # Legacy examples importing APIs deleted in Aug 2025 — rewritten in WP6.1.
-KNOWN_BROKEN = {
-    "01a_directional_coupler_tidy3d.py": "imports gds_fdtd.t3d_tools (deleted)",
-    "01b_crossing_tidy3d.py": "imports gds_fdtd.t3d_tools (deleted)",
-    "05a_gf_bend.py": "imports simprocessor.make_sim (deleted)",
-    "07a_prefab_tidy3d.py": "imports simprocessor.make_t3d_sim (deleted)",
-    "08a_siepic_tidy3d.py": "imports simprocessor.make_t3d_sim (deleted)",
-    "08a_siepic_lumerical.py": "imports simprocessor.make_t3d_sim (deleted)",
-}
+KNOWN_BROKEN: dict[str, str] = {}  # WP6.1: all examples rewritten to current APIs
 
 EXAMPLE_FILES = sorted(EXAMPLES_DIR.rglob("*.py"))
 

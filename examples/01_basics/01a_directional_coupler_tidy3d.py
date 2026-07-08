@@ -1,111 +1,48 @@
-# %%
+"""Directional coupler on the tidy3d cloud via the modern Solver API.
+
+Costs FlexCredits when run: validate/build/estimate are free and offline;
+only solver.run() talks to the cloud. Requires: pip install gds_fdtd[tidy3d]
+and a configured tidy3d API key.
 """
-Example defining a tidy3d simulation from manually defined geometry.
-@author: Mustafa Hammood
-"""
+
 import os
-import tidy3d as td
-from gds_fdtd.lyprocessor import load_cell, load_ports, load_region, load_structure, load_structure_from_bounds
-from gds_fdtd.core import component
-from gds_fdtd.t3d_tools import make_t3d_sim
 
-# Define the path to the GDS file
-file_gds = os.path.join(os.path.dirname(os.path.dirname(__file__)), "devices.gds")
+from gds_fdtd.core import parse_yaml_tech
+from gds_fdtd.lyprocessor import load_cell
+from gds_fdtd.simprocessor import load_component_from_tech
+from gds_fdtd.solvers import get_solver
+from gds_fdtd.spec import SimulationSpec
 
-# Define 3D geometry parameters not captured in the 2D layout
-thickness_si = 0.22  # Silicon thickness
-thickness_sub = 2    # Substrate thickness
-thickness_super = 2  # Superstrate thickness
-sidewall_angle = 88  # Sidewall angle of the structures
+if __name__ == "__main__":
+    here = os.path.dirname(os.path.dirname(__file__))
+    tech = parse_yaml_tech(os.path.join(here, "tech_tidy3d.yaml"))
+    cell, layout = load_cell(os.path.join(here, "devices.gds"), top_cell="directional_coupler_te1550")
+    component = load_component_from_tech(cell=cell, tech=tech)
 
-# Define simulation parameters
-z_span = 4  # Z-span of the simulation
+    solver = get_solver("tidy3d")(
+        component,
+        technology=tech,
+        spec=SimulationSpec(
+            wavelength_start=1.5,
+            wavelength_end=1.6,
+            wavelength_points=51,
+            mesh=10,
+            z_min=-1.0,
+            z_max=1.11,
+            symmetry=(0, 0, 1),  # TE symmetry — structure must be symmetric in z!
+        ),
+        workdir=os.getcwd(),
+    )
+    print(solver.describe())
+    problems = solver.validate()
+    assert not problems, problems
 
-# Define material structures
-mat_si = td.material_library["cSi"]["Li1993_293K"]
-mat_sub = td.Medium(permittivity=1.48**2)
-mat_super = td.Medium(permittivity=1.48**2)
+    artifacts = solver.build()  # offline: full ModalComponentModeler + GDS export
+    print("build summary:", artifacts.summary)
+    print("estimate:", solver.estimate())
 
-# Frequency and bandwidth of pulsed excitation
-in_pol = "TE"  # Input polarization state (options are TE, TM, TETM)
-wavl_min = 1.45  # Simulation wavelength start (microns)
-wavl_max = 1.65  # Simulation wavelength end (microns)
-wavl_pts = 101   # Number of wavelength points
-
-# Define symmetry across Z axis (TE mode) - set to -1 for anti-symmetric
-# Warning: Ensure structure is symmetric across symmetry axis!
-symmetry = (0, 0, 1)
-
-# Load and process the layout file
-cell, layout = load_cell(fname=file_gds, top_cell='directional_coupler_te1550')
-
-# Load all the ports in the device and (optional) initialize each to have a center
-ports_si = load_ports(cell=cell, layer=[1, 10])
-
-# Load the device simulation region
-bounds = load_region(
-    cell=cell, layer=[68, 0], z_center=thickness_si / 2, z_span=z_span
-)
-
-# Load the silicon structures in the device in layer (1,0)
-device_si = load_structure(
-    cell=cell, name="Si", layer=[1, 0], z_base=0, z_span=thickness_si, material=mat_si
-)
-
-# Make the superstrate and substrate based on device bounds
-# This information isn't typically captured in a 2D layer stack
-device_super = load_structure_from_bounds(
-    bounds=bounds, name="Superstrate", z_base=0, z_span=thickness_super, material=mat_super
-)
-device_sub = load_structure_from_bounds(
-    bounds=bounds, name="Substrate", z_base=0, z_span=-thickness_sub, material=mat_sub
-)
-
-# Create the device by loading the structures
-device = component(
-    name=cell.name,
-    structures=[device_sub, device_super, device_si],
-    ports=ports_si,
-    bounds=bounds,
-)
-
-# Create the simulation object
-simulation = make_t3d_sim(
-    device=device,
-    wavl_min=wavl_min,
-    wavl_max=wavl_max,
-    wavl_pts=wavl_pts,
-    symmetry=symmetry,
-    in_port=device.ports[1],  # input on port opt3
-    z_span=z_span,
-    field_monitor_axis='z',
-)
-
-# Upload and run the simulation
-# Create job, upload sim to server to begin running
-simulation.upload()
-
-# Run the simulation. CHECK THE SIMULATION IN THE UI BEFORE RUNNING!
-simulation.execute()
-
-# Visualize the results
-simulation.visualize_results()
-
-# %% working with s-parameters
-import matplotlib.pyplot as plt
-import numpy as np
-c = 299792458
-sparams = simulation.s_parameters
-s32 = sparams.entries_in_ports(idx_in=3, idx_out=2)
-s31 = sparams.entries_in_ports(idx_in=3, idx_out=1)
-fig, ax = plt.subplots(1, 1)
-ax.plot(1e6*c/np.array(s32.freq), 10*np.log10(np.abs(s32.s)**2))
-ax.plot(1e6*c/np.array(s31.freq), 10*np.log10(np.abs(s31.s)**2))
-ax.legend(["S32", "S31"])
-ax.set_xlabel("Wavelength (um)")
-ax.set_ylabel("Transmission (dB)")
-ax.set_ylim(-10, 0)
-ax.set_xlim(1.5, 1.6)
-# %%
-simulation.visualize_results()
-# %%
+    # THE LINE BELOW SPENDS FLEXCREDITS — review the setup in the web UI first.
+    # smatrix = solver.run()
+    # smatrix.to_touchstone(f"{component.name}.s4p")
+    # from gds_fdtd.plotting import plot_smatrix
+    # plot_smatrix(smatrix, kind="db")
