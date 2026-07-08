@@ -17,9 +17,7 @@ from shapely.geometry.polygon import Polygon
 c0_um = 299792458000000.0  # speed of light in um/s
 
 
-def is_point_inside_polygon(
-    point: list[float, float], polygon_points: list[list[float, float]]
-) -> bool:
+def is_point_inside_polygon(point: list[float], polygon_points: list[list[float]]) -> bool:
     """Test if a point inside a polygon using Shapely.
 
     Args:
@@ -31,13 +29,13 @@ def is_point_inside_polygon(
     """
 
     # Create a Shapely Point object for the given coordinate
-    point = Point(point)
+    pt = Point(point)
 
     # Create a Shapely Polygon object from the list of polygon points
     polygon = Polygon(polygon_points)
 
     # Check if the point is inside the polygon
-    return point.within(polygon) or polygon.touches(point)
+    return bool(pt.within(polygon) or polygon.touches(pt))
 
 
 class LayoutSource:
@@ -48,23 +46,23 @@ class LayoutSource:
 
     @property
     def dbu(self) -> float:
-        return self.ly.dbu
+        return float(self.ly.dbu)
 
 
 def calculate_polygon_extension(
-    center: list[float, float], width: float, direction: float, buffer: float = 4.0
-) -> list[list[float, float]]:
+    center: list[float], width: float, direction: float, buffer: float = 4.0
+) -> list[list[float]]:
     """
     Calculate the polygon extension for a port.
 
     Args:
-        center (list[float, float]): Center of the port [x, y]. Convention is in microns.
+        center (list[float]): Center of the port [x, y]. Convention is in microns.
         width (float): Width of the port. Convention is in microns.
         direction (float): Direction of the port in degrees. Convention is in degrees.
         buffer (float): Buffer distance from the port. Convention is in microns.
 
     Returns:
-        list[list[float, float]]: Polygon extension
+        list[list[float]]: Polygon extension
     """
     if direction == 0:
         return [
@@ -94,6 +92,7 @@ def calculate_polygon_extension(
             [center[0] + width / 2, center[1] - buffer],
             [center[0] + width / 2, center[1]],
         ]
+    raise ValueError(f"Invalid direction: {direction}. Supported: 0, 90, 180, 270.")
 
 
 class Port:
@@ -104,7 +103,7 @@ class Port:
 
     Attributes:
         name (str): Name of the port, typically containing a numeric identifier.
-        center (list[float, float, float]): 3D coordinates of the port center [x, y, z]. Convention is in microns.
+        center (list[float]): 3D coordinates of the port center [x, y, z]. Convention is in microns.
         width (float): Width of the port. Convention is in microns.
         direction (float): Direction of the port. Convention is in degrees. Directions supported are 0, 90, 180, 270.
         height (float): Height of the port, assigned during component initialization. Convention is in microns.
@@ -115,7 +114,7 @@ class Port:
     def __init__(
         self,
         name: str,
-        center: list[float, float, float],
+        center: list[float],
         width: float,
         direction: float,
     ):
@@ -124,7 +123,7 @@ class Port:
 
         Args:
             name (str): Name of the port, typically containing a numeric identifier.
-            center (list[float, float, float]): 3D coordinates of the port center [x, y, z].
+            center (list[float]): 3D coordinates of the port center [x, y, z].
             width (float): Width of the port in microns.
             direction (float): Direction of the port in degrees.
         """
@@ -135,9 +134,9 @@ class Port:
         # initialize height, material, and layer as None
         # will be assigned upon component __init__
         # TODO: feels like a better way to do this..
-        self.height = None
-        self.material = None
-        self.layer = None
+        self.height: float | None = None
+        self.material: object = None
+        self.layer: list[int] | None = None
 
         if self.direction not in [0, 90, 180, 270]:
             raise ValueError(
@@ -195,7 +194,7 @@ class Port:
             )
         return int(m.group(1))
 
-    def polygon_extension(self, buffer: float = 4.0) -> list[list[float, float]]:
+    def polygon_extension(self, buffer: float = 4.0) -> list[list[float]]:
         """
         Calculate the polygon extension for this port.
 
@@ -206,7 +205,7 @@ class Port:
             buffer (float, optional): Buffer distance from the port in microns. Defaults to 4.0.
 
         Returns:
-            list[list[float, float]]: Polygon extension as a list of [x,y] coordinates.
+            list[list[float]]: Polygon extension as a list of [x,y] coordinates.
         """
         return calculate_polygon_extension(self.center, self.width, self.direction, buffer)
 
@@ -222,7 +221,7 @@ class Structure:
     def __init__(
         self,
         name: str,
-        polygon: list[list[float, float]],
+        polygon: list[list[float]],
         z_base: float,
         z_span: float,
         material: str,
@@ -235,7 +234,7 @@ class Structure:
 
         Args:
             name (str): Unique identifier for the structure.
-            polygon (list[list[float, float]]): 2D polygon defining the structure's horizontal cross-section,
+            polygon (list[list[float]]): 2D polygon defining the structure's horizontal cross-section,
                                                formatted as [[x1,y1], [x2,y2], ...].
             z_base (float): Base z-coordinate in microns where the structure begins.
             z_span (float): Vertical height/thickness of the structure in microns.
@@ -449,9 +448,9 @@ class Component:
 
     def export_gds(
         self,
-        export_dir: str = None,
+        export_dir: str | None = None,
         dbu: float = 0.001,
-        layer: list | None = None,
+        layer: list[int] | None = None,
         buffer: float = 1.0,
     ) -> None:
         """

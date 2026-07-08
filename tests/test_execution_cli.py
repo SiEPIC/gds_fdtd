@@ -72,11 +72,11 @@ exec(_FAKE_IMPL)  # registers "clifake" in THIS process for local tests
 
 
 def _job(**overrides) -> JobSpec:
-    kw = dict(
-        gds_path=str(TESTS_DIR / "si_sin_escalator.gds"),
-        technology_path=str(TESTS_DIR / "tech_lumerical.yaml"),
-        solver="clifake",
-    )
+    kw: dict = {
+        "gds_path": str(TESTS_DIR / "si_sin_escalator.gds"),
+        "technology_path": str(TESTS_DIR / "tech_lumerical.yaml"),
+        "solver": "clifake",
+    }
     kw.update(overrides)
     return JobSpec(**kw)
 

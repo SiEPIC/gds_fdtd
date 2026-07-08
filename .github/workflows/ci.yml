@@ -23,11 +23,8 @@ jobs:
       - uses: j178/prek-action@0bb87d7f00b0c99306c8bcb8b8beba1eb581c037 # v1
 
   typecheck:
-    name: typecheck (mypy, advisory)
+    name: typecheck (strict core + advisory rest)
     runs-on: ubuntu-latest
-    # TODO(Phase 2): remove continue-on-error once the 71 legacy mypy errors are
-    # burned down (tracked in MODERNIZATION_PLAN.md, deviation D4).
-    continue-on-error: true
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
@@ -38,7 +35,12 @@ jobs:
           cache-dependency-glob: "uv.lock"
           python-version: "3.13"
       - run: uv sync --locked --extra dev
-      - run: uv run mypy src/gds_fdtd
+      - name: mypy --strict on the typed public core (REQUIRED)
+        run: >
+          uv run mypy --strict src/gds_fdtd/geometry.py src/gds_fdtd/technology.py
+          src/gds_fdtd/smatrix.py src/gds_fdtd/spec.py src/gds_fdtd/execution/
+      - name: mypy on the whole package (advisory while legacy errors burn down)
+        run: uv run mypy src/gds_fdtd || true
 
   test:
     name: test (py${{ matrix.python-version }}, ${{ matrix.os }}, ${{ matrix.profile }})
@@ -121,4 +123,3 @@ jobs:
       - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
         with:
           jobs: ${{ toJSON(needs) }}
-          allowed-failures: typecheck

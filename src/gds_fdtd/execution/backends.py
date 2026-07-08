@@ -17,7 +17,7 @@ import sys
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Literal, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, cast, runtime_checkable
 
 from .jobspec import RESULT_FILENAME, JobResult, JobSpec, run_job
 
@@ -60,12 +60,12 @@ class LocalBackend:
         return handle
 
     def status(self, handle: JobHandle) -> JobStatus:
-        return handle._state["status"]
+        return cast(JobStatus, handle._state["status"])
 
     def result(self, handle: JobHandle) -> JobResult:
         if handle._state["status"] == "failed":
             raise RuntimeError(f"job {handle.id} failed") from handle._state["error"]
-        return handle._state["result"]
+        return cast(JobResult, handle._state["result"])
 
     def cancel(self, handle: JobHandle) -> None:
         pass  # synchronous: nothing in flight after submit returns
@@ -108,7 +108,7 @@ class SubprocessBackend:
     def status(self, handle: JobHandle) -> JobStatus:
         if handle._state.get("cancelled"):
             return "cancelled"
-        proc: subprocess.Popen = handle._state["proc"]
+        proc: subprocess.Popen[bytes] = handle._state["proc"]
         rc = proc.poll()
         if rc is None:
             return "running"
@@ -116,7 +116,7 @@ class SubprocessBackend:
         return "done" if rc == 0 else "failed"
 
     def result(self, handle: JobHandle) -> JobResult:
-        proc: subprocess.Popen = handle._state["proc"]
+        proc: subprocess.Popen[bytes] = handle._state["proc"]
         timeout = handle._state.get("timeout")
         try:
             rc = proc.wait(timeout=timeout)
@@ -134,7 +134,7 @@ class SubprocessBackend:
         return JobResult.from_file(handle.out_dir / RESULT_FILENAME)
 
     def cancel(self, handle: JobHandle) -> None:
-        proc: subprocess.Popen = handle._state["proc"]
+        proc: subprocess.Popen[bytes] = handle._state["proc"]
         if proc.poll() is None:
             proc.terminate()
             proc.wait()

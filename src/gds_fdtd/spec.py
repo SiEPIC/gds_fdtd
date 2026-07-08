@@ -42,7 +42,7 @@ class SimulationSpec(BaseModel):
 
     @field_validator("boundary", mode="before")
     @classmethod
-    def _boundary_case(cls, v):
+    def _boundary_case(cls, v: object) -> object:
         # accept any case, normalize to the canonical spelling
         canon = {"pml": "PML", "metal": "Metal", "periodic": "Periodic"}
         if isinstance(v, (list, tuple)):
@@ -59,20 +59,20 @@ class SimulationSpec(BaseModel):
 
     @field_validator("symmetry")
     @classmethod
-    def _symmetry_values(cls, v):
+    def _symmetry_values(cls, v: tuple[int, int, int]) -> tuple[int, int, int]:
         if any(s not in (-1, 0, 1) for s in v):
             raise ValueError(f"symmetry values must be -1, 0 or 1; got {v}")
         return v
 
     @field_validator("modes")
     @classmethod
-    def _modes_positive(cls, v):
+    def _modes_positive(cls, v: tuple[int, ...]) -> tuple[int, ...]:
         if len(v) == 0 or any(int(m) <= 0 for m in v):
             raise ValueError(f"modes must be a non-empty list of positive 1-based ids; got {v}")
         return tuple(int(m) for m in v)
 
     @model_validator(mode="after")
-    def _cross_checks(self):
+    def _cross_checks(self) -> SimulationSpec:
         if self.wavelength_start >= self.wavelength_end:
             raise ValueError(
                 f"wavelength_start ({self.wavelength_start}) must be < "

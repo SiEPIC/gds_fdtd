@@ -18,7 +18,9 @@ Touchstone interop arrive in WP2.4b/c.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
+from typing import Any, cast
 
 import numpy as np
 
@@ -35,7 +37,7 @@ class SMatrix:
     name: str = "smatrix"
     _port_index: dict[str, int] = field(init=False, repr=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.f = np.asarray(self.f, dtype=float)
         self.s = np.asarray(self.s, dtype=complex)
         self.port_names = [str(n) for n in self.port_names]
@@ -63,7 +65,7 @@ class SMatrix:
 
     @property
     def n_modes(self) -> int:
-        return self.s.shape[3]
+        return int(self.s.shape[3])
 
     @property
     def wavelength_um(self) -> np.ndarray:
@@ -75,7 +77,7 @@ class SMatrix:
     @classmethod
     def from_entries(
         cls,
-        entries,
+        entries: Iterable[tuple[Any, Any, int, int, Any, Any]],
         name: str = "smatrix",
         port_names: list[str] | None = None,
     ) -> SMatrix:
@@ -104,6 +106,7 @@ class SMatrix:
             elif f.shape != f_ref.shape or not np.allclose(f, f_ref):
                 raise ValueError("all entries must share one frequency grid")
 
+        assert f_ref is not None  # entries is non-empty (checked above)
         order = np.argsort(f_ref)
         P, M, F = len(names), max_mode, f_ref.size
         s = np.full((F, P, P, M, M), np.nan + 0j, dtype=complex)
@@ -115,8 +118,8 @@ class SMatrix:
 
     # ---------------- access ----------------
 
-    def _pidx(self, port) -> int:
-        if isinstance(port, int) and port not in self._port_index:
+    def _pidx(self, port: str | int) -> int:
+        if isinstance(port, int) and str(port) not in self._port_index:
             # accept a trailing-digit integer id (opt1 -> 1) as a convenience
             for name, i in self._port_index.items():
                 digits = "".join(ch for ch in name if ch.isdigit())
@@ -128,14 +131,18 @@ class SMatrix:
         except KeyError:
             raise KeyError(f"unknown port {port!r}; ports: {self.port_names}") from None
 
-    def sel(self, out, in_, mode_out: int = 1, mode_in: int = 1) -> np.ndarray:
+    def sel(
+        self, out: str | int, in_: str | int, mode_out: int = 1, mode_in: int = 1
+    ) -> np.ndarray:
         """S(out <- in) for the given 1-based mode ids; complex array (F,)."""
         return self.s[:, self._pidx(out), self._pidx(in_), mode_out - 1, mode_in - 1]
 
-    def magnitude_db(self, out, in_, mode_out: int = 1, mode_in: int = 1) -> np.ndarray:
+    def magnitude_db(
+        self, out: str | int, in_: str | int, mode_out: int = 1, mode_in: int = 1
+    ) -> np.ndarray:
         """|S|^2 in dB for one path."""
         with np.errstate(divide="ignore", invalid="ignore"):
-            return 10 * np.log10(np.abs(self.sel(out, in_, mode_out, mode_in)) ** 2)
+            return np.asarray(10 * np.log10(np.abs(self.sel(out, in_, mode_out, mode_in)) ** 2))
 
     # ---------------- physics checks ----------------
 
@@ -159,9 +166,10 @@ class SMatrix:
     def power_balance(self) -> np.ndarray:
         """Sum over outputs of |S|^2 per (F, in_port*mode) excitation; NaN-skipped."""
         m = np.abs(self._flat()) ** 2
-        return np.nansum(np.where(np.isnan(m), np.nan, m), axis=1) * np.where(
+        balance = np.nansum(np.where(np.isnan(m), np.nan, m), axis=1) * np.where(
             np.all(np.isnan(m), axis=1), np.nan, 1.0
         )
+        return np.asarray(balance)
 
     # ---------------- I/O ----------------
 
@@ -205,7 +213,7 @@ class SMatrix:
         from .sparams import process_dat
 
         spar = process_dat(path, name=name, verbose=False)
-        return spar.to_smatrix(name=name)
+        return cast("SMatrix", spar.to_smatrix(name=name))
 
     def to_touchstone(self, path: str) -> str:
         """Write a Touchstone v1 ``.sNp`` file (WP2.4c).
@@ -295,7 +303,7 @@ class SMatrix:
             )
 
 
-def _require_h5py():
+def _require_h5py() -> Any:
     try:
         import h5py
     except ImportError as e:

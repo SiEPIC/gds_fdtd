@@ -19,10 +19,13 @@ golden fixtures prove equivalence with the legacy parser.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from .materials.rii import RiiMaterial
 
 
 class RiiRef(BaseModel):
@@ -34,7 +37,7 @@ class RiiRef(BaseModel):
     book: str
     page: str
 
-    def load(self, db_dir: str | Path | None = None):
+    def load(self, db_dir: str | Path | None = None) -> RiiMaterial:
         """Resolve this reference to tabulated data. See materials.rii."""
         from .materials.rii import load_rii_material
 
@@ -57,14 +60,14 @@ class MaterialSpec(BaseModel):
 
     @field_validator("lum_db")
     @classmethod
-    def _lum_db_needs_model(cls, v):
+    def _lum_db_needs_model(cls, v: dict[str, Any] | None) -> dict[str, Any] | None:
         if v is not None and "model" not in v:
             raise ValueError("'lum_db' must be a mapping containing 'model'")
         return v
 
     @field_validator("tidy3d_db")
     @classmethod
-    def _tidy3d_db_needs_nk_or_model(cls, v):
+    def _tidy3d_db_needs_nk_or_model(cls, v: dict[str, Any] | None) -> dict[str, Any] | None:
         if v is not None and not ("nk" in v or "model" in v):
             raise ValueError("'tidy3d_db' must be a mapping containing 'nk' or 'model'")
         return v
@@ -94,7 +97,7 @@ class BackgroundLayer(BaseModel):
 
     @field_validator("z_span")
     @classmethod
-    def _nonzero_span(cls, v):
+    def _nonzero_span(cls, v: float) -> float:
         if v == 0:
             raise ValueError("z_span must be nonzero")
         return v
@@ -113,14 +116,14 @@ class DeviceLayer(BaseModel):
 
     @field_validator("layer", mode="before")
     @classmethod
-    def _layer_pair(cls, v):
+    def _layer_pair(cls, v: object) -> tuple[int, int]:
         if not isinstance(v, (list, tuple)) or len(v) != 2:
             raise ValueError(f"'layer' must be [layer_number, datatype]; got {v!r}")
         return tuple(v)
 
     @field_validator("z_span")
     @classmethod
-    def _nonzero_span(cls, v):
+    def _nonzero_span(cls, v: float) -> float:
         if v == 0:
             raise ValueError("z_span must be nonzero")
         return v
@@ -141,27 +144,27 @@ class Technology(BaseModel):
 
     @field_validator("schema_version")
     @classmethod
-    def _v1_only(cls, v):
+    def _v1_only(cls, v: int) -> int:
         if v != 1:
             raise ValueError(f"Unsupported technology schema_version {v}; this release reads v1")
         return v
 
     @field_validator("pinrec", "devrec", mode="before")
     @classmethod
-    def _layer_list(cls, v):
+    def _layer_list(cls, v: list[object]) -> list[tuple[int, int]]:
         # YAML shape: [{layer: [a, b]}, ...] (legacy) or [[a, b], ...]
-        out = []
+        out: list[tuple[int, int]] = []
         for item in v:
             if isinstance(item, dict):
                 item = item.get("layer")
             if not isinstance(item, (list, tuple)) or len(item) != 2:
                 raise ValueError(f"expected 'layer: [number, datatype]'; got {item!r}")
-            out.append(tuple(item))
+            out.append((int(item[0]), int(item[1])))
         return out
 
     @model_validator(mode="before")
     @classmethod
-    def _unwrap_background_lists(cls, data):
+    def _unwrap_background_lists(cls, data: object) -> object:
         # legacy YAML holds substrate/superstrate as a single mapping; the
         # legacy dict flow wraps them into one-element lists — accept both
         if isinstance(data, dict):

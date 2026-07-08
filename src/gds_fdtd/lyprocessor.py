@@ -143,7 +143,7 @@ def load_device(
     return c
 
 
-def load_cell(fname: str, top_cell: str = None) -> pya.Cell:
+def load_cell(fname: str, top_cell: str | None = None) -> tuple["pya.Cell", "pya.Layout"]:
     """
     Load a GDS layout and return a cell object.
 

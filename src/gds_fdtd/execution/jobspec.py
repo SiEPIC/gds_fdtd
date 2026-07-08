@@ -73,7 +73,7 @@ class JobSpec(BaseModel):
 
     # ---------------- reconstruction ----------------
 
-    def load_component(self):
+    def load_component(self) -> tuple[Any, Any]:
         """Load (component, technology) through the standard loading path."""
         from ..core import parse_yaml_tech
         from ..lyprocessor import load_cell
@@ -81,7 +81,7 @@ class JobSpec(BaseModel):
 
         tech = parse_yaml_tech(str(self.technology_path))
         cell, layout = load_cell(str(self.gds_path), top_cell=self.top_cell)
-        component = load_component_from_tech(cell=cell, tech=tech)
+        component = load_component_from_tech(cell=cell, tech=tech)  # type: ignore[no-untyped-call]
         component._layout_keepalive = layout  # klayout object must outlive the cell
         return component, tech
 
@@ -155,7 +155,7 @@ def run_job(job: JobSpec, out_dir: str | Path) -> JobResult:
     return result
 
 
-def _json_default(obj):  # pragma: no cover - debugging helper
+def _json_default(obj: object) -> str:  # pragma: no cover - debugging helper
     return repr(obj)
 
 
