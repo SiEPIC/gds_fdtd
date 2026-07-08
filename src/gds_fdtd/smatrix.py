@@ -230,7 +230,7 @@ class SMatrix:
         m = self._flat()  # (F, N, N), port-major mode-minor — matches the convention
         lines = [
             f"! {self.name} - exported by gds_fdtd",
-            f"! Touchstone port k = (optical_port, mode); ordering: "
+            "! Touchstone port k = (optical_port, mode); ordering: "
             + ", ".join(
                 f"{i * self.n_modes + j + 1}=({pn},m{j + 1})"
                 for i, pn in enumerate(self.port_names)

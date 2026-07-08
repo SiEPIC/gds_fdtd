@@ -174,3 +174,21 @@ def test_touchstone_rejects_nan_and_wrong_extension(tmp_path):
     full = SMatrix.from_entries(_entries_2port())
     with pytest.raises(ValueError, match=r"\.s2p"):
         full.to_touchstone(str(tmp_path / "x.s3p"))
+
+
+# ---------- WP2.4d: plotting ----------
+
+
+def test_plot_smatrix_kinds():
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from gds_fdtd.plotting import plot_smatrix
+
+    sm = SMatrix.from_entries(_entries_2port(), name="dut")
+    for kind in ("db", "linear", "phase"):
+        fig, ax = plot_smatrix(sm, kind=kind)
+        assert len(ax.lines) == 4  # all measured paths plotted
+        assert ax.get_title().startswith("dut")
+    with pytest.raises(ValueError, match="kind"):
+        plot_smatrix(sm, kind="bogus")
