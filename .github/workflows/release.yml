@@ -41,6 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
+          persist-credentials: false
           fetch-depth: 0 # hatch-vcs needs tags to derive the version
       - uses: hynek/build-and-inspect-python-package@d44ca7d91762de7a7d5436ddae667c6da6d1c3df # v2
 
@@ -73,7 +74,17 @@ jobs:
         with:
           name: Packages
           path: dist
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          enable-cache: false # publishing job: no cache-poisoning surface
+      - name: Generate SBOM (CycloneDX, from the released sdist)
+        run: |
+          python3 -m venv /tmp/sbom-env
+          /tmp/sbom-env/bin/pip install --quiet dist/*.whl
+          uvx --from cyclonedx-bom cyclonedx-py environment /tmp/sbom-env -o sbom.cdx.json
       - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          files: dist/*
+          files: |
+            dist/*
+            sbom.cdx.json
           generate_release_notes: true

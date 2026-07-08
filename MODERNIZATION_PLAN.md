@@ -53,7 +53,8 @@
 | 6 | 6.2a–d docs · 6.2b citation · 6.3 v1.0 release | ⬜ not started | — |
 | **7 — Hardening** | 7.1 test taxonomy | ✅ done (markers physics/gpu/cloud/licensed/slow + CI `-m` filter; coverage ratchet: branch=true, fail_under=52 — honest measured 53.18% on 2026-07-08, up from 16% at WP0.2; sanctioned exclude_also pragma; weekly lowest-direct workflow, floors resolution verified locally: numpy 1.26.0/pydantic 2.7.0/shapely 2.0.0/pytest 8.1.1. Mutation testing = optional issue, not built) | (next commit) |
 | 7 | 7.5 cloud/licensed CI lanes | ◐ partial (secret set ✓, procedures proven manually; workflows ⬜) | — |
-| 7 | 7.2 supply-chain · 7.3 JobSpec+CLI · 7.4 containers · 7.6 polish | ⬜ not started | — |
+| 7 | 7.2 supply-chain | ✅ executor scope done (security.yml: pip-audit weekly+PR — locked tree audits CLEAN; dependency-review; zizmor gate at medium — all 12 medium+ findings fixed: persist-credentials:false on 11 checkouts, release cache off; scorecard.yml + README badge; SBOM attached to releases — cyclonedx-py CLI validated locally, 65-component BOM; SECURITY/CONTRIBUTING/CODE_OF_CONDUCT/AGENTS/PR-template. **Owner items remain: repo-settings checklist in CONTRIBUTING.md** — branch ruleset, merge queue, secret scanning, CODEOWNERS, tag protection) | (next commit) |
+| 7 | 7.3 JobSpec+CLI · 7.4 containers · 7.6 polish | ⬜ not started | — |
 | **Milestones** | **PR SiEPIC/gds_fdtd#23 fully green** (9-leg matrix + gate) · live validation on BOTH engines · cross-solver agreement locked in tests · findings F1–F8 · FC ledger ≈0.20/10 | ✅ | `a718011` |
 
 Detailed per-WP notes, findings (F1–F8), and deviations (D1–D7) follow below.
