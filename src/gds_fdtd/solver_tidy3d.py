@@ -6,25 +6,14 @@ Tidy3D FDTD solver interface module.
 """
 
 import os
-import re
 
 import numpy as np
 import tidy3d as td
 from tidy3d.plugins.smatrix import ModalComponentModeler, Port
 
 from gds_fdtd.logging_config import log_simulation_complete, log_simulation_start
-from gds_fdtd.solver import fdtd_field_monitor, fdtd_solver
+from gds_fdtd.solver import fdtd_solver
 from gds_fdtd.sparams import sparameters
-
-
-class tidy3d_field_monitor(fdtd_field_monitor):
-    """Tidy3D-specific field monitor.
-
-    NOTE (WP1.9): the previous set_tidy3d_data/_create_field_plots plumbing
-    probed ComponentModeler internals that do not exist in this form and was
-    dead code. Field visualization returns properly with the tidy3d 2.11
-    migration (WP4.1), built on the modeler's result data.
-    """
 
 
 class fdtd_solver_tidy3d(fdtd_solver):
@@ -104,17 +93,6 @@ class fdtd_solver_tidy3d(fdtd_solver):
                 )
                 monitors.append(field_monitor)
                 self.logger.debug(f"Created Tidy3D field monitor: {field_monitor.name}")
-
-                # Create Tidy3D-specific field monitor object for visualization
-                field_monitor_obj = tidy3d_field_monitor(
-                    name=field_monitor.name, monitor_type=field_monitor_axis, logger=self.logger
-                )
-                if not hasattr(self, "field_monitors_objs"):
-                    self.field_monitors_objs = []
-                self.field_monitors_objs.append(field_monitor_obj)
-                self.logger.debug(
-                    f"Created field monitor object: {field_monitor.name} ({field_monitor_axis})"
-                )
 
         # simulation domain size (in microns)
         sim_size = [self.span[0], self.span[1], self.span[2]]
@@ -454,147 +432,6 @@ class fdtd_solver_tidy3d(fdtd_solver):
             print(f"Error retrieving Tidy3D log: {e}")
             return f"Log retrieval error: {str(e)}"
 
-    def _extract_log_metrics(self, log_text: str) -> dict:
-        """
-        Extract Tidy3D-specific metrics from log text.
-
-        Args:
-            log_text: Raw Tidy3D log text
-
-        Returns:
-            dict: Extracted metrics specific to Tidy3D
-        """
-        log_metrics = super()._extract_log_metrics(log_text)
-
-        try:
-            # Grid points
-            grid_match = re.search(r"Number of computational grid points: ([\d.e+-]+)", log_text)
-            if grid_match:
-                log_metrics["grid_points"] = grid_match.group(1)
-
-            # Domain size
-            domain_match = re.search(
-                r"Simulation domain Nx, Ny, Nz: \[(\d+), (\d+), (\d+)\]", log_text
-            )
-            if domain_match:
-                log_metrics["domain_nx"] = int(domain_match.group(1))
-                log_metrics["domain_ny"] = int(domain_match.group(2))
-                log_metrics["domain_nz"] = int(domain_match.group(3))
-
-            # Time steps
-            time_steps_match = re.search(r"Number of time steps: ([\d.e+-]+)", log_text)
-            if time_steps_match:
-                log_metrics["time_steps"] = time_steps_match.group(1)
-
-            # Time step size
-            time_step_match = re.search(r"Time step \(s\): ([\d.e+-]+)", log_text)
-            if time_step_match:
-                log_metrics["time_step_size"] = time_step_match.group(1)
-
-            # Auto shutoff factor
-            shutoff_match = re.search(r"Automatic shutoff factor: ([\d.e+-]+)", log_text)
-            if shutoff_match:
-                log_metrics["shutoff_factor"] = shutoff_match.group(1)
-
-            # Solver times
-            source_modes_time = re.search(r"Compute source modes time \(s\):\s*([\d.]+)", log_text)
-            if source_modes_time:
-                log_metrics["source_modes_time"] = float(source_modes_time.group(1))
-
-            monitor_modes_time = re.search(
-                r"Compute monitor modes time \(s\):\s*([\d.]+)", log_text
-            )
-            if monitor_modes_time:
-                log_metrics["monitor_modes_time"] = float(monitor_modes_time.group(1))
-
-            solver_time_match = re.search(r"Solver time \(s\):\s*([\d.]+)", log_text)
-            if solver_time_match:
-                log_metrics["solver_time"] = float(solver_time_match.group(1))
-
-            post_processing_time = re.search(r"Post-processing time \(s\):\s*([\d.]+)", log_text)
-            if post_processing_time:
-                log_metrics["post_processing_time"] = float(post_processing_time.group(1))
-
-            # Time-stepping performance
-            time_stepping_speed = re.search(
-                r"Time-stepping speed \(cells/s\):\s*([\d.e+]+)", log_text
-            )
-            if time_stepping_speed:
-                log_metrics["time_stepping_speed"] = time_stepping_speed.group(1)
-
-            # Field decay
-            field_decay_matches = re.findall(r"field decay: ([\d.e+-]+)", log_text)
-            if field_decay_matches:
-                log_metrics["final_field_decay"] = field_decay_matches[-1]
-                log_metrics["initial_field_decay"] = (
-                    field_decay_matches[0]
-                    if len(field_decay_matches) > 1
-                    else field_decay_matches[0]
-                )
-
-            # FDTD solver details from the solver log section
-            fdtd_setup_time = re.search(r"Solver setup time \(s\):\s*([\d.]+)", log_text)
-            if fdtd_setup_time:
-                log_metrics["fdtd_setup_time"] = float(fdtd_setup_time.group(1))
-
-            fdtd_time_stepping = re.search(r"Time-stepping time \(s\):\s*([\d.]+)", log_text)
-            if fdtd_time_stepping:
-                log_metrics["fdtd_time_stepping"] = float(fdtd_time_stepping.group(1))
-
-            data_write_time = re.search(r"Data write time \(s\):\s*([\d.]+)", log_text)
-            if data_write_time:
-                log_metrics["data_write_time"] = float(data_write_time.group(1))
-
-            # Convergence information
-            if "Field decay smaller than shutoff factor, exiting solver" in log_text:
-                log_metrics["converged"] = True
-            else:
-                log_metrics["converged"] = False
-
-            # Mode solver warnings
-            mode_warnings = re.findall(
-                r"WARNING: Mode '\d+' appears to undergo a discontinuous change", log_text
-            )
-            log_metrics["mode_warnings"] = len(mode_warnings)
-
-        except Exception as e:
-            self.logger.warning(f"Error extracting Tidy3D log metrics: {e}")
-
-        return log_metrics
-
-    def export_sparameters_dat(self, filepath: str = None):
-        """Export S-parameters to an INTERCONNECT .dat file.
-
-        Each entry is written with its actual port/mode ids and frequency
-        vector (the previous writer assumed a dense n_ports² ordering and a
-        regenerated frequency grid, mislabeling entries; bug B14 — and wrote
-        power |S|² where the format stores magnitude).
-        """
-        if not hasattr(self, "_sparameters") or self._sparameters is None:
-            print("No S-parameters available for export. Run simulation first.")
-            return
-
-        if filepath is None:
-            filepath = os.path.join(self.working_dir, f"{self.component.name}_sparams.dat")
-
-        from gds_fdtd.sparams import write_dat
-
-        write_dat(self._sparameters, filepath)
-        self.logger.info(f"S-parameters exported to: {filepath}")
-        print(f"S-parameters exported to: {filepath}")
-
-    def visualize_results(self):
-        """Visualize the simulation results."""
-        if not hasattr(self, "_sparameters") or self._sparameters is None:
-            print("No results available for visualization.")
-            return
-
-        # Plot S-parameters
-        self._sparameters.plot()
-
-        # Export S-parameters to .dat file
-        self.export_sparameters_dat()
-
     def visualize_field_monitors(self, freq=None, axis: str = "z", savefig: str | None = None):
         """Plot the run's field profile (redeems the WP1.9 deferral).
 
@@ -607,10 +444,3 @@ class fdtd_solver_tidy3d(fdtd_solver):
         from gds_fdtd.solvers.tidy3d import plot_tidy3d_fields
 
         return plot_tidy3d_fields(data, axis=axis, savefig=savefig)
-
-        if not self.visualize:
-            self.logger.debug("Visualization disabled, skipping field monitor visualization")
-            return
-
-        # Use the base class method for modular field visualization
-        self.visualize_all_field_monitors(freq=freq or self.freq0)

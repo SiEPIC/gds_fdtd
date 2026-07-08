@@ -98,7 +98,7 @@ The package provides automatic plotting of all S-parameters:
 .. code-block:: python
 
     # Plot all S-parameters
-    solver.visualize_results()  # Includes S-parameter plots and .dat export
+    plot_smatrix(smatrix, kind="db")  # from gds_fdtd.plotting
 
     # Or directly plot S-parameters
     solver.sparameters.plot()
@@ -222,16 +222,16 @@ Export S-parameters to standard .dat format for use in circuit simulators:
 
 .. code-block:: python
 
-    # Automatic export (included in visualize_results)
-    solver.visualize_results()  # Creates .dat file automatically
+    # Export to INTERCONNECT
+    smatrix.to_dat("my_device.dat")
 
     # Manual export
-    solver.export_sparameters_dat("my_device_sparams.dat")
+    smatrix.to_dat("my_device_sparams.dat")
 
     # Custom filepath
     import os
     dat_path = os.path.join(solver.working_dir, "custom_sparams.dat")
-    solver.export_sparameters_dat(dat_path)
+    smatrix.to_dat(dat_path)
 
 The .dat file format is compatible with most circuit simulators and contains:
 - Frequency sweep information

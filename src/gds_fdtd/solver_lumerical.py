@@ -379,7 +379,6 @@ class fdtd_solver_lumerical(fdtd_solver):
                 self.fdtd.set("z", self.center[2] * 1e-6)
                 self.fdtd.set("x span", self.span[0] * 1e-6)
                 self.fdtd.set("y span", self.span[1] * 1e-6)
-                self.create_field_monitor_object(name="profile_z", monitor_type="z")
                 self.logger.debug("Created Z-normal field monitor")
 
             if m == "x":
@@ -392,7 +391,6 @@ class fdtd_solver_lumerical(fdtd_solver):
                 self.fdtd.set("z", self.center[2] * 1e-6)
                 self.fdtd.set("y span", self.span[1] * 1e-6)
                 self.fdtd.set("z span", self.span[2] * 1e-6)
-                self.create_field_monitor_object(name="profile_x", monitor_type="x")
                 self.logger.debug("Created X-normal field monitor")
 
             if m == "y":
@@ -405,10 +403,7 @@ class fdtd_solver_lumerical(fdtd_solver):
                 self.fdtd.set("z", self.center[2] * 1e-6)
                 self.fdtd.set("x span", self.span[0] * 1e-6)
                 self.fdtd.set("z span", self.span[2] * 1e-6)
-                self.create_field_monitor_object(name="profile_y", monitor_type="y")
                 self.logger.debug("Created Y-normal field monitor")
-
-        self.logger.info(f"Created {len(self.field_monitors_objs)} field monitor objects")
 
     def _setup_ports(self) -> None:
         """

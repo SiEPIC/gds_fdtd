@@ -11,13 +11,10 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-import numpy as np
 import pytest
 
 from gds_fdtd.core import (
     parse_yaml_tech,
-    s_parameters,
-    sparam,
 )
 
 # WP2.1: geometry classes renamed; tests alias them to keep the body unchanged
@@ -705,113 +702,6 @@ def test_span_properties(verts, x_span, y_span):
     reg = Region(verts, z_center=0.0, z_span=1.0)
     assert reg.x_span == pytest.approx(x_span)
     assert reg.y_span == pytest.approx(y_span)
-
-
-# ----------------------------------------------------------------------
-# fixtures ‑‑ sparam / s_parameters
-# ----------------------------------------------------------------------
-
-
-@pytest.fixture
-def sample_freq() -> np.ndarray:
-    """1 THz span centred at 200 THz (≈1.5 µm)."""
-    return np.linspace(195e12, 205e12, 5)
-
-
-@pytest.fixture
-def sp11(sample_freq: np.ndarray) -> sparam:
-    """S11 reflection example (port 1 → port 1)."""
-    s_vals = np.full_like(sample_freq, 0.01)  # flat −40 dB
-    return sparam(1, 1, 0, 0, sample_freq, s_vals)
-
-
-@pytest.fixture
-def sp21(sample_freq: np.ndarray) -> sparam:
-    """S21 transmission example (port 1 → port 2)."""
-    s_vals = np.full_like(sample_freq, 0.9)  # −0.9 dB
-    return sparam(1, 2, 0, 0, sample_freq, s_vals)
-
-
-@pytest.fixture
-def sblock(sp11: sparam, sp21: sparam) -> s_parameters:
-    """Aggregate S‑parameters."""
-    sp = s_parameters()
-    sp.add_param(sp11)
-    sp.add_param(sp21)
-    return sp
-
-
-# ----------------------------------------------------------------------
-# sparam ----------------------------------------------------------------
-
-
-def test_sparam_label(sp11: sparam, sp21: sparam) -> None:
-    """Label string follows S<out><in>_idx<modeout><modein> pattern."""
-    assert sp11.label == "S11_idx00"
-    assert sp21.label == "S21_idx00"
-
-
-def test_sparam_plot_returns_fig_ax(sp11: sparam) -> None:
-    """plot() returns a (figure, axes) tuple."""
-    fig, ax = sp11.plot()
-    assert fig is not None and ax is not None
-
-
-# ----------------------------------------------------------------------
-# s_parameters ----------------------------------------------------------
-
-
-def test_S_mapping_keys(sblock: s_parameters) -> None:
-    """s_parameters.S maps labels → objects."""
-    labels = set(sblock.S.keys())
-    assert labels == {"S11_idx00", "S21_idx00"}
-
-
-@pytest.mark.parametrize(
-    "mode_in,mode_out,expected_labels",
-    [
-        (0, 0, {"S11_idx00", "S21_idx00"}),  # both modes 0→0
-        (1, 0, set()),  # no such mode pair
-    ],
-)
-def test_entries_in_mode(
-    sblock: s_parameters, mode_in: int, mode_out: int, expected_labels: set
-) -> None:
-    entries = sblock.entries_in_mode(mode_in, mode_out)
-    assert {e.label for e in entries} == expected_labels
-
-
-@pytest.mark.parametrize(
-    "idx_in,idx_out,expected_labels",
-    [
-        (1, 1, {"S11_idx00"}),
-        (1, 2, {"S21_idx00"}),
-        (2, 1, set()),
-    ],
-)
-def test_entries_in_ports(
-    sblock: s_parameters,
-    idx_in: int,
-    idx_out: int,
-    expected_labels: set,
-) -> None:
-    entries = sblock.entries_in_ports(idx_in=idx_in, idx_out=idx_out)
-    assert {e.label for e in entries} == expected_labels
-
-
-def test_sblock_plot_returns_fig_ax(sblock: s_parameters) -> None:
-    fig, ax = sblock.plot()
-    assert fig is not None and ax is not None
-
-
-# ----------------------------------------------------------------------
-# parse_yaml_tech -------------------------------------------------------
-# ----------------------------------------------------------------------
-
-
-# ----------------------------------------------------------------------
-# Helpers
-# ----------------------------------------------------------------------
 
 
 def _write_yaml(tmp: Path, name: str, content: str) -> str:

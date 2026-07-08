@@ -406,6 +406,10 @@ Jul–Aug 2025: 32, then dormant since Sep 2025). Four identities:
   unified tech (0.292 FC billed; first attempt hit a transient 'no internet' WebError —
   exactly the 7.6.2 retry case; succeeded on retry). 02a validated offline through build
   (.lsf written). **FC LEDGER: +0.29 ⇒ ≈1.04 spent, ≈8.96 remain (exp 2026-07-22).**
+- **Scorecard badge removed from README (owner found it broken):** api.scorecard.dev only
+  serves results after scorecard.yml has run with publish_results on the DEFAULT branch —
+  impossible until PR #23 merges. RE-ADD the badge as part of WP6.3 release polish, after
+  the first scorecard run on main.
 - **F11 CONFIRMED FIXED IN CI (2026-07-08):** run 28926190430 fully green after the Agg
   conftest — both windows-latest legs pass; only the advisory mypy leg remains non-green
   (allowed-failure by design).
