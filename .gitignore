@@ -149,4 +149,5 @@ examples/**/*_setup.lsf
 
 # solver working directories created by running examples from the repo root
 crossing_te1550/
+directional_coupler_te1550/
 *_modeler.hdf5
