@@ -9,13 +9,11 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from .geometry import Component, Port, Region, Structure
+from .geometry import Component
 
 if TYPE_CHECKING:
-    import gdsfactory as gf
+    pass
 from .lyprocessor import (
-    dilate,
-    dilate_1d,
     load_ports,
     load_region,
     load_structure,
@@ -192,109 +190,14 @@ def load_component_from_tech(cell, tech, z_span=4, z_center=None):
     )
 
 
-def from_gdsfactory(c: "gf.Component", tech: dict, z_span: float = 4.0) -> "Component":
-    """Convert gdsfactory Component to a component.
+def from_gdsfactory(c, tech: dict, z_span: float = 4.0) -> "Component":
+    """Convert a gdsfactory Component to a gds_fdtd Component.
 
-    Args:
-        c (gf.Component): gdsfactory component.
-        tech (dict): dictionary technology stack (can be parsed from yaml)
-        z_span (float, optional): z bounds of the device (can be used to override simulation settings..). Defaults to 4..
-
-    Returns:
-        component: parsed gdsfactory component.
+    WP4.2: this is now a thin delegate to gds_fdtd.layout.gdsfactory, which is
+    written for the gdsfactory >= 9 API (the previous implementation here
+    targeted the pre-gf-8 API and carried bugs B2/B3/B4: hardcoded polygon
+    index, ports named after the component, wrong units).
     """
-    try:
-        import gdsfactory  # noqa: F401  availability probe only
-    except ImportError:
-        raise ImportError(
-            "gdsfactory is not installed. Please install it using 'pip install .[gdsfactory]'"
-        )
+    from .layout.gdsfactory import from_gdsfactory as _impl
 
-    # Convert technology object to dict if needed (for backward compatibility)
-    if hasattr(tech, "to_dict"):
-        tech_dict = tech.to_dict()
-    else:
-        tech_dict = tech
-
-    device_wg = []
-    ports = []
-
-    # for each layer in the device
-    for idx, layer in enumerate(c.get_polygons()):
-        lyr = c.extract(layers={layer})
-
-        for i, _s in enumerate(lyr.get_polygons()):
-            name = f"poly_{idx}_{i}"
-            device_wg.append(
-                Structure(
-                    name=name,
-                    polygon=lyr.get_polygons()[1],
-                    z_base=tech_dict["device"][idx]["z_base"],
-                    z_span=tech_dict["device"][idx]["z_span"],
-                    material=get_material(tech_dict["device"][idx]),
-                    sidewall_angle=tech_dict["device"][idx]["sidewall_angle"],
-                    layer=list(layer),  # Convert layer tuple to list for GDS export
-                )
-            )
-
-        # get device ports
-        for p in c.ports:
-            if p.layer == layer:
-                z_pos = tech_dict["device"][idx]["z_base"] + tech_dict["device"][idx]["z_span"] / 2
-                ports.append(
-                    Port(
-                        name=c.name,
-                        center=list(p.center) + [z_pos],
-                        width=p.width,
-                        direction=p.orientation,
-                    )
-                )
-
-    # get z_center based on structures center (minimize symmetry failures)
-    z_center = np.average([d.z_base + d.z_span / 2 for d in device_wg])
-
-    # expand bbox region to account for evanescent field
-    def min_dim(square):
-        x_dim = abs(square[0][0] - square[1][0])
-        y_dim = abs(square[0][1] - square[1][1])
-        if x_dim < y_dim:
-            return "x"
-        elif x_dim > y_dim:
-            return "y"
-        else:
-            return "xy"
-
-    # expand the bbox region by 1.3 um (on each side) on the smallest dimension
-    bbox_poly = [[c.bbox().p1.x, c.bbox().p1.y], [c.bbox().p2.x, c.bbox().p2.y]]
-    bbox = dilate_1d(bbox_poly, extension=0, dim=min_dim(bbox_poly))
-    bbox_dilated = dilate(bbox, extension=1.9)
-    bounds = Region(vertices=bbox_dilated, z_center=z_center, z_span=z_span)
-
-    # make the superstrate and substrate based on device bounds
-    # this information isn't typically captured in a 2D layer stack
-    device_super = load_structure_from_bounds(
-        bounds,
-        name="Superstrate",
-        z_base=tech_dict["superstrate"][0]["z_base"],
-        z_span=tech_dict["superstrate"][0]["z_span"],
-        material=get_material(tech_dict["superstrate"][0]),
-        layer=[999, 1],  # Use a special layer for superstrate
-        role="superstrate",
-    )
-    device_sub = load_structure_from_bounds(
-        bounds,
-        name="Substrate",
-        z_base=tech_dict["substrate"][0]["z_base"],
-        z_span=tech_dict["substrate"][0]["z_span"],
-        material=get_material(tech_dict["substrate"][0]),
-        layer=[999, 0],  # Use a special layer for substrate
-        role="substrate",
-    )
-
-    # create the device by loading the structures
-    return Component(
-        name=c.name,
-        structures=[device_sub, device_super, *device_wg],
-        ports=ports,
-        bounds=bounds,
-    )
+    return _impl(c, tech, z_span=z_span)

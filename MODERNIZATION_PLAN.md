@@ -148,8 +148,24 @@ WP4.x verification, but not the executor env. Baseline test suite: 51 passed in 
   fresh `entry = struct;` instead. Offline script-content tests in
   tests/test_solvers_adapters.py (layers 1:0+1:5, boundaries/symmetry mapping, ports/sweep
   entries, determinism).
-- **Next:** WP3.1e (entry-points + legacy-constructor deprecations + describe() replaces
-  print summaries), WP3.2 leftovers, WP4.2 (gdsfactory 9 rewrite).
+- **WP3.1e DONE** (`78b59d2`): `[project.entry-points."gds_fdtd.solvers"]` for
+  tidy3d/lumerical; registry lazily merges entry-point adapters (external plugin support);
+  broken plugins surface via available_solvers(), not import errors. **Deviation D7:** legacy
+  solver classes stay undeprecated until WP6.1 (they are the documented example API, and
+  Tidy3DSolver composes the legacy tidy3d machinery internally).
+- **WP4.2 DONE (validated live):** gdsfactory **9.45** in .venv; API
+  re-verified live (ports um/degrees; `port.layer_info` → (layer,datatype);
+  `get_polygons_points(by="tuple")` um arrays; `dbbox()` um; **gf 9.44+ requires explicit
+  `gf.gpdk.PDK.activate()`** — the converter never touches PDK state; callers/tests do).
+  New `layout/gdsfactory.py::from_gdsfactory` kills B2/B3/B4; `simprocessor.from_gdsfactory`
+  is a thin delegate (pre-gf-8 code deleted). 7 offline tests green incl. the
+  gf→Component→LumericalSolver.build() chain.
+  **FINDING F8 (live-caught physics bug):** dilating the gf bbox by the 1.9 um margin on ALL
+  sides pushed ports off the bounds edge, so the 2*buffer waveguide stubs ended inside the
+  domain — an abrupt facet reflecting at S11 ≈ −7 dB on a straight (energy>1 artifact).
+  Fixed: port-plane sides get NO margin (devrec convention; ports sit on the bounds edge);
+  live rerun: **S21 = 0.000 dB, S11 = −54.6 dB**. gf→Lumerical end-to-end validated on the
+  local license.
 
 ---
 
