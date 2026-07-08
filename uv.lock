@@ -216,15 +216,6 @@ wheels = [
 ]
 
 [[package]]
-name = "bump2version"
-version = "1.0.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/29/2a/688aca6eeebfe8941235be53f4da780c6edee05dbbea5d7abaa3aab6fad2/bump2version-1.0.1.tar.gz", hash = "sha256:762cb2bfad61f4ec8e2bdf452c7c267416f8c70dd9ecb1653fd0bbb01fa936e6", size = 36236, upload-time = "2020-10-07T18:38:40.119Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1d/e3/fa60c47d7c344533142eb3af0b73234ef8ea3fb2da742ab976b947e717df/bump2version-1.0.1-py2.py3-none-any.whl", hash = "sha256:37f927ea17cde7ae2d7baf832f8e80ce3777624554a653006c9144f8017fe410", size = 22030, upload-time = "2020-10-07T18:38:38.148Z" },
-]
-
-[[package]]
 name = "cachetools"
 version = "7.1.4"
 source = { registry = "https://pypi.org/simple" }
@@ -814,7 +805,6 @@ wheels = [
 
 [[package]]
 name = "gds-fdtd"
-version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "klayout" },
@@ -828,7 +818,6 @@ dependencies = [
 [package.optional-dependencies]
 dev = [
     { name = "build" },
-    { name = "bump2version" },
     { name = "coverage" },
     { name = "mypy" },
     { name = "pip" },
@@ -865,7 +854,6 @@ tidy3d = [
 [package.metadata]
 requires-dist = [
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.0.0" },
-    { name = "bump2version", marker = "extra == 'dev'", specifier = ">=1.0.1" },
     { name = "coverage", marker = "extra == 'dev'" },
     { name = "docutils", marker = "extra == 'docs'", specifier = "<0.23" },
     { name = "furo", marker = "extra == 'docs'", specifier = ">=2024.8.6" },
@@ -892,7 +880,7 @@ requires-dist = [
     { name = "watchdog", marker = "extra == 'dev'", specifier = ">=3.0.0" },
     { name = "wheel", marker = "extra == 'dev'", specifier = ">=0.42.0" },
 ]
-provides-extras = ["tidy3d", "gdsfactory", "prefab", "siepic", "dev", "docs"]
+provides-extras = ["dev", "docs", "gdsfactory", "prefab", "siepic", "tidy3d"]
 
 [[package]]
 name = "gdsfactory"

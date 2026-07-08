@@ -1,0 +1,19 @@
+# Categories for auto-generated release notes (used by softprops/action-gh-release
+# with generate_release_notes: true). Label your PRs accordingly.
+changelog:
+  exclude:
+    labels: [skip-changelog]
+    authors: [dependabot]
+  categories:
+    - title: "Breaking changes"
+      labels: [breaking]
+    - title: "Features"
+      labels: [feature, enhancement]
+    - title: "Bug fixes"
+      labels: [bug, fix]
+    - title: "Documentation"
+      labels: [docs, documentation]
+    - title: "Infrastructure"
+      labels: [infra, ci, dependencies]
+    - title: "Other changes"
+      labels: ["*"]

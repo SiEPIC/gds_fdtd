@@ -83,85 +83,39 @@ pytest --cov=gds_fdtd tests
 
 ## Development
 
-### Version Management
-
-This project uses `bump2version` to keep version numbers in sync across all files.
-
-**Check current version:**
-```bash
-make check-version
-```
-
-**Bump version:**
-```bash
-# For bug fixes (0.4.0 -> 0.4.1)
-make bump-patch
-
-# For new features (0.4.0 -> 0.5.0)  
-make bump-minor
-
-# For breaking changes (0.4.0 -> 1.0.0)
-make bump-major
-```
-
-**Quick release:**
-```bash
-# Does everything in one go
-./scripts/release.sh [patch|minor|major]
-```
-
-This script will:
-- Run tests and build docs
-- Update version numbers everywhere
-- Create a git tag
-- Push everything to GitHub
-- Trigger GitHub release and PyPI upload
-
-### Available Make Commands
-
-```bash
-make help          # Show all available commands
-make install       # Install package in development mode
-make test          # Run tests with coverage
-make docs          # Build documentation
-make docs-serve    # Build and serve docs locally on port 8000
-make clean         # Clean build artifacts
-make release       # Build package for release
-```
-
 ### Development Setup
 
-For new contributors:
-
 ```bash
-# Clone the repository
 git clone https://github.com/SiEPIC/gds_fdtd.git
 cd gds_fdtd
+pip install -e .[dev]        # or: uv sync --extra dev
 
-# Install development dependencies
-pip install -e .[dev]
-
-# Run tests
-make test
-
-# Build documentation
-make docs
+# install the git hooks (uses the standard .pre-commit-config.yaml;
+# prek is a fast drop-in for pre-commit)
+uv tool install prek && prek install
 ```
 
-### Making a Release
+Canonical dev tasks live in the [justfile](justfile):
 
-1. Make sure you're on the main branch with all changes committed
-2. Run the release script: `./scripts/release.sh [patch|minor|major]`
-3. The script will automatically:
-   - Run tests to make sure everything works
-   - Build documentation
-   - Bump version numbers in all files
-   - Create and push a git tag
-   - Trigger GitHub Actions to create a release and upload to PyPI
-
-The GitHub Actions workflow will:
-- Run tests again
-- Build the package
-- Create a GitHub release with changelog
-- Upload to PyPI automatically
+```bash
+just test        # tests with coverage
+just lint        # ruff check + format check (what CI runs)
+just fix         # auto-fix lint + formatting
+just docs        # build documentation
+just gate        # quick lint+test gate
 ```
+
+### Versioning & Releases
+
+The version is derived **from git tags** via `hatch-vcs` — there is nothing to bump and no
+version string in the source. To release:
+
+```bash
+git tag v0.5.0
+git push --tags
+```
+
+The `release.yml` workflow then verifies the tagged commit passed CI, builds and inspects the
+package, publishes to PyPI via Trusted Publishing (with PEP 740 attestations), and creates a
+GitHub Release with auto-generated notes (categorized by PR labels — see
+`.github/release.yml`).

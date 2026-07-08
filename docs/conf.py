@@ -6,7 +6,12 @@ sys.path.insert(0, os.path.abspath('../'))
 # Project details
 project = 'gds_fdtd'
 author = 'Mustafa Hammood'
-release = '0.4.0'
+try:
+    from importlib.metadata import version as _pkg_version
+
+    release = _pkg_version("gds_fdtd")
+except Exception:  # pragma: no cover - docs built without install
+    release = "0.0.0+unknown"
 
 # Extensions
 extensions = [
