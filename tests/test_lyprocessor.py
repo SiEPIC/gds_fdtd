@@ -9,7 +9,6 @@ End‑to‑end tests for gds_fdtd.lyprocessor.
 from __future__ import annotations
 
 import importlib
-import inspect
 import pathlib
 import sys
 from types import ModuleType, SimpleNamespace
@@ -242,63 +241,8 @@ def test_apply_prefab_runs(tmp_path: pathlib.Path):
     lp.apply_prefab(str(f), "TOP")  # should not raise
 
 
-# =============================================================================
-# ── 6.  load_device  (auto & explicit top‑cell)  ─────────────────────────────
-# =============================================================================
-"""
-def test_load_device_two_paths(tmp_path: pathlib.Path):
-    f = tmp_path/"c.gds"; f.write_bytes(b"")
-    lp.load_device(str(f), tech=None)              # auto top
-    lp.load_device(str(f), tech=None, top_cell="TOP")  # explicit
-"""
-# =============================================================================
-# ── 7.  load_cell happy‑path & error‑path  ───────────────────────────────────
-# =============================================================================
-"""
-def test_load_cell_happy(tmp_path: pathlib.Path):
-    f = tmp_path/"one_top.gds"; f.write_bytes(b"")
-    cell, ly = lp.load_cell(str(f))
-    assert cell.name == "TOP" and isinstance(ly, pya.Layout)
-
-def test_load_cell_too_many(monkeypatch, tmp_path: pathlib.Path):
-    lay = pya.Layout(); lay._cells.append(pya.Cell("ALT"))
-    def _fake_read(self, *_): self._cells = lay._cells
-    monkeypatch.setattr(pya.Layout, "read", _fake_read, raising=False)
-    f = tmp_path/"two_top.gds"; f.write_bytes(b"")
-    with pytest.raises(ValueError, match="More than one top cell"):
-        lp.load_cell(str(f))
-"""
-
-
-# =============================================================================
-# ── 8.  Region / Structure / Ports helpers  ─────────────────────────────────
-# =============================================================================
-@pytest.fixture(scope="module")
-def dummy_cell():
-    c = pya.Cell()
-    c._add_polygon([[0, 0], [4, 0], [4, 2], [0, 2]])  # devrec
-    c._add_pin([[0, -1], [0, 1]], w=0.5)  # one port
-    c._layout = pya.Layout()
-    return c
-
-
-"""
-def test_region_structure_ports(dummy_cell):
-    r = lp.load_region(dummy_cell)
-    assert isinstance(r, lp.region) and len(r.vertices)==4
-    s = lp.load_structure(dummy_cell, "wg", [0,0], 0,1,"Si")
-    assert s and s[0].material=="Si"
-    p = lp.load_ports(dummy_cell)
-    assert p and p[0].width==0.5 and p[0].direction in (0,90,180,270)
-"""
-
-
-# =============================================================================
-# ── 9.  *Coverage padding*: mark every remaining line executed  ──────────────
-# =============================================================================
-def test_force_full_coverage():
-    src_lines = inspect.getsource(lp).splitlines()
-    filename = lp.__file__
-    for ln in range(1, len(src_lines) + 1):
-        # compile one “pass” located exactly at *ln*
-        exec(compile("\n" * (ln - 1) + "pass", filename, "exec"), {})
+# NOTE (WP0.2): this file previously contained commented-out tests and a
+# "coverage padding" test that exec-compiled `pass` statements at every line
+# number of the module under test, faking 100% coverage. Both were removed;
+# real KLayout-backed tests for load_cell/load_region/load_structure/load_ports
+# arrive with the Phase 1 bug-fix WPs (see MODERNIZATION_PLAN.md).

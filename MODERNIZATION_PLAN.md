@@ -12,6 +12,65 @@
 
 ---
 
+## Part −1 — EXECUTION LOG & HANDOFF STATE (update after every WP — mandatory)
+
+> Any agent resuming this effort: read this section first, then Part 0. Update this section
+> in the same commit as (or immediately after) each WP so an interruption at any point leaves
+> a resumable state.
+
+**Standing user directives (override anything below):**
+- Do NOT add `Co-Authored-By` trailers (or any AI attribution) to commits.
+- Keep this execution log current with progress, findings, and plan deviations.
+- All modernization work happens on the **`modernization` branch** — never commit to `main`
+  (`main` sits at origin/main `ab2cd9b`).
+
+**Executor environment:** dedicated venv at `.venv/` (Python 3.13.5, gitignored) created to
+avoid touching the user's `gdsfactory` conda env; `uv` is installed *inside* it
+(`.venv/bin/uv`). Gate: `.venv/bin/ruff check . && .venv/bin/python -m pytest -q tests`.
+Commits are local only — nothing pushed without the user's say-so.
+
+**WP status:**
+| WP | Status | Commit | Notes |
+|---|---|---|---|
+| WP0.1 | ✅ done | `3fe9984` | see deviations D1–D4 |
+| WP0.2 | ✅ done | (next commit) | ci.yml (SHA-pinned, uv, alls-green `pass` gate); fake-coverage test + commented blocks deleted; README fence/badges fixed; **honest coverage measured: 16%** (core 90%, lyprocessor 21%, sparams 11%, simprocessor 6%, solvers+logging 0%) — this is the WP7.1 `fail_under` baseline |
+| WP0.5, WP0.6, WP0.3, WP0.4 | pending | — | in that intended order |
+| Phase 1+ | not started | — | |
+
+**WP0.2 execution notes for successors:** `dev` is an *extra*, not a PEP 735 group — CI must
+`uv sync --locked --extra dev` (plain `uv sync` gives no pytest). The old
+`build_and_test.yml` is deleted (replaced by ci.yml). Owner must later flip the required
+status check to `pass` in branch protection (WP7.2 checklist).
+
+**Deviations from the plan as written (accepted, keep):**
+- **D1:** instead of `# noqa` spam, temporary rule-level ruff ignores live in
+  `pyproject.toml [tool.ruff.lint] ignore` with comments mapping each to its owning WP
+  (E501/B006/E721/E722/B904/F841/UP031). Remove each ignore inside its owning WP.
+- **D2:** `[tool.mypy] python_version` pin removed — numpy 2.x type stubs use `type`
+  statements (3.12+ syntax) and break mypy pinned to 3.11.
+- **D3:** `examples/` is ruff-`extend-exclude`d until the WP6.1 rewrite.
+- **D4:** mypy currently reports **71 errors** on the legacy code → the CI `typecheck` job
+  ships as **advisory** (`continue-on-error: true`, in alls-green `allowed-failures`), to be
+  made required during Phase 2. (Same deadlock class the adversarial review fixed for docs `-W`.)
+- **D5:** WP2.2 gained item 2b — refractiveindex.info material support (`rii:` key), owner
+  request 2026-07-07. Additive v1-schema change; offline-first with committed page fixture.
+
+**Verified action SHAs (resolved via `gh api` 2026-07-07; Dependabot maintains after merge):**
+```
+actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd            # v5
+astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78          # v7
+codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac      # v5
+re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe        # release/v1
+j178/prek-action@0bb87d7f00b0c99306c8bcb8b8beba1eb581c037            # v1
+hynek/build-and-inspect-python-package@d44ca7d91762de7a7d5436ddae667c6da6d1c3df  # v2
+```
+
+**Environment facts discovered:** user's active conda env `gdsfactory` has gdsfactory 9.14.0,
+tidy3d 2.8.5, klayout 0.30.3, pydantic 2.11.7, numpy 2.2.0, python 3.13.5 — useful later for
+WP4.x verification, but not the executor env. Baseline test suite: 51 passed in ~2 s.
+
+---
+
 ## Part 0 — Rules of engagement for the AI developer
 
 These rules override any instinct to "be helpful" by doing more. Violating them is failure.

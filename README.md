@@ -2,11 +2,12 @@
 
 ![alternative text](/docs/logo.png)
 
-![codecov](https://codecov.io/gh/siepic/gds_fdtd/branch/main/graph/badge.svg)
-![build](https://github.com/siepic/gds_fdtd/actions/workflows/build_and_test.yml/badge.svg)
-![docs](https://github.com/siepic/gds_fdtd/actions/workflows/build_docs.yml/badge.svg)
-![jekyll](https://github.com/siepic/gds_fdtd/actions/workflows/jekyll-gh-pages.yml/badge.svg)
-![pypi](https://github.com/siepic/gds_fdtd/actions/workflows/python-publish.yml/badge.svg)
+[![CI](https://github.com/SiEPIC/gds_fdtd/actions/workflows/ci.yml/badge.svg)](https://github.com/SiEPIC/gds_fdtd/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/siepic/gds_fdtd/branch/main/graph/badge.svg)](https://codecov.io/gh/siepic/gds_fdtd)
+[![docs](https://github.com/SiEPIC/gds_fdtd/actions/workflows/build_docs.yml/badge.svg)](https://siepic.github.io/gds_fdtd/)
+[![PyPI](https://img.shields.io/pypi/v/gds_fdtd)](https://pypi.org/project/gds-fdtd/)
+[![Python](https://img.shields.io/pypi/pyversions/gds_fdtd)](https://pypi.org/project/gds-fdtd/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **gds_fdtd** is a minimal Python module to assist in setting up FDTD simulations for planar nanophotonic devices using FDTD solvers such as Tidy3D.
 
@@ -68,7 +69,7 @@ pip install -e .[dev]
 
 ### Requirements
 
-- Python ≥ 3.10 (note: gdsfactory requires Python ≥ 3.11)  
+- Python ≥ 3.11
 - Runtime deps: numpy, matplotlib, shapely, PyYAML, klayout
 
 
@@ -78,6 +79,7 @@ If you've installed the `dev` dependencies, you can run the test suite with:
 
 ```bash
 pytest --cov=gds_fdtd tests
+```
 
 ## Development
 

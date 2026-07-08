@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: lint (prek hooks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: j178/prek-action@0bb87d7f00b0c99306c8bcb8b8beba1eb581c037 # v1
+
+  typecheck:
+    name: typecheck (mypy, advisory)
+    runs-on: ubuntu-latest
+    # TODO(Phase 2): remove continue-on-error once the 71 legacy mypy errors are
+    # burned down (tracked in MODERNIZATION_PLAN.md, deviation D4).
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: "3.13"
+      - run: uv sync --locked --extra dev
+      - run: uv run mypy gds_fdtd
+
+  test:
+    name: test (py${{ matrix.python-version }}, ${{ matrix.os }}, ${{ matrix.profile }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+        profile: [base]
+        include:
+          # cross-OS coverage on min/max supported Python
+          - { os: macos-latest, python-version: "3.11", profile: base }
+          - { os: macos-latest, python-version: "3.13", profile: base }
+          - { os: windows-latest, python-version: "3.11", profile: base }
+          - { os: windows-latest, python-version: "3.13", profile: base }
+          # one leg with every optional extra installed (tidy3d, gdsfactory, ...)
+          - { os: ubuntu-latest, python-version: "3.13", profile: all-extras }
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: ${{ matrix.python-version }}
+      - name: Install (base profile — no optional extras)
+        if: matrix.profile == 'base'
+        run: uv sync --locked --extra dev
+      - name: Install (all extras)
+        if: matrix.profile == 'all-extras'
+        run: uv sync --locked --all-extras
+      - name: Run tests with coverage
+        run: uv run pytest --cov=gds_fdtd --cov-branch --cov-report=xml tests
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13' && matrix.profile == 'base'
+        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: SiEPIC/gds_fdtd
+          files: coverage.xml
+          flags: unittests
+
+  build:
+    name: build (sdist + wheel, inspected)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: hynek/build-and-inspect-python-package@d44ca7d91762de7a7d5436ddae667c6da6d1c3df # v2
+
+  docs:
+    name: docs (build-only smoke)
+    runs-on: ubuntu-latest
+    # TODO(WP6.2): switch to `sphinx-build -W --keep-going` and add this job to
+    # the `pass` gate once the docs overhaul lands.
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: "3.13"
+      - run: uv sync --locked --extra docs
+      - run: uv run sphinx-build -b html docs docs/_build/html
+
+  pass:
+    # Single required status check for branch protection / merge queue.
+    # Adding/removing matrix entries never desyncs required checks.
+    name: pass
+    if: always()
+    needs: [lint, typecheck, test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
+          allowed-failures: typecheck

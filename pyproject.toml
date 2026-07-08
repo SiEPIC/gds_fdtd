@@ -107,6 +107,6 @@ ignore = [
 "tests/*" = ["B011", "A003"]
 
 [tool.mypy]
-python_version = "3.11"
+# no python_version pin: analyze under the running interpreter (numpy 2.x stubs need >=3.12)
 ignore_missing_imports = true
 check_untyped_defs = true
