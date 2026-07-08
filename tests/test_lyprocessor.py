@@ -33,9 +33,19 @@ def test_dilate_rectangle():
 @pytest.mark.parametrize(
     "v,e,d,expect",
     [
+        # ascending point order
         ([[0, 0], [4, 0]], 1, "x", [[-1, 0], [5, 0]]),
         ([[0, 0], [0, 4]], 2, "y", [[0, -2], [0, 6]]),
-        ([[0, 0], [4, 2]], 1, "xy", [[0, -1], [5, 3]]),
+        # NOTE: expectation updated in WP1.1 — the old "xy" implementation failed
+        # to extend x1 (expected [[0, -1], [5, 3]]); both corners now extend.
+        ([[0, 0], [4, 2]], 1, "xy", [[-1, -1], [5, 3]]),
+        # descending point order — the old code returned [] here (bug B1:
+        # `[x, y] * sign` multiplied the LIST by -1)
+        ([[0, 4], [0, 0]], 2, "y", [[0, 6], [0, -2]]),
+        ([[4, 0], [0, 0]], 1, "x", [[5, 0], [-1, 0]]),
+        ([[4, 2], [0, 0]], 1, "xy", [[5, 3], [-1, -1]]),
+        # negative extension behaves like its absolute value (documented)
+        ([[0, 0], [0, 4]], -2, "y", [[0, -2], [0, 6]]),
     ],
 )
 def test_dilate_1d_ok(v, e, d, expect):

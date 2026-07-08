@@ -33,39 +33,28 @@ def dilate(vertices, extension=1.0):
 
 
 def dilate_1d(vertices, extension=1, dim="y"):
-    if dim == "x":
-        if vertices[0][0] < vertices[1][0]:
-            sign = 1
-        else:
-            sign = -1
-        return [
-            [vertices[0][0] - abs(extension) * sign, vertices[0][1]],
-            [vertices[1][0] + abs(extension) * sign, vertices[1][1]],
-        ]
-    elif dim == "y":
-        if vertices[0][1] < vertices[1][1]:
-            sign = 1
-        else:
-            sign = -1
-        return [
-            [vertices[0][0], vertices[0][1] - abs(extension)] * sign,
-            [vertices[1][0], vertices[1][1] + abs(extension) * sign],
-        ]
-    elif dim == "xy":
-        if vertices[0][1] < vertices[1][1]:
-            sign = 1
-        else:
-            sign = -1
-        return [
-            [vertices[0][0], vertices[0][1] - abs(extension)] * sign,
-            [
-                vertices[1][0] + abs(extension) * sign,
-                vertices[1][1] + abs(extension) * sign,
-            ],
-        ]
+    """Extend a 2-point segment/rectangle outward along the given dimension(s).
 
-    else:
-        raise ValueError("Dimension must be 'x' or 'y' or 'xy'")
+    Args:
+        vertices: two corner points [[x1, y1], [x2, y2]] in any order.
+        extension: growth amount (its absolute value is applied outward).
+        dim: "x", "y", or "xy".
+
+    Returns:
+        The two corner points, moved apart by ``abs(extension)`` along the
+        selected dimension(s). Point order is preserved.
+    """
+    (x1, y1), (x2, y2) = vertices
+    ex = abs(extension)
+    sx = 1 if x2 >= x1 else -1
+    sy = 1 if y2 >= y1 else -1
+    if dim == "x":
+        return [[x1 - ex * sx, y1], [x2 + ex * sx, y2]]
+    if dim == "y":
+        return [[x1, y1 - ex * sy], [x2, y2 + ex * sy]]
+    if dim == "xy":
+        return [[x1 - ex * sx, y1 - ex * sy], [x2 + ex * sx, y2 + ex * sy]]
+    raise ValueError("Dimension must be 'x' or 'y' or 'xy'")
 
 
 def apply_prefab(fname, top_cell, MODEL_NAME="ANT_NanoSOI_ANF1_d9"):
