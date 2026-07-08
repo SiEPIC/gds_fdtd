@@ -19,9 +19,9 @@ smatrix = solver.run()
 | | |
 |:---:|:---:|
 | ![crossing field profile](docs/images/crossing_fields_tidy3d.png) | ![crossing S-parameters](docs/images/crossing_sparams.png) |
-| waveguide crossing on **tidy3d** (`examples/03_tidy3d`) | full 4-port × 2-mode S-matrix from the same run |
-| ![geometry with ports and simulation region](docs/images/crossing_geometry.png) | ![cross-solver agreement](docs/images/escalator_cross_solver.png) |
-| every example starts with geometry + ports + FDTD region + port extensions | **tidy3d vs Lumerical** on identical geometry: 0.08 dB worst-pair agreement |
+| waveguide crossing on **tidy3d**, mesh 10 (`examples/03_tidy3d`) | thru / crosstalk / reflection per polarization, same run |
+| ![geometry with ports and simulation region](docs/images/crossing_geometry.png) | ![three-engine agreement](docs/images/three_engine_agreement.png) |
+| every example starts with geometry + ports + FDTD region + port extensions | the IDENTICAL job on all three engines: tidy3d ↔ Lumerical within **0.003 dB**, free beamz within 0.05 dB |
 
 *All images are real solver output produced by the examples as committed.*
 

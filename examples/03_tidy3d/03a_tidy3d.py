@@ -25,7 +25,7 @@ if __name__ == "__main__":
         technology=tech,
         spec=SimulationSpec(
             wavelength_points=51,
-            mesh=6,
+            mesh=10,  # the converged value from the 03b sweep
             z_min=-1.0,
             z_max=1.11,
             modes=(1, 2),  # TE + TM
@@ -42,8 +42,16 @@ if __name__ == "__main__":
     print("build summary:", solver.build().summary)
     print("estimate:", solver.estimate())
 
-    # STEP 3+4: run (SPENDS FLEXCREDITS), S-parameters, fields
+    # STEP 3+4: run (SPENDS FLEXCREDITS ~0.35), S-parameters, fields.
+    # Curated paths: thru / cross / reflection for each polarization —
+    # mode-preserving only (TE<->TM conversion is noise-floor for this device).
     smatrix = solver.run()
-    plot_smatrix(smatrix, kind="db")[0].savefig(f"{component.name}_sparams.png", dpi=150)
+    paths = [
+        ("opt4", "opt1", 1, 1), ("opt4", "opt1", 2, 2),  # thru TE / TM
+        ("opt2", "opt1", 1, 1), ("opt2", "opt1", 2, 2),  # cross TE / TM
+        ("opt1", "opt1", 1, 1), ("opt1", "opt1", 2, 2),  # reflection TE / TM
+    ]
+    fig, _ = plot_smatrix(smatrix, kind="db", paths=paths)
+    fig.savefig(f"{component.name}_sparams.png", dpi=150, bbox_inches="tight")
     solver.plot_fields(axis="z", savefig=f"{component.name}_fields.png")
     smatrix.to_dat(f"{component.name}.dat")  # -> INTERCONNECT

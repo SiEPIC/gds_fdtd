@@ -1,17 +1,16 @@
 """Cross-solver validation (WP5.5) — the payoff of solver agnosticism.
 
-``validate_across`` runs the SAME job through several engines and reports the
-worst pairwise |ΔS| in dB. This script reproduces that comparison OFFLINE and
-free from the recorded artifacts shipped in tests/recorded/: the same Si→SiN
-escalator run for real on tidy3d (cloud, 2026-07-07) and Lumerical FDTD v252
-(local license) — they agree within a fraction of a dB.
+THREE engines ran the IDENTICAL job (gdsfactory straight, unified tech,
+mesh 10, zero engine-specific kwargs): tidy3d and Lumerical agree within
+0.004 dB; beamz — free and open-source — lands within 0.06 dB of both.
+This script reproduces the comparison OFFLINE from the recorded results
+shipped in tests/recorded/ (real solver output, 2026-07-08).
 
-To run the comparison live instead (spends credits + a license seat):
+To rerun live (tidy3d ~0.05 FC, Lumerical license seat, beamz free):
 
     from gds_fdtd.validation import validate_across
-    from gds_fdtd.solvers import get_solver
     report = validate_across(
-        [get_solver("tidy3d"), get_solver("lumerical")],
+        [get_solver("tidy3d"), get_solver("lumerical"), get_solver("beamz")],
         component, tech, spec, cache_dir=".gds_fdtd_cache",
     )
 """
@@ -27,16 +26,12 @@ if __name__ == "__main__":
     )
     report = compare_smatrices(
         {
-            "tidy3d (cloud)": SMatrix.from_hdf5(
-                os.path.join(recorded, "si_sin_escalator_smatrix.h5")
-            ),
-            "lumerical v252": SMatrix.from_hdf5(
-                os.path.join(recorded, "si_sin_escalator_lum_smatrix.h5")
-            ),
+            name: SMatrix.from_npz(os.path.join(recorded, f"straight_mesh10_{name}.npz"))
+            for name in ("tidy3d", "lumerical", "beamz")
         }
     )
     print(report.summary())
-    print("agreement within 1 dB:", report.passed(tol_db=1.0))
+    print("agreement within 0.1 dB:", report.passed(tol_db=0.1))
 
-    # overlay of the thru path from both engines (ports align by digit id)
-    report.plot(out=2, in_=1, savefig="escalator_cross_solver.png")
+    # overlay of the thru path from all three engines
+    report.plot(out=2, in_=1, savefig="three_engine_agreement.png")

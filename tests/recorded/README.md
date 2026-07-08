@@ -18,3 +18,12 @@ re-run the scrub grep, and update this table.
 NOTE (finding F5): tidy3d 2.8.x requires numpy<2 (undeclared) and therefore a
 Python ≤3.12 environment — the recording env was a py3.11 venv. tidy3d ≥2.11
 (WP4.1) resolves this.
+
+## straight_mesh10_{tidy3d,lumerical,beamz}.npz
+
+The SAME gdsfactory straight (L=5 um), unified `examples/tech.yaml`,
+`SimulationSpec(wavelength_points=11, mesh=10, z_min=-1, z_max=1.22)`,
+zero engine-specific kwargs, recorded 2026-07-08:
+tidy3d 2.11.2 cloud (~0.05 FC), Lumerical 2025 R2 local license,
+beamz 0.4.3 CPU. Refresh with scratch script `threeway/run_one.py`
+(same three commands, one argument changed).

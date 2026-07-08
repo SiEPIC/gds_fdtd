@@ -406,6 +406,23 @@ Jul–Aug 2025: 32, then dormant since Sep 2025). Four identities:
   unified tech (0.292 FC billed; first attempt hit a transient 'no internet' WebError —
   exactly the 7.6.2 retry case; succeeded on retry). 02a validated offline through build
   (.lsf written). **FC LEDGER: +0.29 ⇒ ≈1.04 spent, ≈8.96 remain (exp 2026-07-22).**
+- **OWNER BATCH 3 (2026-07-08 pm):** (1) THREE-ENGINE agreement on the identical job
+  (gf straight, mesh 10, unified tech, zero engine-specific kwargs): tidy3d ↔ Lumerical
+  **0.0033 dB**, beamz within 0.052 dB — recorded as tests/recorded/straight_mesh10_*.npz +
+  test_three_engine_agreement (every PR); README + 04c now show the 3-way plot (the old
+  2-engine escalator plot was coarse-mesh mesh-6 data — 0.081 dB was discretization, not
+  disagreement; tidy3d's +dB values were its coarse-mesh normalization overshoot).
+  (2) Hero images regenerated at mesh 10 (0.346 FC): crisper fields; sparams curated to
+  thru/cross/reflection per polarization (no TE↔TM conversion traces); 03a ships the same
+  curated selection. (3) Dead-code audit: **646 lines removed** (write-only
+  fdtd_field_monitor chain, log-metrics chain, unreachable block, legacy core.sparam/
+  s_parameters per D6, technology layer helpers) — vulture + reference tracing, suite green.
+  (4) docs/adding_a_solver.md — the bring-your-own-engine guide, first feature bullet in
+  README. (5) Scorecard badge removed until first run on main (re-add at WP6.3).
+  **FC LEDGER: +0.05 (3-way t3d) +0.35 (hero) ⇒ ≈1.44 spent, ≈8.56 remain (exp 2026-07-22).**
+  **PUSH BLOCKED:** HTTPS uploads >~100 KB stall through the current VPN (chunked AND
+  buffered POSTs both time out; reads fine; no SSH keys) — commits queued locally with a
+  background retry loop; lands the moment the uplink clears.
 - **Scorecard badge removed from README (owner found it broken):** api.scorecard.dev only
   serves results after scorecard.yml has run with publish_results on the DEFAULT branch —
   impossible until PR #23 merges. RE-ADD the badge as part of WP6.3 release polish, after

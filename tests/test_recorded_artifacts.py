@@ -61,3 +61,20 @@ def test_cross_solver_agreement():
     assert np.max(np.abs(np.mean(s21_t3d) - np.mean(s21_lum))) < 0.15
     assert t3d.magnitude_db(out=1, in_=1).max() < -20
     assert lum.magnitude_db(out=1, in_=1).max() < -20
+
+
+def test_three_engine_agreement():
+    """All three engines ran the IDENTICAL gf-straight job (mesh 10, unified
+    tech, zero solver-specific kwargs) on 2026-07-08: tidy3d and Lumerical
+    agree within 0.004 dB; beamz (free, 0.x) within 0.06 dB of both."""
+    from gds_fdtd.validation import compare_smatrices
+
+    sms = {
+        name: SMatrix.from_npz(str(RECORDED / f"straight_mesh10_{name}.npz"))
+        for name in ("tidy3d", "lumerical", "beamz")
+    }
+    report = compare_smatrices(sms)
+    assert report.pairwise_db[("tidy3d", "lumerical")] < 0.01, report.summary()
+    assert report.worst_db < 0.08, report.summary()
+    for sm in sms.values():
+        assert sm.magnitude_db(out=1, in_=1).max() < -25  # stubs reach the PML
