@@ -58,6 +58,7 @@ dev = [
   "coverage",
   "ruff>=0.4.3",
   "mypy>=1.10",
+  "h5py>=3.10",  # SMatrix HDF5 I/O tests (optional at runtime)
 ]
 
 docs = [

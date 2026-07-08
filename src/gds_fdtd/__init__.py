@@ -6,6 +6,7 @@ from importlib.metadata import PackageNotFoundError, version
 from . import core, geometry, lyprocessor, simprocessor, sparams
 from .core import technology
 from .geometry import Component, LayoutSource, Port, Region, Structure
+from .smatrix import SMatrix
 
 # Library logging etiquette: emit nothing unless the application (or
 # logging_config.setup_logging) configures handlers.
@@ -16,6 +17,7 @@ __all__ = [
     "LayoutSource",
     "Port",
     "Region",
+    "SMatrix",
     "Structure",
     "core",
     "geometry",

@@ -820,6 +820,7 @@ dependencies = [
 dev = [
     { name = "build" },
     { name = "coverage" },
+    { name = "h5py" },
     { name = "mypy" },
     { name = "pip" },
     { name = "pytest" },
@@ -859,6 +860,7 @@ requires-dist = [
     { name = "docutils", marker = "extra == 'docs'", specifier = "<0.23" },
     { name = "furo", marker = "extra == 'docs'", specifier = ">=2024.8.6" },
     { name = "gdsfactory", marker = "extra == 'gdsfactory'", specifier = ">=9.5.7,<10" },
+    { name = "h5py", marker = "extra == 'dev'", specifier = ">=3.10" },
     { name = "klayout", specifier = ">=0.30.1" },
     { name = "matplotlib", specifier = ">=3.8" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
