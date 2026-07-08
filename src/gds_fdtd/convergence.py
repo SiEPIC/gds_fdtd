@@ -127,8 +127,11 @@ class ConvergenceReport:
         import matplotlib.pyplot as plt
 
         fig, ax = plt.subplots(figsize=(6, 4))
-        ax.semilogy(self.values[1:], self.deltas_db, "o-", label="max |ΔS| vs previous")
-        ax.axhline(tol_db, color="tab:red", linestyle="--", label=f"tolerance {tol_db} dB")
+        from .plotting import rdbu_colors
+
+        blue, red = rdbu_colors(2)[0], rdbu_colors(2)[1]
+        ax.semilogy(self.values[1:], self.deltas_db, "o-", color=blue, label="max |ΔS| vs previous")
+        ax.axhline(tol_db, color=red, linestyle="--", label=f"tolerance {tol_db} dB")
         ax.set_xlabel(f"spec.{self.field}")
         ax.set_ylabel("max |ΔS| [dB]")
         ax.set_title(f"S-matrix convergence vs {self.field}")

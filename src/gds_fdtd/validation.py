@@ -59,13 +59,18 @@ class CrossSolverReport:
         """Overlay one S-parameter magnitude from every engine."""
         import matplotlib.pyplot as plt
 
+        from .plotting import rdbu_colors
+
         fig, ax = plt.subplots(figsize=(7, 4.5))
-        for name, sm in self.smatrices.items():
+        for (name, sm), color in zip(
+            self.smatrices.items(), rdbu_colors(len(self.smatrices)), strict=True
+        ):
             ax.plot(
                 sm.wavelength_um,
                 sm.magnitude_db(out, in_, mode_out, mode_in),
                 "o-",
                 markersize=3,
+                color=color,
                 label=name,
             )
         ax.set_xlabel("wavelength [µm]")

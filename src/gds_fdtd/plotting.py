@@ -9,6 +9,28 @@ from __future__ import annotations
 
 import numpy as np
 
+# Package-wide default color scheme (owner directive): the RdBu family.
+# Field images use the continuous map; categorical needs (S-parameter
+# traces, GDS layers, engines in comparison plots) sample its deep ends.
+DEFAULT_CMAP = "RdBu_r"
+
+
+def rdbu_colors(n: int) -> list:
+    """``n`` distinguishable colors sampled from RdBu, skipping the pale center.
+
+    Alternates the deep-blue and deep-red ends and walks inward, so up to
+    ~10 series stay tellable-apart while everything belongs to one palette.
+    """
+    import matplotlib.pyplot as plt
+
+    cmap = plt.get_cmap("RdBu")
+    per_side = max((n + 1) // 2, 1)
+    stops = []
+    for i in range(n):
+        depth = (i // 2) / per_side * 0.30
+        stops.append((0.95 - depth) if i % 2 == 0 else (0.05 + depth))
+    return [cmap(s) for s in stops]
+
 
 def plot_smatrix(sm, kind: str = "db", ax=None, paths=None):
     """Plot S-matrix paths versus wavelength.
@@ -45,7 +67,8 @@ def plot_smatrix(sm, kind: str = "db", ax=None, paths=None):
         ]
 
     wavl = sm.wavelength_um
-    for out, in_, mode_out, mode_in in paths:
+    trace_colors = rdbu_colors(len(paths))
+    for (out, in_, mode_out, mode_in), trace_color in zip(paths, trace_colors, strict=True):
         col = sm.sel(out, in_, mode_out, mode_in)
         label = f"S({out}←{in_})"
         if sm.n_modes > 1:
@@ -60,7 +83,7 @@ def plot_smatrix(sm, kind: str = "db", ax=None, paths=None):
         else:
             y = np.unwrap(np.angle(col))
             ax.set_ylabel("Phase [rad]")
-        ax.plot(wavl, y, label=label)
+        ax.plot(wavl, y, label=label, color=trace_color)
 
     ax.set_xlabel("Wavelength [µm]")
     ax.set_title(f"{sm.name} S-parameters")
@@ -94,7 +117,7 @@ def plot_component(component, spec=None, ax=None, savefig=None):
         fig = ax.figure
 
     # device polygons, colored per GDS layer
-    palette = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    palette = rdbu_colors(8)
     layer_colors: dict[tuple, str] = {}
     seen_layers = set()
     for s in component.structures:
@@ -140,7 +163,7 @@ def plot_component(component, spec=None, ax=None, savefig=None):
                 b.x_span + 2 * buf,
                 b.y_span + 2 * buf,
                 fill=False,
-                edgecolor="tab:red",
+                edgecolor=plt.get_cmap("RdBu")(0.02),
                 linestyle=":",
                 linewidth=1.4,
                 label=f"FDTD region (buffer {buf} µm)",
@@ -158,7 +181,7 @@ def plot_component(component, spec=None, ax=None, savefig=None):
                     stub,
                     closed=True,
                     facecolor="none",
-                    edgecolor="tab:green",
+                    edgecolor=plt.get_cmap("RdBu")(0.98),
                     linewidth=1.0,
                     linestyle="--",
                     hatch="///",
@@ -176,19 +199,29 @@ def plot_component(component, spec=None, ax=None, savefig=None):
             "",
             xy=(p.x + dx, p.y + dy),
             xytext=(p.x, p.y),
-            arrowprops={"arrowstyle": "-|>", "color": "tab:green", "lw": 2},
+            arrowprops={"arrowstyle": "-|>", "color": plt.get_cmap("RdBu")(0.98), "lw": 2},
         )
         # port width tick, perpendicular to the direction
         if p.direction in (0, 180):
-            ax.plot([p.x, p.x], [p.y - p.width / 2, p.y + p.width / 2], "tab:green", lw=2)
+            ax.plot(
+                [p.x, p.x],
+                [p.y - p.width / 2, p.y + p.width / 2],
+                color=plt.get_cmap("RdBu")(0.98),
+                lw=2,
+            )
         else:
-            ax.plot([p.x - p.width / 2, p.x + p.width / 2], [p.y, p.y], "tab:green", lw=2)
+            ax.plot(
+                [p.x - p.width / 2, p.x + p.width / 2],
+                [p.y, p.y],
+                color=plt.get_cmap("RdBu")(0.98),
+                lw=2,
+            )
         ax.annotate(
             p.name,
             (p.x, p.y),
             textcoords="offset points",
             xytext=(6, 6),
-            color="tab:green",
+            color=plt.get_cmap("RdBu")(0.98),
             fontsize=9,
             fontweight="bold",
         )

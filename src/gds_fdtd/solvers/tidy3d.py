@@ -221,6 +221,10 @@ def plot_tidy3d_fields(modeler_data, axis: str = "z", savefig: str | None = None
     f0 = float(freqs[len(freqs) // 2])
     fig, ax = plt.subplots(figsize=(9, 5))
     sim_data.plot_field(monitor_name, "E", val="abs", f=f0, ax=ax)
+    from ..plotting import DEFAULT_CMAP
+
+    for mesh in ax.collections:  # tidy3d hardcodes its own cmap; restyle to ours
+        mesh.set_cmap(DEFAULT_CMAP)
     ax.set_title(f"|E| ({monitor_name}) — excitation {task_name}")
     if savefig:
         fig.savefig(savefig, dpi=150, bbox_inches="tight")

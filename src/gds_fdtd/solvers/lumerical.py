@@ -20,6 +20,7 @@ import tempfile
 from pathlib import Path
 
 from ..errors import JobValidationError, SolverError, SolverUnavailableError
+from ..plotting import DEFAULT_CMAP
 from ..smatrix import SMatrix
 from .base import (
     ResourceEstimate,
@@ -345,7 +346,7 @@ class LumericalSolver(Solver):
         x = np.asarray(res["x"]).squeeze() * 1e6
         y = np.asarray(res["y"]).squeeze() * 1e6
         fig, ax = plt.subplots(figsize=(9, 5))
-        im = ax.pcolormesh(x, y, mag2.T, shading="auto", cmap="magma")
+        im = ax.pcolormesh(x, y, mag2.T, shading="auto", cmap=DEFAULT_CMAP)
         fig.colorbar(im, ax=ax, label="|E|²")
         ax.set_xlabel("x [µm]")
         ax.set_ylabel("y [µm]")

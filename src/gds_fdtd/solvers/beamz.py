@@ -27,6 +27,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..errors import JobValidationError
+from ..plotting import DEFAULT_CMAP
 from ..smatrix import SMatrix
 from .base import (
     ResourceEstimate,
@@ -331,7 +332,7 @@ class BeamzSolver(Solver):
             np.asarray(mag2),  # rows are already y (see reshape note in run())
             origin="lower",
             extent=(0, meta["width_um"], 0, meta["height_um"]),
-            cmap="magma",
+            cmap=DEFAULT_CMAP,
             aspect="equal",
         )
         fig.colorbar(im, ax=ax, label="|E|²")

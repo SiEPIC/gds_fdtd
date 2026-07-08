@@ -20,9 +20,26 @@
 
 **Standing user directives (override anything below):**
 - Do NOT add `Co-Authored-By` trailers (or any AI attribution) to commits.
+  **VIOLATED then fixed 2026-07-08:** 16 commits from one session carried the trailer after a
+  context compaction dropped the directive; history rewritten (`filter-branch --msg-filter`)
+  and force-pushed. A persistent memory file now guards this — but ANY executor must re-read
+  this block after every compaction, before the first commit.
 - Keep this execution log current with progress, findings, and plan deviations.
 - All modernization work happens on the **`modernization` branch** — never commit to `main`
   (`main` sits at origin/main `ab2cd9b`).
+- **Docs host = GitHub Pages (+ wiki if useful), NOT ReadTheDocs** (owner, 2026-07-08):
+  WP6.2's RTD skeleton/preview items are void; build_docs.yml → Pages is already the pipeline.
+  This UNBLOCKS the docs overhaul (no owner action needed beyond flipping Pages source).
+- **Examples must be solver-AGNOSTIC and consistent** (owner, 2026-07-08): every example uses
+  the modern `get_solver(name)(component, tech, spec)` setup; no legacy 15-kwarg constructors,
+  no per-solver extra kwargs like beamz's `gf_component`/`n_core` (derive from tech/component).
+- **RdBu is the default color scheme** for all package visualizations (owner, 2026-07-08).
+- **One technology file for all solvers** (owner, 2026-07-08): owner hates per-solver tech
+  YAMLs; examples must share a single tech (materials carry both per-solver hints and/or
+  neutral nk/rii); scope a cleaner "technology 2.0" neutral-first format.
+- **beamz-first where possible** in examples and cloud docs (Modal/AWS) — it's the free engine.
+- Repo root stays clean: generated sim outputs never live at the root; showcase-worthy real
+  sim images belong in docs/ and the README.
 
 ### MASTER SCOREBOARD (single source of truth — keep current)
 
