@@ -134,8 +134,22 @@ WP4.x verification, but not the executor env. Baseline test suite: 51 passed in 
   `ModalPortDataArray` dims = (port_out, mode_index_out, port_in, mode_index_in, f);
   tidy3d config moved to `~/.config/tidy3d` (key migrated there).
   **FC LEDGER UPDATE: 0.15 spent, ≈9.85 remain (expires 2026-07-22).**
-- **Next:** WP3.1c/d (port both validated adapters onto the Solver ABC — live validation
-  now available for BOTH engines), then WP3.1e registry/shims, WP3.2, WP4.2 (gdsfactory).
+- **WP3.1c DONE (validated live):** `solvers/tidy3d.py::Tidy3DSolver` — pure constructor;
+  build() composes the legacy machinery to make the ModalComponentModeler offline; run() =
+  td.web.run → SMatrix (real port names). Conformance suite made job-aware (per-solver tech,
+  probe-gated skips). Live ABC lifecycle run: 0.024 dB agreement vs recorded. **FC ledger:
+  ≈0.20/10 spent.**
+- **WP3.1d DONE (validated live, 0.0000 dB vs legacy run on v252):** `solvers/lumerical.py::LumericalSolver`
+  — build() generates the COMPLETE .lsf setup script as pure text (layers derived from
+  component structures, no session read-backs) + exports GDS; run() = lumapi session
+  (hide=True), replay script, sweep, .dat → SMatrix; F7-aware device selection;
+  `probe_lumapi()` auto-discovers `/opt/lumerical/*/api/python` or LUMERICAL_API_PATH.
+  **Live-bisect finding: LSF `clear(entry);` errors on undefined vars** — generator emits
+  fresh `entry = struct;` instead. Offline script-content tests in
+  tests/test_solvers_adapters.py (layers 1:0+1:5, boundaries/symmetry mapping, ports/sweep
+  entries, determinism).
+- **Next:** WP3.1e (entry-points + legacy-constructor deprecations + describe() replaces
+  print summaries), WP3.2 leftovers, WP4.2 (gdsfactory 9 rewrite).
 
 ---
 

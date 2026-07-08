@@ -30,3 +30,5 @@ __all__ = [
 # Adapters register themselves on import; missing optional engines are fine.
 with contextlib.suppress(ImportError):
     from .tidy3d import Tidy3DSolver  # noqa: F401
+with contextlib.suppress(ImportError):
+    from .lumerical import LumericalSolver  # noqa: F401
