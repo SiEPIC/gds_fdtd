@@ -556,7 +556,6 @@ class s_parameters:
         for i in self._entries:
             logging.info("Mode amplitudes in each port: \n")
             mag = [10 * np.log10(abs(i) ** 2) for i in i.s]
-            phase = [np.angle(i) ** 2 for i in i.s]
             ax.plot(c0_um / i.freq, mag, label=i.label)
         ax.legend()
         fig.show()
@@ -578,7 +577,7 @@ class sparam:
 
     def plot(self):
         fig, ax = plt.subplots(1, 1)
-        ax.plot((c0_um) / np.array(self.freq), 10 * np.log10(self.s**2))
+        ax.plot((c0_um) / np.array(self.freq), 10 * np.log10(np.abs(self.s) ** 2))
         ax.set_xlabel("Wavelength [um]")
         ax.set_ylabel("Transmission [dB]")
         ax.set_title("Frequency vs S")

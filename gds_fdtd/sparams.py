@@ -97,7 +97,6 @@ class s:
         ax.set_ylabel("Transmission [dB]")
 
         mag = [10 * np.log10(abs(i) ** 2) for i in self.s_mag]
-        phase = [np.angle(i) ** 2 for i in self.s_phase]
         ax.plot(1e6 * c / np.array(self.f), mag, label="S_" + self.idn)
         ax.legend()
         return fig, ax
@@ -543,78 +542,49 @@ def process_dat(file_path: str, name: str | None = None, verbose: bool = True):
     return spar
 
 
-class s_parameter_writer:
-    """Object that writes data to Lumerical INTERCONNECT S-parameters .dat format"""
+def write_dat(spar: sparameters, file_path: str) -> str:
+    """Write a sparameters object to Lumerical INTERCONNECT .dat format.
 
-    def __init__(self):
-        self.name = "sparams"
-        self.wavl = [1500e-9, 1600e-9, 20e-9]  # start, stop, resolution
-        self.n_ports = 2
-        self.data = 0
-        self.encoding = "utf-8"
+    One header + data block is written per entry, carrying that entry's ACTUAL
+    in/out port and mode ids and its own frequency vector. (The previous writer
+    class assumed a dense n_ports x n_ports ordering and regenerated frequencies
+    from a wavelength range, mislabeling ports whenever the entry order differed
+    or the matrix was partial; bug B14.)
 
-    def make_file(self):
-        f = open(self.name + ".dat", "wb")
-        return f
+    The format is the same one process_dat() parses; write_dat -> process_dat is
+    a lossless round trip (frequencies are written as full-precision floats).
 
-    def npoints(self):
-        self.nPts = int((self.wavl[1] - self.wavl[0]) / self.wavl[2] + 1)
-        return self.nPts
+    Args:
+        spar: The S-parameter collection to write.
+        file_path: Destination path (conventionally .dat).
 
-    def get_index(self, idx):
-        return str(int(idx / self.n_ports) + 1) + str(idx % self.n_ports + 1)
+    Returns:
+        str: file_path.
+    """
+    # port header lines: declared ports first, then any others found in the data
+    port_names: list[str] = [p.name for p in spar.ports]
+    for d in spar.data:
+        for name in (f"port {d.out_port_num}", f"port {d.in_port_num}"):
+            if name not in port_names:
+                port_names.append(name)
 
-    def visualize(self):
-        wavelength = np.linspace(self.wavl[0], self.wavl[1], self.npoints())
-        for idx, S in enumerate(self.data):
-            txt = "S" + self.get_index(idx)
-            plt.plot(wavelength * 1e9, 10 * np.log10(S[0]), label=txt)
-        plt.xlabel("Wavelength [nm]")
-        plt.ylabel("Transmission [dB]")
-        plt.tight_layout()
-        plt.legend()
-        return 0
+    with open(file_path, "w", encoding="utf-8") as f:
+        directions = {p.name: p.direction for p in spar.ports}
+        for name in port_names:
+            f.write(f'["{name}","{directions.get(name, "")}"]\n')
 
-    def write_header(self, file):
-        for i in range(self.n_ports):
-            text = bytes('["port %d",""]\n' % (i + 1), encoding=self.encoding)
-            file.write(text)
-        return 0
+        for d in spar.data:
+            if not (len(d.f) == len(d.s_mag) == len(d.s_phase)):
+                raise ValueError(
+                    f"S-parameter entry {d.idn} has inconsistent lengths: "
+                    f"f={len(d.f)}, s_mag={len(d.s_mag)}, s_phase={len(d.s_phase)}"
+                )
+            f.write(
+                f'("port {d.out_port_num}","mode {d.out_mode_num}",{d.out_mode_num},'
+                f'"port {d.in_port_num}",{d.in_mode_num},"{d.data_type}")\n'
+            )
+            f.write(f"({len(d.f)}, 3)\n")
+            for freq, mag, phase in zip(d.f, d.s_mag, d.s_phase, strict=True):
+                f.write(f"{freq:.10e} {mag:.10e} {phase:.10e}\n")
 
-    def write_S_header(self, file, S):
-        port1 = S[0]
-        port2 = S[1]
-        OID1 = S[2]
-        OID2 = S[3]
-        text = bytes(
-            '("port %d","mode 1",%d,"port %d",%d,"transmission")\n' % (port1, OID1, port2, OID2),
-            encoding="utf-8",
-        )
-        file.write(text)
-        text = bytes("(%d, 3)\n" % self.nPts, encoding=self.encoding)
-        file.write(text)
-        return 0
-
-    def write_S_data(self, file, data):
-        c = 299792458  # m/s
-        wavelength = np.linspace(self.wavl[0], self.wavl[1], self.nPts)
-        freq = c / wavelength
-        freq = np.flip(freq)
-        for idx, i in enumerate(freq):
-            text = bytes("%d %f %f\n" % (i, data[0][idx], data[1][idx]), encoding=self.encoding)
-            file.write(text)
-        return 0
-
-    def write_S(self):
-        self.npoints()
-        f = self.make_file()
-        self.write_header(f)
-        idx = 0
-        for i in range(self.n_ports):
-            for k in range(self.n_ports):
-                S = [i + 1, k + 1, 1, 1]  # out_port, in_port2, out_OID1, in_OID2
-                self.write_S_header(f, S)
-                self.write_S_data(f, self.data[idx])
-                idx += 1
-        f.close()
-        return 0
+    return file_path

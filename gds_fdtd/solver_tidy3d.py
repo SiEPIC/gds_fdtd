@@ -695,7 +695,13 @@ class fdtd_solver_tidy3d(fdtd_solver):
         return log_metrics
 
     def export_sparameters_dat(self, filepath: str = None):
-        """Export S-parameters to .dat file using s_parameter_writer."""
+        """Export S-parameters to an INTERCONNECT .dat file.
+
+        Each entry is written with its actual port/mode ids and frequency
+        vector (the previous writer assumed a dense n_ports² ordering and a
+        regenerated frequency grid, mislabeling entries; bug B14 — and wrote
+        power |S|² where the format stores magnitude).
+        """
         if not hasattr(self, "_sparameters") or self._sparameters is None:
             print("No S-parameters available for export. Run simulation first.")
             return
@@ -703,37 +709,11 @@ class fdtd_solver_tidy3d(fdtd_solver):
         if filepath is None:
             filepath = os.path.join(self.working_dir, f"{self.component.name}_sparams.dat")
 
-        try:
-            from gds_fdtd.sparams import s_parameter_writer
+        from gds_fdtd.sparams import write_dat
 
-            # Create writer instance
-            writer = s_parameter_writer()
-            writer.name = filepath.replace(".dat", "")
-
-            # Set wavelength range
-            writer.wavl = [
-                self.wavelength_start * 1e-6,
-                self.wavelength_end * 1e-6,
-                (self.wavelength_end - self.wavelength_start) * 1e-6 / (self.wavelength_points - 1),
-            ]
-
-            # Set number of ports
-            writer.n_ports = len(self.fdtd_ports)
-
-            # Convert S-parameters data to writer format
-            writer.data = []
-            for data_entry in self._sparameters.data:
-                # Convert s_mag to power (magnitude squared)
-                s_power = [abs(mag) ** 2 for mag in data_entry.s_mag]
-                s_phase = data_entry.s_phase
-                writer.data.append([s_power, s_phase])
-
-            # Write the file
-            writer.write_S()
-            print(f"S-parameters exported to: {filepath}")
-
-        except Exception as e:
-            print(f"Error exporting S-parameters: {e}")
+        write_dat(self._sparameters, filepath)
+        self.logger.info(f"S-parameters exported to: {filepath}")
+        print(f"S-parameters exported to: {filepath}")
 
     def visualize_results(self):
         """Visualize the simulation results."""
