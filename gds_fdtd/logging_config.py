@@ -14,14 +14,20 @@ from pathlib import Path
 
 def setup_logging(working_dir: str = "./", component_name: str = "gds_fdtd"):
     """
-    Setup logging for the entire gds_fdtd package.
+    Set up file + console logging for the ``gds_fdtd`` package logger ONLY.
+
+    A library must never reconfigure the root logger; the previous
+    implementation cleared all root handlers and set root to DEBUG on every
+    solver construction, hijacking the host application's logging (bug B16).
+    This configures the ``gds_fdtd`` logger with its own handlers and disables
+    propagation so records are not duplicated through root.
 
     Args:
-        working_dir: Directory where log file will be created
-        component_name: Name of the component (for log filename)
+        working_dir: Directory where the log file will be created.
+        component_name: Name of the component (for the log filename).
 
     Returns:
-        Logger instance for the package
+        The ``gds_fdtd`` package logger.
     """
     # Ensure working directory exists
     Path(working_dir).mkdir(parents=True, exist_ok=True)
@@ -31,36 +37,31 @@ def setup_logging(working_dir: str = "./", component_name: str = "gds_fdtd"):
     log_filename = f"{component_name}_{timestamp}.log"
     log_filepath = os.path.join(working_dir, log_filename)
 
-    # Configure root logger
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
+    package_logger = logging.getLogger("gds_fdtd")
+    package_logger.setLevel(logging.DEBUG)
+    package_logger.propagate = False
 
-    # Remove any existing handlers to avoid duplicates
-    for handler in root_logger.handlers[:]:
-        root_logger.removeHandler(handler)
+    # Remove only OUR previous handlers (re-configuration between solver runs)
+    for handler in package_logger.handlers[:]:
+        package_logger.removeHandler(handler)
+        handler.close()
 
-    # Create formatters
     detailed_formatter = logging.Formatter(
         "%(asctime)s | %(levelname)-8s | %(name)-20s | %(funcName)-15s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-
     console_formatter = logging.Formatter("%(levelname)-8s | %(name)-15s | %(message)s")
 
-    # File handler (detailed logging)
     file_handler = logging.FileHandler(log_filepath, mode="w", encoding="utf-8")
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(detailed_formatter)
-    root_logger.addHandler(file_handler)
+    package_logger.addHandler(file_handler)
 
-    # Console handler (less verbose)
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(console_formatter)
-    root_logger.addHandler(console_handler)
+    package_logger.addHandler(console_handler)
 
-    # Get package logger
-    package_logger = logging.getLogger("gds_fdtd")
     package_logger.info(f"Logging initialized - Log file: {log_filepath}")
     package_logger.info(f"Working directory: {os.path.abspath(working_dir)}")
 

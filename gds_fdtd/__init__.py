@@ -1,9 +1,14 @@
 """gds_fdtd Top-level package imports."""
 
+import logging as _logging
 from importlib.metadata import PackageNotFoundError, version
 
 from . import core, lyprocessor, simprocessor, sparams
 from .core import technology
+
+# Library logging etiquette: emit nothing unless the application (or
+# logging_config.setup_logging) configures handlers.
+_logging.getLogger("gds_fdtd").addHandler(_logging.NullHandler())
 
 __all__ = ["core", "lyprocessor", "simprocessor", "sparams", "technology"]
 

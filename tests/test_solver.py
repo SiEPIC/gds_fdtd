@@ -81,3 +81,30 @@ def test_fdtd_port_instances_share_no_mutable_state():
     assert p2.position == [0.0, 0.0, 0.0]
     assert p2.modes == [0]
     assert p2.span == [None, 2.5, 1.5]
+
+
+# ---------- WP1.7 (B16): library must not touch the root logger ----------
+
+
+def test_solver_construction_leaves_root_logger_alone(escalator_component, tmp_path):
+    import logging
+
+    root = logging.getLogger()
+    sentinel = logging.NullHandler()
+    root.addHandler(sentinel)
+    level_before = root.level
+    handlers_before = list(root.handlers)
+    try:
+        _make_solver(escalator_component, tmp_path)
+        assert root.handlers == handlers_before, "solver construction modified root handlers"
+        assert root.level == level_before, "solver construction modified root level"
+        pkg = logging.getLogger("gds_fdtd")
+        assert pkg.propagate is False
+        assert any(isinstance(h, logging.FileHandler) for h in pkg.handlers)
+    finally:
+        root.removeHandler(sentinel)
+        # close package handlers so tmp log files release cleanly on Windows
+        pkg = logging.getLogger("gds_fdtd")
+        for h in pkg.handlers[:]:
+            pkg.removeHandler(h)
+            h.close()
