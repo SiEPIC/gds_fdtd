@@ -1,0 +1,161 @@
+{
+ "bounds": {
+  "vertices": [
+   [
+    0.0,
+    -1.9
+   ],
+   [
+    0.0,
+    1.9
+   ],
+   [
+    18.0,
+    1.9
+   ],
+   [
+    18.0,
+    -1.9
+   ]
+  ],
+  "z_center": 0.11,
+  "z_span": 4.0
+ },
+ "name": "si_sin_escalator",
+ "ports": [
+  {
+   "center": [
+    0.0,
+    0.0,
+    0.11
+   ],
+   "direction": 180,
+   "height": 0.22,
+   "idx": 1,
+   "name": "opt1",
+   "width": 0.5
+  },
+  {
+   "center": [
+    18.0,
+    0.0,
+    1.5
+   ],
+   "direction": 0,
+   "height": 3.0,
+   "idx": 2,
+   "name": "opt2",
+   "width": 1.6
+  }
+ ],
+ "structures": [
+  {
+   "layer": [
+    999,
+    0
+   ],
+   "material": {
+    "lum": "SiO2 (Glass) - Palik",
+    "tidy3d": null
+   },
+   "name": "Subtrate",
+   "polygon": [
+    [
+     0.0,
+     -1.9
+    ],
+    [
+     18.0,
+     -1.9
+    ],
+    [
+     18.0,
+     1.9
+    ],
+    [
+     0.0,
+     1.9
+    ]
+   ],
+   "sidewall_angle": 90.0,
+   "z_base": 0.0,
+   "z_span": -2.0
+  },
+  {
+   "layer": [
+    999,
+    1
+   ],
+   "material": {
+    "lum": "SiO2 (Glass) - Palik",
+    "tidy3d": null
+   },
+   "name": "Superstrate",
+   "polygon": [
+    [
+     0.0,
+     -1.9
+    ],
+    [
+     18.0,
+     -1.9
+    ],
+    [
+     18.0,
+     1.9
+    ],
+    [
+     0.0,
+     1.9
+    ]
+   ],
+   "sidewall_angle": 90.0,
+   "z_base": 0.0,
+   "z_span": 3.0
+  },
+  {
+   "layer": [
+    1,
+    0
+   ],
+   "material": {
+    "lum": "Si (Silicon) - Palik",
+    "tidy3d": null
+   },
+   "name": "dev_0_0",
+   "polygon": [
+    [
+     0.0,
+     -0.25
+    ],
+    [
+     0.0,
+     0.25
+    ],
+    [
+     0.01,
+     0.25
+    ],
+    [
+     17.9,
+     0.05
+    ],
+    [
+     17.95,
+     0.0
+    ],
+    [
+     17.9,
+     -0.05
+    ],
+    [
+     0.01,
+     -0.25
+    ]
+   ],
+   "sidewall_angle": 90.0,
+   "z_base": 0.0,
+   "z_span": 0.22
+  }
+ ]
+}
