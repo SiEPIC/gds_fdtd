@@ -92,6 +92,37 @@ hynek/build-and-inspect-python-package@d44ca7d91762de7a7d5436ddae667c6da6d1c3df 
 tidy3d 2.8.5, klayout 0.30.3, pydantic 2.11.7, numpy 2.2.0, python 3.13.5 — useful later for
 WP4.x verification, but not the executor env. Baseline test suite: 51 passed in ~2 s.
 
+**LIVE VALIDATION RESOURCES (2026-07-07, owner-provided):**
+- **tidy3d API key**: configured in `~/.tidy3d/config` + repo secret `TIDY3D_API_KEY` on
+  mustafacc/gds_fdtd (fork = origin). **Expires 2026-07-22. Budget 10 FC.
+  LEDGER: spent 0.10 FC (2 validation runs × 2 tasks × 0.025 min) → 9.90 FC remain.**
+  Always `web.estimate_cost` before running; hard cap 0.5 FC per validation batch.
+- **Lumerical v252 (2025 R2)** at `/opt/lumerical/v252/api/python` — license via owner's VPN
+  (works, verified). Headless via `lumapi.FDTD(hide=True)`; DISPLAY=:0 also available.
+- **FINDING F5:** tidy3d 2.8.5 declares unbounded numpy but crashes under numpy≥2
+  (`ComponentModeler.shift_port`: `np.argwhere(...)[-1]` 1-elem array no longer coerces).
+  scipy has no numpy<2 wheels for py3.13 ⇒ **tidy3d 2.8.x is unusable on Python 3.13,
+  period**. Cloud validation used a uv-managed **py3.11 venv** at
+  `<scratchpad>/venv311` (numpy 1.26.4 + scipy 1.12). Raises WP4.1 (tidy3d ≥2.11) urgency;
+  also our all-extras CI leg will break if it ever touches `sim_dict` on py3.13.
+- **Cloud validation result (tidy3d 2.8.5, escalator fixture, mesh 6, 11 pts):** full
+  production path `solver.run()` → `sparameters.to_smatrix()` → hdf5/.dat/.s2p exports all
+  green; physics: S21 ≈ 0 dB (adiabatic escalator), S11 < −30 dB, reciprocal ✓, passive
+  within 1% (coarse-mesh normalization overshoot, expected). Artifacts recorded in
+  `tests/recorded/` with replay tests (`test_recorded_artifacts.py`) — scrub-checked.
+- **FINDING F6:** Lumerical v252 `runsystemcheck` returns an EMPTY dict (2024 keys
+  `Memory_Recommended`/`Total_FDTD_Yee_Nodes` gone) — crashed `get_resources` during an
+  otherwise fully-successful v252 setup. Fixed tolerantly.
+- **FINDING F7:** v252 `setresource("FDTD","CPU",1)` raises (2025 syntax:
+  `setresource("FDTD", index, "device type", dev)`) — fixed with new-syntax-first +
+  2024 fallback in `_set_device_type`.
+- **Lumerical v252 FULL SWEEP validated end-to-end** (local license via VPN, headless
+  `hide=True`): S21 −0.01…−0.08 dB, S11 < −30 dB, reciprocal, passive. **Cross-solver
+  agreement tidy3d-vs-Lumerical on the same fixture: |ΔS21| < 0.15 dB** — recorded as
+  `tests/recorded/si_sin_escalator_lum_smatrix.h5` + `test_cross_solver_agreement` (the
+  flagship replay test). Env note: reinstalling/pruning the venv drops the manually-added
+  pytz/skrf/h5py — re-add after any `uv sync`.
+
 ---
 
 ## Part 0 — Rules of engagement for the AI developer

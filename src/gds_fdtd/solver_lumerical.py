@@ -73,33 +73,32 @@ class fdtd_solver_lumerical(fdtd_solver):
         self._print_simulation_summary()
 
     def get_resources(self) -> None:
-        """Get the resources used by the simulation."""
-        # TODO: I don't think this will work for Lumerical 2025 with GPU
-        # ref: https://optics.ansys.com/hc/en-us/articles/4403937981715-runsystemcheck-Script-command
+        """Report estimated simulation resources, when the API provides them.
+
+        Lumerical 2024 `runsystemcheck` returns Memory_Recommended /
+        Total_FDTD_Yee_Nodes; **Lumerical 2025 (v252) returns an empty dict**
+        (verified 2026-07-07, finding F6) — this must not crash setup.
+        """
         self.fdtd.eval("reqs = runsystemcheck;")
+        reqs = self.fdtd.getv("reqs") or {}
 
-        reqs = self.fdtd.getv("reqs")
-
-        memory = reqs["Memory_Recommended"]  # in Bytes
-        nodes = reqs["Total_FDTD_Yee_Nodes"]  # in MNodes
-        print(f"Memory: {memory / 1e9} GB")
-        print(f"Nodes: {nodes} MNodes")
+        memory = reqs.get("Memory_Recommended")  # Bytes (2024 API)
+        nodes = reqs.get("Total_FDTD_Yee_Nodes")  # MNodes (2024 API)
+        if memory is not None:
+            print(f"Memory: {memory / 1e9} GB")
+        if nodes is not None:
+            print(f"Nodes: {nodes} MNodes")
+        if memory is None and nodes is None:
+            self.logger.info(
+                "runsystemcheck reported no resource estimates (Lumerical 2025+ "
+                "returns an empty result); continuing."
+            )
 
     def run(self) -> None:
         """Run the simulation."""
         log_simulation_start(self.logger, "Lumerical FDTD", self.component.name)
 
-        # note: this only works for Lumerical 2024.
-        # For Lumerical 2025, Lumerical has changed the syntax for setting GPU.
-        # I Don't have a 2025 license, so I can't test it.
-        # If you do, please update the code to make it work for 2025 as well as 2024.
-        # lumerical: please make your api backwards compatible :)))
-        if self.gpu:
-            self.fdtd.setresource("FDTD", "GPU", 1)
-            self.logger.info("GPU acceleration enabled")
-        else:
-            self.fdtd.setresource("FDTD", "CPU", 1)
-            self.logger.info("CPU processing selected")
+        self._set_device_type("GPU" if self.gpu else "CPU")
 
         self.logger.info("Starting S-parameter sweep")
         try:
@@ -111,6 +110,21 @@ class fdtd_solver_lumerical(fdtd_solver):
 
         self.get_results()
         log_simulation_complete(self.logger, "Lumerical FDTD")
+
+    def _set_device_type(self, device: str) -> None:
+        """Select CPU/GPU compute, handling the 2024->2025 API change.
+
+        Lumerical 2025 (v252): setresource("FDTD", index, "device type", dev)
+        (verified 2026-07-07, finding F7 — the 2024 two-arg form raises
+        LumApiError with a migration hint). 2024: setresource("FDTD", dev, 1).
+        Try the current syntax first, fall back to 2024.
+        """
+        try:
+            self.fdtd.setresource("FDTD", 1, "device type", device)
+            self.logger.info(f"{device} compute selected (Lumerical 2025+ syntax)")
+        except Exception:
+            self.fdtd.setresource("FDTD", device, 1)
+            self.logger.info(f"{device} compute selected (Lumerical 2024 syntax)")
 
     def get_results(self) -> None:
         """Get the results of the simulation."""
