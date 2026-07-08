@@ -107,3 +107,44 @@ def test_t3d_validate_flags_missing_tech():
     solver = get_solver("tidy3d")(comp, technology=None)
     assert any("technology" in p for p in solver.validate())
     del layout
+
+
+# ---------------- BeamzSolver: validation surface (WP5.3) ----------------
+
+
+def test_beamz_validate_requires_gf_component():
+    pytest.importorskip("beamz")
+    comp, tech, layout = _job("tech_tidy3d.yaml")
+    solver = get_solver("beamz")(comp, technology=tech)
+    problems = solver.validate()
+    assert any("gf_component" in p for p in problems)
+    del layout
+
+
+def test_beamz_validate_v1_mode_restriction():
+    pytest.importorskip("beamz")
+    comp, tech, layout = _job("tech_tidy3d.yaml")
+    solver = get_solver("beamz")(
+        comp, technology=tech, spec=SimulationSpec(modes=(1, 2)), gf_component=object()
+    )
+    problems = solver.validate()
+    assert any("modes=(1,)" in p for p in problems)
+    del layout
+
+
+def test_beamz_resolves_index_from_rii(tmp_path, monkeypatch):
+    """The rii material source feeds beamz with zero solver-specific entries."""
+    pytest.importorskip("beamz")
+    import copy
+    import pathlib as _pl
+
+    monkeypatch.setenv("GDS_FDTD_RII_DB", str(_pl.Path(__file__).parent / "rii_db"))
+    comp, tech, layout = _job("tech_tidy3d.yaml")
+    rii_tech = copy.deepcopy(tech)
+    # v1 needs exactly ONE device layer present: keep [1,0] only, rii material
+    rii_tech["device"] = [rii_tech["device"][0]]
+    rii_tech["device"][0]["material"] = {"rii": {"shelf": "main", "book": "Si", "page": "Li-293"}}
+    solver = get_solver("beamz")(comp, technology=rii_tech, gf_component=object())
+    n_core, _ = solver._indices()
+    assert n_core == pytest.approx(3.4757, abs=0.01)
+    del layout

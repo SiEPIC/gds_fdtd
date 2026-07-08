@@ -98,17 +98,27 @@ class FakeSolver(Solver):
 
 
 def _make_job(cls):
-    """Build a valid (component, technology) job for the given solver class.
-
-    Solvers that resolve materials need the tech whose entries they understand;
-    FakeSolver accepts anything.
+    """Build a valid (component, technology, keepalive, extra_kwargs) job for
+    the given solver class. Solvers that resolve materials need the tech whose
+    entries they understand; beamz v1 additionally needs the source gdsfactory
+    component; FakeSolver accepts anything.
     """
+    if cls.name == "beamz":
+        gf = pytest.importorskip("gdsfactory")
+        gf.gpdk.PDK.activate()
+        from gds_fdtd.layout.gdsfactory import from_gdsfactory
+
+        tech_dict = parse_yaml_tech(str(TESTS_DIR / "tech_tidy3d.yaml"))
+        gf_c = gf.components.straight(length=5)
+        comp = from_gdsfactory(gf_c, tech_dict)
+        return comp, tech_dict, None, {"gf_component": gf_c, "n_core": 3.47}
+
     tech_file = "tech_tidy3d.yaml" if cls.name == "tidy3d" else "tech_lumerical.yaml"
     tech_dict = parse_yaml_tech(str(TESTS_DIR / tech_file))
     cell, layout = load_cell(str(TESTS_DIR / "si_sin_escalator.gds"))
     comp = load_component_from_tech(cell=cell, tech=tech_dict)
     technology = tech_dict if cls.name != "fake" else None
-    return comp, technology, layout
+    return comp, technology, layout, {}
 
 
 @pytest.fixture(scope="module")
@@ -130,8 +140,8 @@ def solver(request):
     probe = getattr(cls, "probe_available", None)
     if probe is not None and probe():
         pytest.skip(f"{cls.name}: {probe()}")
-    comp, technology, layout = _make_job(cls)
-    s = cls(comp, technology=technology, spec=SimulationSpec())
+    comp, technology, layout, extra = _make_job(cls)
+    s = cls(comp, technology=technology, spec=SimulationSpec(), **extra)
     s._keepalive = layout  # klayout layout must outlive the cell
     return s
 
@@ -158,8 +168,8 @@ def test_constructor_is_pure(tmp_path, monkeypatch):
         probe = getattr(cls, "probe_available", None)
         if probe is not None and probe():
             continue
-        comp, technology, layout = _make_job(cls)
-        cls(comp, technology=technology)
+        comp, technology, layout, extra = _make_job(cls)
+        cls(comp, technology=technology, **extra)
         assert list(tmp_path.iterdir()) == [], f"{cls.name} constructor wrote files"
         del layout
 
@@ -179,7 +189,11 @@ def test_build_is_offline_and_deterministic(solver, monkeypatch):
     a1 = solver.build()
     a2 = solver.build()
     assert isinstance(a1, SetupArtifacts)
-    assert repr(a1.native) == repr(a2.native), "build() is not deterministic"
+    # determinism is judged on the summary (always) and on native when it is
+    # text — rich native objects (e.g. beamz grids) embed memory addresses
+    assert a1.summary == a2.summary, "build() summary is not deterministic"
+    if isinstance(a1.native, str | bytes):
+        assert a1.native == a2.native, "build() native scene is not deterministic"
     assert isinstance(a1.summary, dict)
 
 

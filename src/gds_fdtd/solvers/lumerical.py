@@ -115,11 +115,13 @@ class LumericalSolver(Solver):
         if problems:
             raise ValueError("cannot build: " + "; ".join(problems))
 
-        workdir = (
-            Path(self.workdir)
-            if self.workdir is not None
-            else Path(tempfile.mkdtemp(prefix="gds_fdtd_lum_"))
-        )
+        if self.workdir is not None:
+            workdir = Path(self.workdir)
+        else:
+            # cache the tempdir: build() must be deterministic across calls
+            if not hasattr(self, "_tmp_workdir"):
+                self._tmp_workdir = Path(tempfile.mkdtemp(prefix="gds_fdtd_lum_"))
+            workdir = self._tmp_workdir
         workdir.mkdir(parents=True, exist_ok=True)
 
         gds_name = f"{self.component.name}.gds"
