@@ -123,3 +123,54 @@ def test_sparameters_to_smatrix_equivalence(tmp_path):
         got = sm.sel(out=d.out_port_num, in_=d.in_port_num, mode_out=d.out_mode_num, mode_in=d.in_mode_num)
         expected = np.asarray(d.s_mag) * np.exp(1j * np.asarray(d.s_phase))
         np.testing.assert_allclose(got, expected, rtol=1e-12)
+
+
+# ---------- WP2.4c: Touchstone export, validated with scikit-rf ----------
+
+
+def test_touchstone_2port_read_back_with_skrf(tmp_path):
+    skrf = pytest.importorskip("skrf")
+    sm = SMatrix.from_entries(_entries_2port(), name="dut")
+    path = str(tmp_path / "dut.s2p")
+    sm.to_touchstone(path)
+    nw = skrf.Network(path)
+    np.testing.assert_allclose(nw.f, sm.f)
+    np.testing.assert_allclose(nw.s[:, 1, 0], sm.sel(out="opt2", in_="opt1"), rtol=1e-9)
+    np.testing.assert_allclose(nw.s[:, 0, 1], sm.sel(out="opt1", in_="opt2"), rtol=1e-9)
+    np.testing.assert_allclose(nw.s[:, 0, 0], sm.sel(out="opt1", in_="opt1"), rtol=1e-9)
+
+
+def test_touchstone_multimode_flattening_convention(tmp_path):
+    """2 ports x 2 modes -> .s4p; Touchstone port k = (p, m), port-major."""
+    skrf = pytest.importorskip("skrf")
+    rng = np.random.default_rng(7)
+    entries = []
+    for pi, po in [(1, 1), (1, 2), (2, 1), (2, 2)]:
+        for mi, mo in [(1, 1), (1, 2), (2, 1), (2, 2)]:
+            entries.append(
+                (f"opt{pi}", f"opt{po}", mi, mo, F, rng.normal(size=F.size) * 0.1 + 0.2j)
+            )
+    sm = SMatrix.from_entries(entries, name="mm")
+    path = str(tmp_path / "mm.s4p")
+    sm.to_touchstone(path)
+    nw = skrf.Network(path)
+    # touchstone port index k = (port_idx)*M + mode_idx  (0-based)
+    np.testing.assert_allclose(
+        nw.s[:, 2, 1],  # (opt2,m1) <- (opt1,m2)
+        sm.sel(out="opt2", in_="opt1", mode_out=1, mode_in=2),
+        rtol=1e-9,
+    )
+    np.testing.assert_allclose(
+        nw.s[:, 3, 0],  # (opt2,m2) <- (opt1,m1)
+        sm.sel(out="opt2", in_="opt1", mode_out=2, mode_in=1),
+        rtol=1e-9,
+    )
+
+
+def test_touchstone_rejects_nan_and_wrong_extension(tmp_path):
+    partial = SMatrix.from_entries([("opt1", "opt2", 1, 1, F, np.ones(F.size))])
+    with pytest.raises(ValueError, match="NaN"):
+        partial.to_touchstone(str(tmp_path / "x.s2p"))
+    full = SMatrix.from_entries(_entries_2port())
+    with pytest.raises(ValueError, match=r"\.s2p"):
+        full.to_touchstone(str(tmp_path / "x.s3p"))

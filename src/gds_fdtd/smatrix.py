@@ -207,6 +207,56 @@ class SMatrix:
         spar = process_dat(path, name=name, verbose=False)
         return spar.to_smatrix(name=name)
 
+    def to_touchstone(self, path: str) -> str:
+        """Write a Touchstone v1 ``.sNp`` file (WP2.4c).
+
+        Convention (documented in the file header): the (port, mode) pairs are
+        flattened into N = P*M Touchstone ports ordered
+        (p1,m1), (p1,m2), ..., (pN,mM) — i.e. port-major, mode-minor. Data is
+        written as ``# Hz S RI R 50``. Touchstone cannot represent unmeasured
+        paths: a matrix containing NaN raises (export the .dat instead, or
+        fill the matrix).
+        """
+        if np.any(np.isnan(self.s)):
+            raise ValueError(
+                "SMatrix contains unmeasured (NaN) paths; Touchstone requires a "
+                "complete matrix. Use to_dat() for partial matrices."
+            )
+        n = self.n_ports * self.n_modes
+        expected_ext = f".s{n}p"
+        if not path.lower().endswith(expected_ext):
+            raise ValueError(f"path must end with {expected_ext} for {n} flattened ports")
+
+        m = self._flat()  # (F, N, N), port-major mode-minor — matches the convention
+        lines = [
+            f"! {self.name} - exported by gds_fdtd",
+            f"! Touchstone port k = (optical_port, mode); ordering: "
+            + ", ".join(
+                f"{i * self.n_modes + j + 1}=({pn},m{j + 1})"
+                for i, pn in enumerate(self.port_names)
+                for j in range(self.n_modes)
+            ),
+            "# Hz S RI R 50",
+        ]
+        for fi, freq in enumerate(self.f):
+            if n == 2:
+                # Touchstone 2-port quirk: S11 S21 S12 S22 on one line
+                vals = [m[fi, 0, 0], m[fi, 1, 0], m[fi, 0, 1], m[fi, 1, 1]]
+                row = " ".join(f"{v.real:.12e} {v.imag:.12e}" for v in vals)
+                lines.append(f"{freq:.12e} {row}")
+            else:
+                # v1 layout: frequency shares the line with the first matrix row;
+                # subsequent rows continue on their own lines
+                for r in range(n):
+                    row = " ".join(
+                        f"{m[fi, r, c].real:.12e} {m[fi, r, c].imag:.12e}" for c in range(n)
+                    )
+                    lines.append(f"{freq:.12e} {row}" if r == 0 else row)
+        pathlib_write = path
+        with open(pathlib_write, "w", encoding="utf-8") as fh:
+            fh.write("\n".join(lines) + "\n")
+        return path
+
     def to_npz(self, path: str) -> str:
         np.savez_compressed(
             path, f=self.f, s=self.s, port_names=np.array(self.port_names), name=self.name
