@@ -165,6 +165,48 @@ class SMatrix:
 
     # ---------------- I/O ----------------
 
+    def to_dat(self, path: str) -> str:
+        """Write to Lumerical INTERCONNECT .dat (via the WP1.6 entry-driven writer).
+
+        Port names are mapped to numeric ids by their trailing digits (or by
+        position when a name has none); NaN (unmeasured) paths are skipped.
+        """
+        from .sparams import sparameters, write_dat
+
+        def _num(i: int) -> int:
+            digits = "".join(ch for ch in self.port_names[i] if ch.isdigit())
+            return int(digits) if digits else i + 1
+
+        spar = sparameters(self.name)
+        for i_out in range(self.n_ports):
+            for i_in in range(self.n_ports):
+                for m_out in range(self.n_modes):
+                    for m_in in range(self.n_modes):
+                        col = self.s[:, i_out, i_in, m_out, m_in]
+                        if np.all(np.isnan(col)):
+                            continue
+                        spar.add_data(
+                            in_port=f"port {_num(i_in)}",
+                            out_port=f"port {_num(i_out)}",
+                            mode_label=1,
+                            in_modeid=m_in + 1,
+                            out_modeid=m_out + 1,
+                            data_type="transmission",
+                            group_delay=0.0,
+                            f=list(self.f),
+                            s_mag=list(np.abs(col)),
+                            s_phase=list(np.angle(col)),
+                        )
+        return write_dat(spar, path)
+
+    @classmethod
+    def from_dat(cls, path: str, name: str | None = None) -> SMatrix:
+        """Read a Lumerical INTERCONNECT .dat into an SMatrix."""
+        from .sparams import process_dat
+
+        spar = process_dat(path, name=name, verbose=False)
+        return spar.to_smatrix(name=name)
+
     def to_npz(self, path: str) -> str:
         np.savez_compressed(
             path, f=self.f, s=self.s, port_names=np.array(self.port_names), name=self.name

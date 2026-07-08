@@ -90,3 +90,36 @@ def test_unknown_port_raises():
     sm = SMatrix.from_entries(_entries_2port())
     with pytest.raises(KeyError, match="unknown port"):
         sm.sel(out="opt9", in_="opt1")
+
+
+# ---------- WP2.4b: .dat interop + legacy-class bridge ----------
+
+
+def test_dat_round_trip_via_smatrix(tmp_path):
+    sm = SMatrix.from_entries(_entries_2port(), name="dut")
+    path = sm.to_dat(str(tmp_path / "dut.dat"))
+    back = SMatrix.from_dat(path)
+    # names normalize to "port N"; numeric ids and values survive exactly
+    np.testing.assert_allclose(back.sel(out=2, in_=1), sm.sel(out=2, in_=1), rtol=1e-9)
+    np.testing.assert_allclose(back.sel(out=1, in_=1), sm.sel(out=1, in_=1), rtol=1e-9)
+    assert back.n_ports == sm.n_ports and back.n_modes == sm.n_modes
+
+
+def test_dat_skips_nan_paths(tmp_path):
+    sm = SMatrix.from_entries([("opt1", "opt2", 1, 1, F, np.ones(F.size))])
+    path = sm.to_dat(str(tmp_path / "partial.dat"))
+    back = SMatrix.from_dat(path)
+    assert np.all(np.isnan(back.sel(out=1, in_=2)))  # reverse path stayed unmeasured
+    np.testing.assert_allclose(np.abs(back.sel(out=2, in_=1)), 1.0)
+
+
+def test_sparameters_to_smatrix_equivalence(tmp_path):
+    """The legacy container and the canonical one agree entry-by-entry."""
+    from tests.test_sparams import _make_multimode_sparams
+
+    spar = _make_multimode_sparams()
+    sm = spar.to_smatrix()
+    for d in spar.data:
+        got = sm.sel(out=d.out_port_num, in_=d.in_port_num, mode_out=d.out_mode_num, mode_in=d.in_mode_num)
+        expected = np.asarray(d.s_mag) * np.exp(1j * np.asarray(d.s_phase))
+        np.testing.assert_allclose(got, expected, rtol=1e-12)

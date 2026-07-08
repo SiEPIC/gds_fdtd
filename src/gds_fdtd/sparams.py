@@ -271,6 +271,26 @@ class sparameters:
         else:
             logging.error("No valid data to visualize")
 
+    def to_smatrix(self, name: str | None = None):
+        """Convert to the canonical gds_fdtd.smatrix.SMatrix (WP2.4b).
+
+        Magnitude/phase entries become complex amplitudes; port names are
+        carried through as-is; unmeasured paths stay NaN in the result.
+        """
+        import numpy as np
+
+        from .smatrix import SMatrix
+
+        entries = []
+        for d in self.data:
+            s_complex = np.asarray(d.s_mag, dtype=float) * np.exp(
+                1j * np.asarray(d.s_phase, dtype=float)
+            )
+            entries.append(
+                (str(d.in_port), str(d.out_port), d.in_mode_num, d.out_mode_num, d.f, s_complex)
+            )
+        return SMatrix.from_entries(entries, name=name or self.name)
+
     def analyze_excitations(self, threshold: float = 1e-10, verbose: bool = True):
         """
         Analyze S-parameter data to identify zero vs non-zero entries.
