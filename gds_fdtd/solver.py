@@ -37,10 +37,10 @@ class fdtd_port:
     def __init__(
         self,
         name: str = "opt1",
-        position: list[float] = [0.0, 0.0, 0.0],
-        span: list[float | None] = [None, 2.5, 1.5],
+        position: list[float] | None = None,
+        span: list[float | None] | None = None,
         direction: str = "forward",
-        modes: list[int] = [0],
+        modes: list[int] | None = None,
     ):
         """
         Initialize an FDTD port with specified parameters.
@@ -48,15 +48,20 @@ class fdtd_port:
         Parameters:
             name (str): Name for the port.
             position (list of float): Port position as [x, y, z]. Must have exactly 3 elements.
+                Defaults to [0.0, 0.0, 0.0].
             span (list of float|None): Port span as a list of 3 values.
+                Defaults to [None, 2.5, 1.5].
             direction (str): Direction of the port, either 'forward' or 'backward'.
-            modes (list of int): List of mode indices (non-empty).
+            modes (list of int): List of mode indices (non-empty). Defaults to [0].
         """
         self.name = name
-        self.position = position
-        self.span = span
+        self.position = list(position) if position is not None else [0.0, 0.0, 0.0]
+        self.span = list(span) if span is not None else [None, 2.5, 1.5]
         self.direction = direction
-        self.modes = modes
+        self.modes = list(modes) if modes is not None else [0]
+        position = self.position
+        span = self.span
+        modes = self.modes
 
         if len(position) != 3:
             raise ValueError("Position must be a list of 3 floats")
@@ -211,22 +216,22 @@ class fdtd_solver:
         self,
         component: component,
         tech: technology,
-        port_input: list[port | None] = [None],
+        port_input: port | list[port] | None = None,
         wavelength_start: float = 1.5,
         wavelength_end: float = 1.6,
         wavelength_points: int = 100,
         mesh: int = 10,
-        boundary: list[str] = ["PML", "PML", "PML"],
-        symmetry: list[int] = [0, 0, 0],
+        boundary: list[str] | None = None,
+        symmetry: list[int] | None = None,
         z_min: float = -1.0,
         z_max: float = 1.0,
         width_ports: float = 2.0,
         depth_ports: float = 1.5,
         buffer: float = 1.0,
-        modes: list[int] = [1],
+        modes: list[int] | None = None,
         mode_freq_pts: int = 3,
         run_time_factor: float = 3,
-        field_monitors: list[str] = ["z"],
+        field_monitors: list[str] | None = None,
         working_dir: str = "./",
     ):
         """
@@ -255,22 +260,37 @@ class fdtd_solver:
         """
         self.component = component
         self.tech = tech
-        self.port_input = port_input if port_input else component.ports[0]
+        # Normalize port_input to a list of component ports.
+        # None => all ports are active (full S-matrix). The old default ([None])
+        # was truthy, so the documented "first port" fallback was unreachable and
+        # _get_active_ports crashed on the default (bug B5).
+        if port_input is None:
+            self.port_input = list(component.ports)
+        elif isinstance(port_input, list):
+            self.port_input = list(port_input)
+        else:
+            self.port_input = [port_input]
+        for p in self.port_input:
+            if not hasattr(p, "name"):
+                raise ValueError(
+                    f"Invalid port object in port_input: {p!r}. Expected component "
+                    "port objects (or None for all ports)."
+                )
         self.wavelength_start = wavelength_start
         self.wavelength_end = wavelength_end
         self.wavelength_points = wavelength_points
         self.mesh = mesh
-        self.boundary = boundary
-        self.symmetry = symmetry
+        self.boundary = list(boundary) if boundary is not None else ["PML", "PML", "PML"]
+        self.symmetry = list(symmetry) if symmetry is not None else [0, 0, 0]
         self.z_min = z_min
         self.z_max = z_max
         self.width_ports = width_ports
         self.depth_ports = depth_ports
         self.buffer = buffer
-        self.modes = modes
+        self.modes = list(modes) if modes is not None else [1]
         self.mode_freq_pts = mode_freq_pts
         self.run_time_factor = run_time_factor
-        self.field_monitors = field_monitors
+        self.field_monitors = list(field_monitors) if field_monitors is not None else ["z"]
         self.working_dir = working_dir
 
         # Create component-specific working directory under the base working directory
@@ -431,30 +451,9 @@ class fdtd_solver:
 
         return fdtd_ports
 
-    def _get_active_ports(self) -> list[fdtd_port]:
-        """Get the active ports from the component ports."""
-        # Determine which ports should be active
-        # active_ports should be a list of component port objects (type: port from component.ports)
-        if self.port_input is None:
-            # Default: activate all ports for full S-parameter matrix
-            active_port_names = [fdtd_port.name for fdtd_port in self.fdtd_ports]
-        elif isinstance(self.port_input, list):
-            # List of component port objects
-            active_port_names = []
-            for component_port in self.port_input:
-                if hasattr(component_port, "name"):
-                    active_port_names.append(component_port.name)
-                else:
-                    raise ValueError(f"Invalid port object in active_ports list: {component_port}")
-        else:
-            # Single component port object (user fed in 1 active port)
-            if hasattr(self.port_input, "name"):
-                active_port_names = [self.port_input.name]
-            else:
-                raise ValueError(
-                    f"Invalid single port object: {self.port_input}. Expected component port object with 'name' attribute."
-                )
-        return active_port_names
+    def _get_active_ports(self) -> list[str]:
+        """Names of the ports to excite (port_input is normalized to a list in __init__)."""
+        return [p.name for p in self.port_input]
 
     def _validate_simulation_parameters(self) -> None:
         """Validate simulation parameters for consistency."""

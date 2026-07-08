@@ -228,7 +228,7 @@ class structure:
         z_span: float,
         material: str,
         sidewall_angle: float = 90.0,
-        layer: list[int] = [1, 0],
+        layer: list[int] | None = None,
     ):
         """
         Initialize a structure with geometric and material properties.
@@ -250,7 +250,7 @@ class structure:
         self.z_span = z_span
         self.material = material
         self.sidewall_angle = sidewall_angle
-        self.layer = layer
+        self.layer = list(layer) if layer is not None else [1, 0]
 
 
 class region:
