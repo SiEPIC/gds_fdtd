@@ -153,6 +153,19 @@ WP4.x verification, but not the executor env. Baseline test suite: 51 passed in 
   broken plugins surface via available_solvers(), not import errors. **Deviation D7:** legacy
   solver classes stay undeprecated until WP6.1 (they are the documented example API, and
   Tidy3DSolver composes the legacy tidy3d machinery internally).
+- **WP5.3 IN PROGRESS (beamz, owner-requested; pulled before WP5.1/5.2):** beamz **0.4.3**
+  installed in .venv. Rule-8 introspection findings: SI units (meters; `beamz.um = 1e-6`
+  multiplier), default `resolution=20e-9`; `Simulation(design, sources, monitors, boundaries,
+  time, plane_2d='xy', ...)` — 2D-plane default but real 3D exists; native S-matrix via
+  `Simulation.get_S_matrix_modal(source_port, ports, frequencies, as_sax=True)`;
+  `Design(width,height,depth,background).add(Polygon(vertices[m], material, depth, z,
+  sidewall_angle))`; Port/PortSpec/ModeSource/ModeMonitor; GDS import exists
+  (`beamz.design.io.gdsf.prepare_component` — wraps gdsfactory). **Reality check on the
+  README's "few lines of code" claim: their own flagship compact-model example (the UBC
+  SiEPIC ebeam_crossing4!) is an 871-line harness** — port-plane snapping, PML clearances,
+  monitor offsets, decay control are all manual. Adapter strategy: extract the minimal
+  assembly recipe from that example into build(); run() = run-until-decay +
+  get_S_matrix_modal per source port. WP6.1 (examples rewrite) queued next in this session.
 - **✅ PR #23 FULLY GREEN (2026-07-08):** the complete CI matrix passes on GitHub runners —
   9 test legs (ubuntu/macos/windows × py3.11–3.13, base + all-extras profiles), lint (prek),
   build (hatch-vcs versioned), docs smoke, CodeQL, and the alls-green `pass` gate. mypy
