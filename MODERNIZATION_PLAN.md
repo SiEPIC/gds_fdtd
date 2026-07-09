@@ -424,6 +424,15 @@ Jul–Aug 2025: 32, then dormant since Sep 2025). Four identities:
   **PUSH BLOCKED:** HTTPS uploads >~100 KB stall through the current VPN (chunked AND
   buffered POSTs both time out; reads fine; no SSH keys) — commits queued locally with a
   background retry loop; lands the moment the uplink clears.
+- **COVERAGE-GATE CORRECTION (2026-07-09, caught by CI):** the release-sprint "80.04%
+  base" was measured in a venv that had beamz+gdsfactory installed — the TRUE base
+  profile is **75.28%** (engine adapters can't execute without their extras; CI showed
+  identical numbers on all 7 base legs, and a re-synced local venv reproduces 75.28
+  exactly). The honest structure now: pyproject fail_under=75 (base floor), the
+  all-extras leg — the FULL package, measured **81.05%** in CI — enforces the ≥80
+  release bar via --cov-fail-under=80 and feeds codecov (badge = whole package).
+  LESSON: 'measured on the base profile' requires a venv synced to EXACTLY the base
+  profile first (`uv sync --locked --extra dev` and nothing else).
 - **FINDING F15 / PUSH MYSTERY RESOLVED (2026-07-08 pm):** the "network problem" was
   largely self-inflicted — `git add -A` during example validation had swept **1.1 GB of
   Lumerical .fsp project files** (8 × 140 MB, crossing_te1550_sparams/) into the gallery
