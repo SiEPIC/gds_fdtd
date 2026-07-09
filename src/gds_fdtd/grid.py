@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-Permittivity rasterizer (WP5.2a) — the first Tier-B enabler. Kernel-level
+Permittivity rasterizer — the first Tier-B enabler. Kernel-level
 engines (fdtdz, fdtdx) take a raw permittivity grid instead of a scene
 graph; ``rasterize`` turns a ``Component`` into that grid offline:
 

@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-The canonical S-matrix container (WP2.4a). One representation for every solver:
+The canonical S-matrix container. One representation for every solver:
 
 - ``f``: frequency grid in Hz, shape (F,), ascending.
 - ``s``: complex ndarray, shape (F, P, P, M, M) indexed as
@@ -12,8 +12,8 @@ The canonical S-matrix container (WP2.4a). One representation for every solver:
 
 I/O: ``.npz`` always (numpy built-in); ``.h5`` when ``h5py`` is installed.
 Checks: reciprocity, passivity, per-excitation power balance.
-Plotting lives in gds_fdtd.plotting (WP2.4d); Lumerical ``.dat`` and
-Touchstone interop arrive in WP2.4b/c.
+Plotting lives in gds_fdtd.plotting; Lumerical ``.dat`` and
+Touchstone interop live in to_dat/to_touchstone below.
 """
 
 from __future__ import annotations
@@ -174,7 +174,7 @@ class SMatrix:
     # ---------------- I/O ----------------
 
     def to_dat(self, path: str) -> str:
-        """Write to Lumerical INTERCONNECT .dat (via the WP1.6 entry-driven writer).
+        """Write to Lumerical INTERCONNECT .dat (via the entry-driven sparams writer).
 
         Port names are mapped to numeric ids by their trailing digits (or by
         position when a name has none); NaN (unmeasured) paths are skipped.
@@ -216,7 +216,7 @@ class SMatrix:
         return cast("SMatrix", spar.to_smatrix(name=name))
 
     def to_touchstone(self, path: str) -> str:
-        """Write a Touchstone v1 ``.sNp`` file (WP2.4c).
+        """Write a Touchstone v1 ``.sNp`` file.
 
         Convention (documented in the file header): the (port, mode) pairs are
         flattened into N = P*M Touchstone ports ordered

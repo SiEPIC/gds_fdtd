@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-SimulationSpec (WP3.1a): one validated pydantic model for every numeric
+SimulationSpec: one validated pydantic model for every numeric
 simulation setting that was previously ~15 loose solver kwargs. Defaults are
 IDENTICAL to the historical fdtd_solver defaults. All lengths are um, angles
 degrees, frequencies Hz (package-wide convention).

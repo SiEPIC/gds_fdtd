@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-Plotting helpers for the canonical SMatrix (WP2.4d). matplotlib is imported
+Plotting helpers for the canonical SMatrix. matplotlib is imported
 lazily so headless / minimal installs never pay for it.
 """
 

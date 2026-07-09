@@ -1,6 +1,6 @@
 """Solver adapters implementing the Phase-3 contract (gds_fdtd.solvers.base).
 
-The tidy3d/lumerical adapters are ported onto this contract in WP3.1c/d; the
+The tidy3d/lumerical/beamz adapters implement this contract; the
 legacy gds_fdtd.solver_tidy3d / solver_lumerical modules keep working until
 then.
 """

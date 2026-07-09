@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-Technology definition as validated pydantic models (WP2.2).
+Technology definition as validated pydantic models.
 
 The YAML format is UNCHANGED from the legacy parser (schema v1; the existing
 key names — including per-solver material hints ``tidy3d_db``/``lum_db`` — are

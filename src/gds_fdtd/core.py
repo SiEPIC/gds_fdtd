@@ -1,11 +1,11 @@
 """
 gds_fdtd simulation toolbox.
 
-Legacy core module. The geometry classes moved to gds_fdtd.geometry in WP2.1
+Legacy core module. The geometry classes moved to gds_fdtd.geometry in 0.5
 (port -> Port, structure -> Structure, region -> Region, component -> Component,
 layout -> LayoutSource); importing the old names from here still works but
 emits a DeprecationWarning. The technology class and the legacy s-parameter
-classes still live here until WP2.2 / WP2.4.
+classes still live here until their v1.0 removal.
 @author: Mustafa Hammood, 2025
 """
 
@@ -35,7 +35,7 @@ def __getattr__(name: str):
         new_name = _DEPRECATED_GEOMETRY_NAMES[name]
         warnings.warn(
             f"gds_fdtd.core.{name} is deprecated; use gds_fdtd.geometry.{new_name} "
-            "instead (renamed in WP2.1, removal at v1.0).",
+            "instead (renamed in 0.5, removal at v1.0).",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -61,7 +61,7 @@ def parse_yaml_tech(file_path: str) -> dict:
 
     Note:
         Routes through the validated pydantic model (gds_fdtd.technology.Technology,
-        WP2.2); the returned dict shape is identical to the legacy parser's.
+        the returned dict shape is identical to the legacy parser's.
     """
     from .technology import Technology
 

@@ -1,4 +1,4 @@
-"""Material sources for gds_fdtd (WP2.2)."""
+"""Material sources for gds_fdtd."""
 
 from .rii import RiiMaterial, load_rii_material
 

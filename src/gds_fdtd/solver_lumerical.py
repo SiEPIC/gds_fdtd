@@ -6,7 +6,6 @@ Lumerical tools interface module.
 """
 
 import os
-import re
 
 from lumapi import FDTD
 
@@ -64,7 +63,7 @@ class fdtd_solver_lumerical(fdtd_solver):
         project_filepath = os.path.join(self.working_dir, f"{self.component.name}.fsp")
         self.fdtd.save(project_filepath)
         self.logger.info(f"FDTD project saved: {project_filepath}")
-        print(f"FDTD project saved: {project_filepath}")
+        self.logger.info(f"FDTD project saved: {project_filepath}")
 
         # Get the resources used by the simulation
         self.get_resources()
@@ -85,9 +84,9 @@ class fdtd_solver_lumerical(fdtd_solver):
         memory = reqs.get("Memory_Recommended")  # Bytes (2024 API)
         nodes = reqs.get("Total_FDTD_Yee_Nodes")  # MNodes (2024 API)
         if memory is not None:
-            print(f"Memory: {memory / 1e9} GB")
+            self.logger.info(f"Memory: {memory / 1e9} GB")
         if nodes is not None:
-            print(f"Nodes: {nodes} MNodes")
+            self.logger.info(f"Nodes: {nodes} MNodes")
         if memory is None and nodes is None:
             self.logger.info(
                 "runsystemcheck reported no resource estimates (Lumerical 2025+ "
@@ -176,7 +175,7 @@ class fdtd_solver_lumerical(fdtd_solver):
             try:
                 self.fdtd.removesweepparameter("sparams", 1)
             except Exception:
-                print("Done removing sweep parameters")
+                self.logger.info("Done removing sweep parameters")
                 break
 
         # Add all port-mode combinations to the sweep
@@ -186,18 +185,18 @@ class fdtd_solver_lumerical(fdtd_solver):
         # Print summary of S-parameter sweep configuration
         active_combinations = [idx for idx in indices if idx["Active"] == 1]
         total_combinations = len(indices)
-        print("S-parameter sweep configured:")
-        print(f"  Total port-mode combinations: {total_combinations}")
-        print(f"  Active combinations: {len(active_combinations)}")
-        print(f"  Active ports: {active_port_names}")
-        print(f"  Modes: {self.modes}")
+        self.logger.info("S-parameter sweep configured:")
+        self.logger.info(f"  Total port-mode combinations: {total_combinations}")
+        self.logger.info(f"  Active combinations: {len(active_combinations)}")
+        self.logger.info(f"  Active ports: {active_port_names}")
+        self.logger.info(f"  Modes: {self.modes}")
 
         if len(active_combinations) > 0:
-            print("  Active combinations:")
+            self.logger.info("  Active combinations:")
             for combo in active_combinations:
-                print(f"    {combo['Port']} - {combo['Mode']}")
+                self.logger.info(f"    {combo['Port']} - {combo['Mode']}")
         else:
-            print("  Warning: No active port-mode combinations found!")
+            self.logger.info("  Warning: No active port-mode combinations found!")
 
     def _setup_layer_builder(self) -> None:
         """
@@ -319,19 +318,19 @@ class fdtd_solver_lumerical(fdtd_solver):
                     )
 
                 layers_added += 1
-                print(
+                self.logger.info(
                     f"Added layer {layer_name} for GDS layer {layer_spec} at z={device_layer['z_base']}μm, thickness={device_layer['z_span']}μm"
                 )
             else:
-                print(
+                self.logger.info(
                     f"Skipping device layer {idx} (GDS layer {gds_layer[0]}:{gds_layer[1]}) - not found in GDS file"
                 )
 
-        print(
+        self.logger.info(
             f"Layer builder setup complete with {layers_added} device layers (out of {len(tech_dict['device'])} defined in technology)"
         )
         if gds_layers_result is not None:
-            print(f"GDS file contains layers: {gds_layers_result}")
+            self.logger.info(f"GDS file contains layers: {gds_layers_result}")
 
     def _setup_fdtd(self) -> None:
         """Setup the FDTD simulation."""
@@ -343,13 +342,16 @@ class fdtd_solver_lumerical(fdtd_solver):
         self.fdtd.setnamed("FDTD", "y span", (self.span[1]) * 1e-6)
         self.fdtd.setnamed("FDTD", "z span", self.span[2] * 1e-6)
 
-        # configure GPU acceleration
-        # TODO: IMPORTANT: This is valid for Lumerical 2024.
-        # For Lumerical 2025, Lumerical has changed the syntax for setting GPU.
-        # If you do, please update the code to make it work for 2025 as well as 2024
-        # I Don't have a 2025 license, so I can't test it.
+        # GPU: Lumerical 2024 uses 'express mode' here; 2025 switched to
+        # setresource, handled by _set_device_type() at run() (finding F7).
+        # Tolerate either vintage.
         if self.gpu:
-            self.fdtd.setnamed("FDTD", "express mode", True)
+            try:
+                self.fdtd.setnamed("FDTD", "express mode", True)
+            except Exception:
+                self.logger.debug(
+                    "'express mode' unavailable (Lumerical 2025+); using setresource at run()"
+                )
         else:
             self.fdtd.setnamed("FDTD", "express mode", False)
 
@@ -486,7 +488,7 @@ class fdtd_solver_lumerical(fdtd_solver):
                 min_diff = diff
                 mesh_option = option
 
-        print(
+        self.logger.info(
             f"User requested {self.mesh} mesh cells per wavelength, using mesh option {mesh_option} ({possible_meshes[mesh_option]} cells per wavelength)"
         )
 
@@ -546,48 +548,3 @@ class fdtd_solver_lumerical(fdtd_solver):
                 return "FDTD solver not initialized."
         except Exception as e:
             return f"Error retrieving log: {str(e)}"
-
-    def _extract_log_metrics(self, log_text: str) -> dict:
-        """
-        Extract Lumerical-specific metrics from log text.
-
-        Args:
-            log_text: Raw Lumerical log text
-
-        Returns:
-            dict: Extracted metrics specific to Lumerical
-        """
-        log_metrics = super()._extract_log_metrics(log_text)
-
-        try:
-            # TODO: Implement Lumerical-specific log parsing
-            # This will depend on the actual format of Lumerical logs
-            # For now, we'll add basic parsing patterns
-
-            # Memory usage
-            memory_match = re.search(r"Memory.*?(\d+\.?\d*)\s*GB", log_text, re.IGNORECASE)
-            if memory_match:
-                log_metrics["memory_gb"] = float(memory_match.group(1))
-
-            # Simulation time
-            sim_time_match = re.search(
-                r"simulation time.*?(\d+\.?\d*)\s*s", log_text, re.IGNORECASE
-            )
-            if sim_time_match:
-                log_metrics["simulation_time"] = float(sim_time_match.group(1))
-
-            # Time steps
-            time_steps_match = re.search(r"time steps.*?(\d+)", log_text, re.IGNORECASE)
-            if time_steps_match:
-                log_metrics["time_steps"] = int(time_steps_match.group(1))
-
-            # Note: This is a placeholder implementation
-            # Actual Lumerical log format will need to be analyzed for proper parsing
-            log_metrics["note"] = (
-                "Lumerical log parsing is placeholder - needs actual log format analysis"
-            )
-
-        except Exception as e:
-            self.logger.warning(f"Error extracting Lumerical log metrics: {e}")
-
-        return log_metrics

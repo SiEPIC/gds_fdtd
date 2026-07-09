@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-Simulation-result caching (WP5.5 item 2). A job is identified by a sha256
+Simulation-result caching. A job is identified by a sha256
 over a canonical JSON fingerprint of everything that determines its result:
 component geometry (structures, ports, bounds), technology, SimulationSpec,
 solver name and engine version. ``cached_run`` short-circuits repeat runs to

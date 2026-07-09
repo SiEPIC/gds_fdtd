@@ -2,7 +2,7 @@
 gds_fdtd simulation toolbox.
 
 LumericalSolver: the Ansys Lumerical FDTD adapter on the Phase-3 Solver
-contract (WP3.1d). ``build()`` generates the COMPLETE setup script (.lsf) as
+contract. ``build()`` generates the COMPLETE setup script (.lsf) as
 pure text plus the exported GDS — offline, deterministic, no license, no
 lumapi import — mirroring the validated legacy ``fdtd_solver_lumerical``
 semantics (incl. the F6/F7 Lumerical-2025 fixes). ``run()`` is the only

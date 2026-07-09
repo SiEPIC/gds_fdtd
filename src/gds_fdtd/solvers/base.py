@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-The Phase-3 solver contract (WP3.1b). Every engine adapter implements:
+The Phase-3 solver contract. Every engine adapter implements:
 
     validate() -> list[str]        # human-readable problems; [] = ok
     build()    -> SetupArtifacts   # native scene, OFFLINE, serializable
@@ -10,9 +10,9 @@ The Phase-3 solver contract (WP3.1b). Every engine adapter implements:
                                    # money / licenses / GPU time
 
 Constructors MUST be cheap and pure: no disk writes, no network, no license
-checks (rule 10 / the remote-compute invariant in MODERNIZATION_PLAN.md).
+checks — the remote-compute invariant: a JobSpec must be buildable anywhere.
 The legacy ``fdtd_solver`` hierarchy remains in gds_fdtd.solver until the
-adapters are ported (WP3.1c/d); nothing imports this module yet besides the
+adapters are ported; nothing imports this module yet besides the
 conformance tests and FakeSolver.
 """
 
@@ -250,7 +250,7 @@ def register_solver(cls: type[Solver]) -> type[Solver]:
 def available_solvers() -> dict[str, str]:
     """Registered solver names -> availability ('ok' or the import problem).
 
-    Entry-point discovery (external plugins) is wired in WP3.1e; for now this
+    Entry-point discovery covers external plugins; this also
     reports the in-package registrations.
     """
     _scan_entry_points()

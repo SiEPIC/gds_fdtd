@@ -24,14 +24,21 @@ if __name__ == "__main__":
     print("reciprocal:", sm.is_reciprocal(atol=0.05))
     print("passive:", sm.is_passive(atol=0.02))
 
-    # exports: Touchstone (industry standard), HDF5, .dat
-    sm.to_touchstone(os.path.join(here, "escalator.s2p"))  # scikit-rf readable
-    sm.to_hdf5(os.path.join(here, "escalator.h5"))
-    print("wrote escalator.s2p / escalator.h5")
+    # exports: Touchstone (industry standard), npz, .dat — outputs land in CWD
+    sm.to_touchstone("escalator.s2p")  # scikit-rf readable
+    sm.to_npz("escalator.npz")
+    print("wrote escalator.s2p / escalator.npz")
+
+    # HDF5 needs the optional h5py (pip install h5py)
+    try:
+        sm.to_hdf5("escalator.h5")
+        print("wrote escalator.h5")
+    except ImportError as e:
+        print(f"skipped HDF5 export: {e}")
 
     # plotting (matplotlib, lazy import)
     from gds_fdtd.plotting import plot_smatrix
 
     fig, ax = plot_smatrix(sm, kind="db")
-    fig.savefig(os.path.join(here, "escalator_sparams.png"), dpi=150)
+    fig.savefig("escalator_sparams.png", dpi=150)
     print("wrote escalator_sparams.png")

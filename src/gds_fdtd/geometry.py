@@ -1,9 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-Geometry primitives: Port, Structure, Region, Component (WP2.1 — renamed from
-the lowercase classes previously in core.py; gds_fdtd.core re-exports the old
-names with a DeprecationWarning).
+Geometry primitives: Port, Structure, Region, Component.
 @author: Mustafa Hammood, 2025
 """
 
@@ -131,9 +129,8 @@ class Port:
         self.center = center
         self.width = width
         self.direction = direction
-        # initialize height, material, and layer as None
-        # will be assigned upon component __init__
-        # TODO: feels like a better way to do this..
+        # height/material/layer are resolved by Component.__init__ once the
+        # port is matched to a device layer
         self.height: float | None = None
         self.material: object = None
         self.layer: list[int] | None = None
@@ -384,7 +381,7 @@ def initialize_ports_z(ports: list["Port"], structures: list["Structure"]) -> No
     Initialize each port's z-center, height, material, and layer from the DEVICE
     structure containing it (last match wins, as before).
 
-    WP2.3: structures are a flat list discriminated by Structure.role; the old
+    Structures are a flat list discriminated by Structure.role; the old
     list-nesting convention (type(s) == list) is gone. Substrate/superstrate no
     longer silently claim ports that sit outside every device structure — those
     now warn and keep height=None.
@@ -426,7 +423,7 @@ class Component:
         self.name = name
         flat: list[Structure] = []
         for entry in structures:
-            if isinstance(entry, list):  # legacy nested convention (pre-WP2.3)
+            if isinstance(entry, list):  # legacy nested convention (pre-0.5)
                 import warnings
 
                 warnings.warn(

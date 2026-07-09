@@ -5,6 +5,7 @@ Simulation processing module.
 @author: Mustafa Hammood, 2025
 """
 
+import logging
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -19,6 +20,8 @@ from .lyprocessor import (
     load_structure,
     load_structure_from_bounds,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_material(device: dict):
@@ -112,8 +115,8 @@ def _load_tidy3d_material(material_spec: dict):
                 # Try to load from Tidy3D material database
                 return td.material_library[material_name][variant]
             except KeyError:
-                print(f"Warning: Material {material_name}[{variant}] not found in Tidy3D library")
-                print(
+                logger.warning(f"Material {material_name}[{variant}] not found in Tidy3D library")
+                logger.warning(
                     f"Available variants for {material_name}: {list(td.material_library[material_name].keys()) if material_name in td.material_library else 'Material not found'}"
                 )
                 # Fallback to silicon with warning
@@ -126,12 +129,12 @@ def _load_tidy3d_material(material_spec: dict):
                 first_variant = next(iter(material_dict.keys()))
                 return material_dict[first_variant]
             except (KeyError, StopIteration):
-                print(f"Warning: Material {model_spec} not found in Tidy3D library")
+                logger.warning(f"Material {model_spec} not found in Tidy3D library")
                 # Fallback to silicon
                 return td.material_library["cSi"]["Li1993_293K"]
 
     # Fallback: return silicon if nothing else works
-    print("Warning: Could not parse material specification, using default silicon")
+    logger.warning("Could not parse material specification, using default silicon")
     return td.material_library["cSi"]["Li1993_293K"]
 
 
@@ -156,7 +159,7 @@ def load_component_from_tech(cell, tech, z_span=4, z_center=None):
             )
         )
     # Removing empty lists due to no structures existing in an input layer,
-    # then flatten: Component.structures is a flat list with roles (WP2.3)
+    # then flatten: Component.structures is a flat list with roles
     device_wg = [s for dev in device_wg if dev for s in dev]
 
     # get z_center based on structures center (minimize symmetry failures);
@@ -207,7 +210,7 @@ def load_component_from_tech(cell, tech, z_span=4, z_center=None):
 def from_gdsfactory(c, tech: dict, z_span: float = 4.0) -> "Component":
     """Convert a gdsfactory Component to a gds_fdtd Component.
 
-    WP4.2: this is now a thin delegate to gds_fdtd.layout.gdsfactory, which is
+    This is a thin delegate to gds_fdtd.layout.gdsfactory, which is
     written for the gdsfactory >= 9 API (the previous implementation here
     targeted the pre-gf-8 API and carried bugs B2/B3/B4: hardcoded polygon
     index, ports named after the component, wrong units).

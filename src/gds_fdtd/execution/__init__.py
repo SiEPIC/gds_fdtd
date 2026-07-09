@@ -1,4 +1,4 @@
-"""Serializable jobs + execution backends (WP7.3)."""
+"""Serializable jobs + execution backends."""
 
 from .backends import ExecutionBackend, JobHandle, LocalBackend, SubprocessBackend
 from .jobspec import Budget, JobResult, JobSpec, run_job

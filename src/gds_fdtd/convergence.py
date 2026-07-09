@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-Convergence sweeps (WP5.5 item 1): rerun one job while stepping a single
+Convergence sweeps: rerun one job while stepping a single
 SimulationSpec field (mesh, run_time_factor, buffer, ...) and measure how
 much the S-matrix still moves between successive values. Generalizes the
 hand-rolled mesh sweeps of the legacy examples.

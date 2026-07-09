@@ -1,53 +1,81 @@
 Architecture Overview
 =====================
 
-Here's how the different parts of ``gds_fdtd`` work together to run FDTD simulations.
+GDS in, S-parameters out — with every engine behind one contract.
 
-Main Modules
+.. code-block:: text
+
+    layout (GDS / gdsfactory / SiEPIC)
+        │  lyprocessor · layout.gdsfactory        ports auto-detected
+        ▼
+    Component  ─────────  Technology (YAML, schema v2: named materials)
+        │
+        ▼
+    Solver ABC (solvers.base) ── registry + entry points
+        │        validate() · build() · estimate()   [offline, free]
+        │        run()                                [the only spending step]
+        ▼
+    SMatrix ── checks (reciprocity/passivity) · .dat / Touchstone / HDF5 / npz
+        │
+        ▼
+    plotting · convergence.sweep · validation.validate_across · caching
+
+Core modules
 ------------
 
-``core``
-    Contains the basic data structures and functions that everything else uses.
-    This is where ports, components, and geometry are defined.
+``geometry``
+    ``Component``, ``Structure`` (flat, role-tagged: device / substrate /
+    superstrate), ``Port`` (with port-extension stubs through the boundary),
+    ``Region``.
 
-``lyprocessor``
-    Takes GDS files and turns them into something the simulation can understand.
-    Uses KLayout to read the layout files and extract the shapes.
+``technology`` / ``materials.rii``
+    Pydantic-validated technology files. Schema v2 defines named materials
+    once (neutral ``nk``/``rii`` + per-engine hints) and layers reference
+    them; ``gds-fdtd convert-tech`` migrates v1 files.
 
-``simprocessor``
-    Puts everything together. Takes your technology file and GDS layout
-    and creates a simulation setup.
+``lyprocessor`` / ``simprocessor`` / ``layout.gdsfactory``
+    GDS loading via KLayout (SiEPIC pin conventions), component assembly,
+    and gdsfactory (>= 9) conversion.
 
-``sparams``
-    Handles S-parameter calculations after the simulation runs. Can export
-    results to different file formats.
+``spec``
+    ``SimulationSpec`` — every numeric simulation setting, validated, in
+    package-wide units (µm / degrees / Hz).
 
-``logging_config``
-    Keeps track of what happens during simulations. Writes detailed logs
-    to files so you can debug problems.
+``smatrix`` / ``sparams``
+    The canonical ``SMatrix`` container plus the Lumerical-format ``.dat``
+    reader/writer it interoperates with.
 
-How the Solvers Work
---------------------
+Solver layer
+------------
 
-``solver`` (Base Class)
-    The foundation that both Tidy3D and Lumerical solvers build on.
-    Handles common tasks like port setup and parameter checking.
+``solvers.base``
+    The ``Solver`` ABC and registry. Constructors are cheap and pure;
+    ``validate``/``build``/``estimate`` are offline; only ``run()`` spends.
+    Third-party engines register via the ``gds_fdtd.solvers`` entry-point
+    group (see :doc:`adding_a_solver`).
 
-``solver_tidy3d``
-    Runs simulations on Tidy3D's cloud platform. Uses their ComponentModeler
-    to get accurate S-parameters. Works with multiple polarizations.
+``solvers.tidy3d`` / ``solvers.lumerical`` / ``solvers.beamz``
+    The engine adapters. The tidy3d and Lumerical adapters wrap the
+    pre-0.5 implementation modules (``solver_tidy3d`` / ``solver_lumerical``,
+    deprecated as public API, removal at v1.0).
 
-``solver_lumerical``
-    Interfaces with Lumerical FDTD on your local machine or cluster.
-    Can use GPU acceleration and handles complex layer stacks.
+``grid`` / ``modes`` / ``extraction``
+    The kernel-engine pipeline: permittivity rasterization with sub-pixel
+    averaging, local mode solving, and bidirectional mode-overlap
+    extraction — for engines that only accept raw permittivity arrays.
 
-What Makes It Useful
---------------------
+Orchestration
+-------------
 
-The package is built so you can easily switch between different solvers without rewriting your simulation setup. Both Tidy3D and Lumerical solvers use the same interface, so your code stays mostly the same.
+``convergence`` / ``caching`` / ``validation``
+    Field sweeps with converged-value recommendation; job-hash result
+    caching (repeat runs are free); cross-engine agreement reports.
 
-You can run simulations with both TE and TM polarizations at once, which is handy for analyzing things like polarization beam splitters or mode converters.
+``execution`` / ``cli``
+    Serializable ``JobSpec`` + local/subprocess backends and the
+    ``gds-fdtd`` command-line interface — the remote-compute surface
+    (see :doc:`remote_compute`).
 
-Everything gets logged automatically, so when something goes wrong (and it will), you have detailed information to figure out what happened.
-
-The examples show you how to use all these pieces together for real photonic device simulations.
+``errors`` / ``settings`` / ``logging_config``
+    One exception hierarchy (``GdsFdtdError``), ``GDS_FDTD_*`` environment
+    configuration, and package-scoped logging (text or JSON lines).

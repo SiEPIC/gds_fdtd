@@ -1,8 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-BeamzSolver: the beamz (>= 0.4) adapter on the Phase-3 Solver contract
-(WP5.3, owner-requested). beamz is an open-source JAX FDTD engine
+BeamzSolver: the beamz (>= 0.4) adapter on the Phase-3 Solver contract. beamz is an open-source JAX FDTD engine
 (Apache-2.0, pip-installable, CPU or GPU) — the first zero-cost engine in the
 registry.
 
@@ -180,7 +179,7 @@ class BeamzSolver(Solver):
             problems.append(
                 "BeamzSolver v1 needs a gdsfactory-sourced component: convert with "
                 "layout.gdsfactory.from_gdsfactory (it is picked up automatically); "
-                "KLayout-sourced components need the WP5.2 kernel pipeline"
+                "KLayout-sourced components are not supported by this adapter yet"
             )
         if self.technology is None:
             problems.append("BeamzSolver requires a technology")

@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-Cross-solver validation (WP5.5 item 3) — the payoff of solver agnosticism:
+Cross-solver validation — the payoff of solver agnosticism:
 run the SAME component/technology/spec through several engines and quantify
 how well their S-matrices agree.
 
