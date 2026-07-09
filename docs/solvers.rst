@@ -1,271 +1,121 @@
-FDTD Solvers
-============
+Solvers
+=======
 
-The ``gds_fdtd`` package lets you run FDTD simulations using different solvers without changing much of your code. Right now it supports Tidy3D and Lumerical, but you can add other solvers if needed.
-
-Base Solver Class
------------------
-
-The :class:`~gds_fdtd.solver.fdtd_solver` serves as the abstract base class for all FDTD solver implementations. It provides common functionality and defines the interface that all solvers must implement.
-
-What it does:
-- Converts your component ports into a standard format
-- Logs everything that happens during setup and simulation
-- Manages field monitors for visualizing results
-- Figures out how big your simulation domain needs to be
-- Checks that your parameters make sense before running
+Every engine sets up the same way — swap engines by changing one string:
 
 .. code-block:: python
 
-    from gds_fdtd.solver import fdtd_solver
-
-    class MyCustomSolver(fdtd_solver):
-        def setup(self):
-            # Implementation specific setup
-            pass
-
-        def run(self):
-            # Implementation specific simulation execution
-            pass
-
-Common Solver Parameters
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-All solvers share these common initialization parameters:
-
-- ``component``: The photonic component to simulate
-- ``tech``: Technology definition (materials, layers, etc.)
-- ``wavelength_start/end``: Simulation wavelength range (μm)
-- ``wavelength_points``: Number of frequency points
-- ``mesh``: Mesh resolution (cells per wavelength)
-- ``modes``: List of mode indices for multi-modal simulation
-- ``field_monitors``: Field monitoring axes ('x', 'y', 'z')
-- ``working_dir``: Directory for simulation files and logs
-
-Tidy3D Solver
--------------
-
-The :class:`~gds_fdtd.solver_tidy3d.fdtd_solver_tidy3d` provides integration with the Tidy3D cloud-based FDTD platform using the official ComponentModeler plugin.
-
-What it does:
-- Uses Tidy3D's ComponentModeler to calculate S-parameters correctly
-- Handles multiple polarizations in one simulation
-- Runs everything on their cloud servers
-- Can plot field distributions using Tidy3D's plotting tools
-- Sets up sources and monitors automatically
-
-.. code-block:: python
-
-    from gds_fdtd.solver_tidy3d import fdtd_solver_tidy3d
     from gds_fdtd.core import parse_yaml_tech
-    from gds_fdtd.simprocessor import load_component_from_tech
     from gds_fdtd.lyprocessor import load_cell
+    from gds_fdtd.simprocessor import load_component_from_tech
+    from gds_fdtd.solvers import get_solver
+    from gds_fdtd.spec import SimulationSpec
 
-    # Load component and technology
-    tech = parse_yaml_tech("tech.yaml")
-    cell, layout = load_cell("device.gds", "crossing_te1550")
-    component = load_component_from_tech(cell, tech)
+    tech = parse_yaml_tech("tech.yaml")            # ONE tech, every engine
+    cell, layout = load_cell("devices.gds", top_cell="crossing_te1550")
+    component = load_component_from_tech(cell=cell, tech=tech)
 
-    # Create Tidy3D solver
-    solver = fdtd_solver_tidy3d(
-        component=component,
-        tech=tech,
-        wavelength_start=1.5,
-        wavelength_end=1.6,
-        wavelength_points=100,
-        modes=[1, 2],  # TE and TM modes
-        field_monitors=["z"],
-        visualize=True
+    solver = get_solver("tidy3d")(                 # or "lumerical" / "beamz"
+        component,
+        technology=tech,
+        spec=SimulationSpec(wavelength_points=51, mesh=10, z_min=-1.0, z_max=1.11),
     )
 
-    # Run simulation
-    solver.run()
+The lifecycle contract
+----------------------
 
-Tidy3D Specific Parameters:
-- ``visualize``: Enable/disable visualization during setup and results
+.. list-table::
+   :header-rows: 1
 
-Lumerical Solver
-----------------
-
-The :class:`~gds_fdtd.solver_lumerical.fdtd_solver_lumerical` provides integration with Lumerical FDTD for commercial-grade electromagnetic simulations.
-
-What it can do:
-- Runs Lumerical FDTD simulations directly
-- Uses GPU acceleration if you have it set up
-- Builds 3D structures from your technology file
-- Sets up S-parameter sweeps automatically
-- Saves field data for visualization
-
-.. code-block:: python
-
-    from gds_fdtd.solver_lumerical import fdtd_solver_lumerical
-
-    # Create Lumerical solver
-    solver = fdtd_solver_lumerical(
-        component=component,
-        tech=tech,
-        wavelength_start=1.5,
-        wavelength_end=1.6,
-        wavelength_points=100,
-        modes=[1, 2],
-        gpu=True,  # Enable GPU acceleration
-        boundary=["PML", "PML", "Metal"],
-        symmetry=[0, 0, 1]  # Mirror symmetry in z
-    )
-
-    # Run simulation
-    solver.run()
-
-Lumerical Specific Parameters:
-- ``gpu``: Enable GPU acceleration (Lumerical 2024 syntax)
-- ``boundary``: Boundary conditions for each axis
-- ``symmetry``: Symmetry conditions (0=none, 1=symmetric, -1=anti-symmetric)
-
-Field Monitor System
---------------------
-
-Both solvers feature a modular field monitor system for electromagnetic field visualization:
-
-Base Field Monitor
-^^^^^^^^^^^^^^^^^^
-
-The :class:`~gds_fdtd.solver.fdtd_field_monitor` provides the base functionality:
+   * - method
+     - contract
+   * - ``validate() -> list[str]``
+     - every problem with the job as human-readable strings; ``[]`` = runnable
+   * - ``build() -> SetupArtifacts``
+     - engine-native scene, **offline and deterministic** — no network, no license
+   * - ``estimate() -> ResourceEstimate``
+     - offline cost hints (cells, memory, number of simulations)
+   * - ``run() -> SMatrix``
+     - the **only** method that spends money, license seats, or GPU time
 
 .. code-block:: python
 
-    # Access field monitors
-    for monitor in solver.field_monitors_objs:
-        print(f"Monitor: {monitor.name} ({monitor.monitor_type})")
+    assert solver.validate() == []
+    artifacts = solver.build()      # free: script/scene generated locally
+    print(solver.estimate())
+    smatrix = solver.run()          # cloud credits / license / local compute
 
-        # Check if data is available
-        if monitor.has_data():
-            # Visualize fields
-            monitor.visualize(freq=freq, field_component='E')
-
-            # Get monitor information
-            print(monitor.get_field_info())
-
-Tidy3D Field Monitors
-^^^^^^^^^^^^^^^^^^^^^
-
-Tidy3D solvers use field monitors that work with Tidy3D's plotting functions:
-
-.. code-block:: python
-
-    # Visualize all field monitors
-    solver.visualize_field_monitors()
-
-    # Access individual monitors
-    z_monitor = solver.get_field_monitor("z_field")
-    if z_monitor and z_monitor.has_data():
-        z_monitor.visualize(field_component='E')
-
-Logging System
---------------
-
-All solvers write detailed logs to files in the working directory:
-
-.. code-block:: python
-
-    # Logging is automatic - check working directory for log files
-    import os
-    log_files = [f for f in os.listdir(solver.working_dir) if f.endswith('.log')]
-    print(f"Log files: {log_files}")
-
-    # Manual logging
-    solver.logger.info("Custom log message")
-
-Log files contain:
-- Detailed simulation setup information
-- Parameter validation results
-- Simulation progress and timing
-- Error messages and debugging information
-- Field monitor and S-parameter processing details
-
-Solver Comparison
+Available engines
 -----------------
 
-.. list-table:: Solver Feature Comparison
+.. list-table::
    :header-rows: 1
-   :widths: 30 35 35
 
-   * - Feature
-     - Tidy3D Solver
-     - Lumerical Solver
-   * - **Platform**
-     - Cloud-based
-     - Local/Commercial license
-   * - **S-matrix Calculation**
-     - ComponentModeler plugin
-     - Built-in S-parameter sweep
-   * - **Multi-modal Support**
-     - Full TE/TM/conversion
-     - Full TE/TM/conversion
-   * - **GPU Acceleration**
-     - Cloud automatic
-     - Local GPU support
-   * - **Field Visualization**
-     - Enhanced Tidy3D plots
-     - Lumerical native
-   * - **Cost**
-     - Pay-per-simulation
-     - License required
-   * - **Setup Complexity**
-     - Minimal (cloud)
-     - Installation required
+   * - engine
+     - execution
+     - cost
+     - install
+   * - `Tidy3D <https://github.com/flexcompute/tidy3d>`_ >= 2.11
+     - cloud
+     - FlexCredits
+     - ``pip install gds_fdtd[tidy3d]`` + ``TIDY3D_API_KEY``
+   * - Ansys Lumerical FDTD 2024/2025
+     - local
+     - license
+     - Lumerical install with ``lumapi`` on path
+   * - `beamz <https://github.com/beamzorg/beamz>`_ >= 0.4
+     - local (JAX CPU/GPU)
+     - free
+     - ``pip install gds_fdtd[beamz]``
 
-Extending the Solver System
-----------------------------
+``gds-fdtd solvers`` (CLI) lists every registered engine with availability
+and, when unavailable, the reason. Per-engine verification against the real
+engines lives in ``SOLVER_STATUS.md`` — the three engines agree within
+0.052 dB (tidy3d ↔ Lumerical within 0.0033 dB) on an identical job.
 
-To add support for a new FDTD solver:
+Standard visualization flow
+---------------------------
 
-1. **Inherit from the base class:**
+Every example follows the same four steps:
 
 .. code-block:: python
 
-    from gds_fdtd.solver import fdtd_solver
+    from gds_fdtd.plotting import plot_component, plot_smatrix
 
-    class fdtd_solver_newsolver(fdtd_solver):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.setup()
+    plot_component(component, spec=solver.spec)   # 1: geometry + ports + FDTD region
+    solver.build()                                # 2: offline setup (free)
+    plot_smatrix(smatrix, kind="db")              # 3: S-parameters
+    solver.plot_fields(axis="z")                  # 4: field profile (after run())
 
-2. **Implement required abstract methods:**
-
-.. code-block:: python
-
-    def setup(self) -> None:
-        """Setup the simulation."""
-        self._validate_simulation_parameters()
-        self._export_gds()
-        # Solver-specific setup
-
-    def run(self) -> None:
-        """Run the simulation."""
-        # Solver-specific execution
-
-    def get_resources(self) -> None:
-        """Get simulation resource requirements."""
-        # Resource estimation
-
-    def get_results(self) -> None:
-        """Retrieve simulation results."""
-        # Results processing
-
-    def get_log(self) -> None:
-        """Get simulation logs."""
-        # Log retrieval
-
-3. **Use modular components:**
+Beyond one engine
+-----------------
 
 .. code-block:: python
 
-    # Create field monitors
-    field_monitor = self.create_field_monitor_object("my_monitor", "z")
+    from gds_fdtd.convergence import sweep
+    from gds_fdtd.validation import validate_across
 
-    # Access standardized ports
-    for fdtd_port in self.fdtd_ports:
-        # Port configuration using standardized interface
-        pass
+    # principled mesh choice; with cache_dir reruns are free
+    report = sweep(get_solver("tidy3d"), component, tech, spec,
+                   field="mesh", values=[6, 8, 10], cache_dir=".cache")
+    report.recommend(tol_db=0.05)
 
-This modular approach ensures consistency across different solver backends while allowing for solver-specific optimizations and features.
+    # the agnosticism payoff: identical job, several engines, worst |dS| in dB
+    report = validate_across(
+        [get_solver("tidy3d"), get_solver("lumerical"), get_solver("beamz")],
+        component, tech, spec, cache_dir=".cache",
+    )
+
+Bring your own engine
+---------------------
+
+Any FDTD engine becomes a gds_fdtd solver by implementing the four methods
+above — see :doc:`adding_a_solver` for the full guide, including the
+conformance test suite your adapter inherits for free.
+
+.. note::
+
+    The pre-0.5 class interface (``fdtd_solver_tidy3d`` /
+    ``fdtd_solver_lumerical`` with per-solver keyword arguments) still works
+    but is deprecated and will be removed at v1.0. New code should use
+    ``get_solver(name)(component, tech, spec)``.
