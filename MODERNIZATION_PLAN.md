@@ -424,6 +424,21 @@ Jul–Aug 2025: 32, then dormant since Sep 2025). Four identities:
   **PUSH BLOCKED:** HTTPS uploads >~100 KB stall through the current VPN (chunked AND
   buffered POSTs both time out; reads fine; no SSH keys) — commits queued locally with a
   background retry loop; lands the moment the uplink clears.
+- **FINDING F15 / PUSH MYSTERY RESOLVED (2026-07-08 pm):** the "network problem" was
+  largely self-inflicted — `git add -A` during example validation had swept **1.1 GB of
+  Lumerical .fsp project files** (8 × 140 MB, crossing_te1550_sparams/) into the gallery
+  commit; every push was a >1 GB pack dying on a flaky uplink. Diagnosed via the Data-API
+  push fallback printing per-blob sizes ("blob e445e2e (143686 KB)"). Fix: two
+  filter-branch index-filter passes over the unpushed queue (giant blobs NEVER reached
+  GitHub), 7 more tracked junk files (root PNGs, temp tidy3d workdir) purged from disk +
+  tracking + history, root-level gitignore guards for every generated-output class, gc.
+  FULL-history audit for the owner: worst remaining blobs are a 3 MB GDS fixture and
+  ~7 MB of logo revisions; the GitHub repo is 6.9 MB total — rewriting main's history is
+  NOT worth breaking clones. Push then landed instantly. Secondary finding: this
+  network's middlebox also stalls gh's Go HTTP client on large auth'd POSTs while curl
+  passes — a curl-transport Data-API push script now exists in scratchpad as a fallback.
+  LESSON (standing): the 'git add -A' ban on in-flight outputs now has teeth (gitignore);
+  check `git count-objects` / queue pack size FIRST when pushes hang.
 - **v0.5 RELEASE PREP (2026-07-08 pm, owner directive):** (1) **coverage 63% → 80.04%**
   honest branch coverage; fail_under ratcheted 52 → 79. New offline batteries: recording
   lumapi mock (WP7.1.3 — legacy Lumerical setup+run on a RECORDED real .dat; F6/F7
