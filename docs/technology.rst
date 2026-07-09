@@ -3,8 +3,44 @@ Technology Configuration
 
 Technology files define the physical properties of your photonic devices, including materials, layer definitions, and fabrication parameters. The ``gds_fdtd`` package uses YAML-based technology files that are compatible with both Tidy3D and Lumerical solvers.
 
-Technology File Structure
----------------------------
+Schema v2: named materials (recommended)
+----------------------------------------
+
+Define each material ONCE and reference it by name — one technology file
+serves every solver:
+
+.. code-block:: yaml
+
+    technology:
+      name: "EBeam"
+      schema_version: 2
+
+      materials:
+        Si:
+          nk: 3.476                      # neutral constant (beamz, grid/modes)
+          tidy3d: [cSi, Li1993_293K]     # dispersive model on tidy3d
+          lumerical: Si (Silicon) - Palik
+        SiO2:
+          nk: 1.444
+          tidy3d: 1.444
+          lumerical: SiO2 (Glass) - Palik
+
+      substrate: {z_base: 0.0, z_span: -2, material: SiO2}
+      superstrate: {z_base: 0.0, z_span: 3, material: SiO2}
+      pinrec: [{layer: [1, 10]}]
+      devrec: [{layer: [68, 0]}]
+      device:
+        - {layer: [1, 0], z_base: 0.0, z_span: 0.22, material: Si, sidewall_angle: 85}
+
+Migrate a v1 file (per-layer inline materials) with::
+
+    gds-fdtd convert-tech old.yaml
+
+The two schemas are equivalent by construction — v2 expands into v1 before
+validation. ``examples/tech.yaml`` is the reference v2 file.
+
+Technology File Structure (schema v1)
+-------------------------------------
 
 Basic Structure
 ^^^^^^^^^^^^^^^

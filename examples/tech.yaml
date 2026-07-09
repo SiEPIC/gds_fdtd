@@ -1,66 +1,47 @@
-# ONE technology file for EVERY solver (owner directive, 2026-07-08).
+# ONE technology file for EVERY solver — schema v2: materials are defined
+# ONCE by name and referenced by layers (owner directive, 2026-07-08).
 #
-# Each material carries every hint an engine might want:
+# Each named material carries every hint an engine might want:
 #   nk        - neutral constant index: beamz, the grid/mode pipeline, and
-#               quick estimates use this; it is engine-independent.
-#   tidy3d_db - tidy3d's dispersive material database entry (best accuracy
-#               on tidy3d; falls back to nk when only that is given).
-#   lum_db    - the Lumerical material database name.
-# A neutral dispersive source can replace nk via
-#   rii: {shelf: main, book: Si, page: Li-293}   (refractiveindex.info)
-# when a local copy of the database is available (GDS_FDTD_RII_DB).
+#               quick estimates use this; engine-independent.
+#   tidy3d    - tidy3d database entry: a dispersive model list, or a plain
+#               nk number.
+#   lumerical - the Lumerical material database name.
+# A neutral dispersive source can be added per material via
+#   rii: {shelf: main, book: Si, page: Li-293}   (refractiveindex.info,
+# resolved offline from a local database copy - GDS_FDTD_RII_DB).
 #
 # Pick the engine at run time - the technology never changes:
 #   solver = get_solver("tidy3d" | "lumerical" | "beamz")(component, tech, spec)
+#
+# Migrate old per-layer-material files with: gds-fdtd convert-tech old.yaml
 
 technology:
   name: "EBeam"
+  schema_version: 2
 
-  substrate:
-      z_base: 0.0
-      z_span: -2
-      material:
-        nk: 1.444
-        tidy3d_db:
-          nk: 1.444
-        lum_db:
-          model: SiO2 (Glass) - Palik
+  materials:
+    Si:
+      nk: 3.476
+      tidy3d: [cSi, Li1993_293K]
+      lumerical: Si (Silicon) - Palik
+    SiN:
+      nk: 1.997
+      tidy3d: [Si3N4, Luke2015PMLStable]
+      lumerical: Si3N4 (Silicon Nitride) - Luke
+    SiO2:
+      nk: 1.444
+      tidy3d: 1.444
+      lumerical: SiO2 (Glass) - Palik
 
-  superstrate:
-      z_base: 0.0
-      z_span: 3
-      material:
-        nk: 1.444
-        tidy3d_db:
-          nk: 1.444
-        lum_db:
-          model: SiO2 (Glass) - Palik
+  substrate: {z_base: 0.0, z_span: -2, material: SiO2}
+  superstrate: {z_base: 0.0, z_span: 3, material: SiO2}
 
   pinrec:
     - layer: [1, 10]
-
   devrec:
     - layer: [68, 0]
 
   device:
-    - layer: [1, 0]
-      z_base: 0.0
-      z_span: 0.22
-      material:
-        nk: 3.476
-        tidy3d_db:
-          model: [cSi, Li1993_293K]
-        lum_db:
-          model: Si (Silicon) - Palik
-      sidewall_angle: 85
-
-    - layer: [4, 0]
-      z_base: .3
-      z_span: 0.4
-      material:
-        nk: 1.997
-        tidy3d_db:
-          model: [Si3N4, Luke2015PMLStable]
-        lum_db:
-          model: Si3N4 (Silicon Nitride) - Luke
-      sidewall_angle: 83
+    - {layer: [1, 0], z_base: 0.0, z_span: 0.22, material: Si, sidewall_angle: 85}
+    - {layer: [4, 0], z_base: 0.3, z_span: 0.4, material: SiN, sidewall_angle: 83}

@@ -21,7 +21,7 @@ TECH_FILES = [
 @pytest.mark.parametrize("path", TECH_FILES, ids=lambda p: str(p.name) + "/" + p.parent.name)
 def test_all_shipped_tech_files_load(path):
     tech = Technology.from_yaml(path)
-    assert tech.schema_version == 1
+    assert tech.schema_version in (1, 2)  # examples/tech.yaml is the v2 reference
     assert tech.device and tech.pinrec and tech.devrec
     legacy = tech.to_legacy_dict()
     assert set(legacy) == {"name", "substrate", "superstrate", "pinrec", "devrec", "device"}
@@ -87,7 +87,7 @@ def test_lum_db_without_model_names_key(tmp_path):
 def test_future_schema_version_rejected(tmp_path):
     body = BASE.format(
         device="{layer: [1, 0], z_base: 0.0, z_span: 0.22, material: {lum_db: {model: Si}}}"
-    ).replace("name: t", "name: t\n  schema_version: 2")
+    ).replace("name: t", "name: t\n  schema_version: 3")
     with pytest.raises(ValueError, match="schema_version"):
         Technology.from_yaml(_tech_yaml(tmp_path, body))
 

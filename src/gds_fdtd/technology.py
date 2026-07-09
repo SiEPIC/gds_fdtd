@@ -129,8 +129,70 @@ class DeviceLayer(BaseModel):
         return v
 
 
+def _expand_v2_material(entry: object, name: str) -> dict[str, Any]:
+    """One v2 named-material entry -> the v1 MaterialSpec mapping.
+
+    v2 keys: ``nk`` (neutral constant), ``rii`` (neutral dispersive),
+    ``tidy3d`` (model list, nk number, or full mapping), ``lumerical``
+    (database name string). Unknown keys pass through untouched.
+    """
+    if not isinstance(entry, dict):
+        raise ValueError(f"material {name!r} must be a mapping; got {entry!r}")
+    out: dict[str, Any] = {}
+    for key, value in entry.items():
+        if key == "tidy3d":
+            if isinstance(value, dict):
+                out["tidy3d_db"] = value
+            elif isinstance(value, (list, tuple)):
+                out["tidy3d_db"] = {"model": list(value)}
+            elif isinstance(value, (int, float)):
+                out["tidy3d_db"] = {"nk": value}
+            else:
+                raise ValueError(
+                    f"material {name!r}: 'tidy3d' must be a model list, an nk number, "
+                    f"or a mapping; got {value!r}"
+                )
+        elif key == "lumerical":
+            if not isinstance(value, str):
+                raise ValueError(
+                    f"material {name!r}: 'lumerical' must be a material-database "
+                    f"name string; got {value!r}"
+                )
+            out["lum_db"] = {"model": value}
+        else:  # nk, rii, and forward-compatible extras carry over verbatim
+            out[key] = value
+    return out
+
+
 class Technology(BaseModel):
-    """A validated technology (layer stack) definition. YAML schema v1."""
+    """A validated technology (layer stack) definition.
+
+    Two YAML schemas are read:
+
+    - **v1** (default): every layer carries an inline material mapping with
+      per-solver hints (``tidy3d_db``/``lum_db``) and/or neutral ``nk``/``rii``.
+    - **v2** (``schema_version: 2``): a top-level ``materials:`` section
+      defines NAMED materials once; layers reference them by name — no more
+      repeating material blocks, one technology for every solver:
+
+      .. code-block:: yaml
+
+         technology:
+           name: EBeam
+           schema_version: 2
+           materials:
+             Si:   {nk: 3.476, tidy3d: [cSi, Li1993_293K], lumerical: "Si (Silicon) - Palik"}
+             SiO2: {nk: 1.444, lumerical: "SiO2 (Glass) - Palik"}
+           substrate:   {z_base: 0.0, z_span: -2, material: SiO2}
+           superstrate: {z_base: 0.0, z_span: 3, material: SiO2}
+           pinrec: [{layer: [1, 10]}]
+           devrec: [{layer: [68, 0]}]
+           device:
+             - {layer: [1, 0], z_base: 0.0, z_span: 0.22, material: Si, sidewall_angle: 85}
+
+      v2 expands into the v1 model before validation, so the two schemas are
+      equivalent by construction (``gds-fdtd convert-tech`` migrates files).
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -144,10 +206,46 @@ class Technology(BaseModel):
 
     @field_validator("schema_version")
     @classmethod
-    def _v1_only(cls, v: int) -> int:
-        if v != 1:
-            raise ValueError(f"Unsupported technology schema_version {v}; this release reads v1")
+    def _known_schema(cls, v: int) -> int:
+        if v not in (1, 2):
+            raise ValueError(
+                f"Unsupported technology schema_version {v}; this release reads v1 and v2"
+            )
         return v
+
+    @model_validator(mode="before")
+    @classmethod
+    def _expand_v2(cls, data: object) -> object:
+        """schema v2 -> v1: resolve named materials into inline mappings."""
+        if not (isinstance(data, dict) and data.get("schema_version") == 2):
+            return data
+        data = dict(data)
+        materials = data.pop("materials", None) or {}
+        if not isinstance(materials, dict):
+            raise ValueError(f"'materials' must be a mapping of names; got {materials!r}")
+        expanded = {n: _expand_v2_material(m, n) for n, m in materials.items()}
+
+        def resolve(mat: object, where: str) -> object:
+            if isinstance(mat, str):
+                if mat not in expanded:
+                    raise ValueError(
+                        f"{where}: unknown material {mat!r}; defined materials: {sorted(expanded)}"
+                    )
+                return dict(expanded[mat])
+            if isinstance(mat, dict):  # inline v2 material (escape hatch)
+                return _expand_v2_material(mat, where)
+            return mat
+
+        for key in ("substrate", "superstrate"):
+            entry = data.get(key)
+            entries = entry if isinstance(entry, list) else [entry]
+            for e in entries:
+                if isinstance(e, dict) and "material" in e:
+                    e["material"] = resolve(e["material"], key)
+        for i, d in enumerate(data.get("device") or []):
+            if isinstance(d, dict) and "material" in d:
+                d["material"] = resolve(d["material"], f"device[{i}]")
+        return data
 
     @field_validator("pinrec", "devrec", mode="before")
     @classmethod

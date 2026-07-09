@@ -184,6 +184,91 @@ def cmd_convert(args) -> int:
     return EXIT_OK
 
 
+def cmd_convert_tech(args) -> int:
+    """Migrate a v1 technology YAML to schema v2 (named materials)."""
+    import yaml
+
+    from .technology import Technology
+
+    tech = Technology.from_yaml(args.tech)
+
+    # dedupe identical material mappings into named entries
+    def v2_material(legacy: dict) -> dict:
+        out = {}
+        for key, value in legacy.items():
+            if key == "tidy3d_db":
+                out["tidy3d"] = value.get("model", value.get("nk"))
+            elif key == "lum_db":
+                out["lumerical"] = value["model"]
+            else:
+                out[key] = value
+        return out
+
+    def suggest_name(mat: dict, taken: set[str]) -> str:
+        base = None
+        lum = mat.get("lumerical")
+        if isinstance(lum, str):
+            base = lum.split()[0].strip("(),")
+        elif isinstance(mat.get("tidy3d"), list):
+            base = str(mat["tidy3d"][0])
+        base = base or f"mat{len(taken) + 1}"
+        name, i = base, 1
+        while name in taken:
+            i += 1
+            name = f"{base}{i}"
+        return name
+
+    named: dict[str, dict] = {}
+
+    def register(legacy: dict) -> str:
+        mat = v2_material(legacy)
+        for name, existing in named.items():
+            if existing == mat:
+                return name
+        name = suggest_name(mat, set(named))
+        named[name] = mat
+        return name
+
+    legacy = tech.to_legacy_dict()
+    doc: dict = {
+        "name": legacy["name"],
+        "schema_version": 2,
+        "materials": named,  # filled by register() below
+        "substrate": {
+            "z_base": legacy["substrate"][0]["z_base"],
+            "z_span": legacy["substrate"][0]["z_span"],
+            "material": register(legacy["substrate"][0]["material"]),
+        },
+        "superstrate": {
+            "z_base": legacy["superstrate"][0]["z_base"],
+            "z_span": legacy["superstrate"][0]["z_span"],
+            "material": register(legacy["superstrate"][0]["material"]),
+        },
+        "pinrec": legacy["pinrec"],
+        "devrec": legacy["devrec"],
+        "device": [
+            {
+                "layer": d["layer"],
+                "z_base": d["z_base"],
+                "z_span": d["z_span"],
+                "material": register(d["material"]),
+                "sidewall_angle": d["sidewall_angle"],
+            }
+            for d in legacy["device"]
+        ],
+    }
+    out_path = args.out or args.tech.rsplit(".", 1)[0] + "_v2.yaml"
+    with open(out_path, "w") as f:
+        yaml.safe_dump({"technology": doc}, f, sort_keys=False, default_flow_style=None)
+    # round-trip guard: the emitted v2 must reproduce the v1 legacy dict
+    converted = Technology.from_yaml(out_path).to_legacy_dict()
+    if converted != legacy:
+        _emit({"error": f"round-trip mismatch writing {out_path}"}, args.json)
+        return EXIT_INVALID
+    _emit({"written": out_path, "materials": sorted(named)}, args.json)
+    return EXIT_OK
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="gds-fdtd",
@@ -212,6 +297,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("job")
     p.add_argument("--out", default="results")
     p.add_argument("--backend", choices=("local", "subprocess"), default="local")
+    p = sub.add_parser("convert-tech", help="migrate a v1 technology YAML to schema v2")
+    p.add_argument("tech", help="path to a v1 technology YAML")
+    p.add_argument("-o", "--out", help="output path (default: <name>_v2.yaml)")
+    p.add_argument("--json", action="store_true")
+
     p = sub.add_parser("convert", help="convert S-parameter files between formats")
     p.add_argument("results")
     p.add_argument("--to", choices=("snp", "dat", "npz", "h5"), required=True)
@@ -227,6 +317,7 @@ def main(argv: list[str] | None = None) -> int:
         "estimate": cmd_estimate,
         "run": cmd_run,
         "convert": cmd_convert,
+        "convert-tech": cmd_convert_tech,
     }[args.command]
     try:
         return handler(args)
