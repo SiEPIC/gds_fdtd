@@ -19,12 +19,6 @@ if __name__ == "__main__":
     cell, layout = load_cell(os.path.join(here, "devices.gds"), top_cell="directional_coupler_te1550")
     component = load_component_from_tech(cell=cell, tech=tech)
 
-
-    # STANDARD VISUALIZATION STEP 1: geometry, ports, simulation region
-    from gds_fdtd.plotting import plot_component
-
-    plot_component(component, spec=None, savefig=f"{component.name}_geometry.png")
-
     solver = get_solver("tidy3d")(
         component,
         technology=tech,
@@ -39,6 +33,12 @@ if __name__ == "__main__":
         ),
         workdir=os.getcwd(),
     )
+    # STEP 1: geometry, ports, simulation region
+    from gds_fdtd.plotting import plot_component
+
+    plot_component(component, spec=solver.spec, savefig=f"{component.name}_geometry.png")
+
+    # STEP 2: offline setup (free)
     print(solver.describe())
     problems = solver.validate()
     assert not problems, problems

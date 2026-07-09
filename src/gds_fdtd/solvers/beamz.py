@@ -167,6 +167,15 @@ class BeamzSolver(Solver):
             problems.append(reason)
         if not self.component.ports:
             problems.append("component has no ports")
+        for port in self.component.ports:
+            if port.direction in (90, 270):
+                problems.append(
+                    f"port {port.name!r} faces {port.direction} deg: beamz v1 handles "
+                    "x-oriented ports only (F14: modal wave separation on y-normal "
+                    "monitors mis-normalizes by tens of dB - measured S11 +40 dB on a "
+                    "vertical straight). Orient the device along x, or use tidy3d/"
+                    "lumerical for devices with y-facing ports."
+                )
         if self.gf_component is None:
             problems.append(
                 "BeamzSolver v1 needs a gdsfactory-sourced component: convert with "

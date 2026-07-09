@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     plot_component(component, spec=solver.spec, savefig=f"{component.name}_geometry.png")
     solver.build()
-    # smatrix = solver.run()  # SPENDS FLEXCREDITS
+    smatrix = solver.run()  # SPENDS FLEXCREDITS
     #
     # STEP 3: S-parameters   |   STEP 4: field profile
     # from gds_fdtd.plotting import plot_smatrix

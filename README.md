@@ -49,11 +49,11 @@ smatrix = solver.run()
 
 | example | shows |
 |---|---|
-| `01_basics/` | GDS -> tidy3d via the modern solver API (offline build, cloud run) |
+| `01_basics/` | first contact: load & inspect any GDS, no engine needed (01b); the free offline setup flow on tidy3d (01a) |
 | `02_lumerical/`, `03_tidy3d/` | the SAME flow on Lumerical / tidy3d — 02b and 03b are identical code except the engine string (+ mesh convergence via `convergence.sweep`) |
 | `04_solvers/` | the engine-agnostic registry (04a); convergence sweeps + job caching (04b); cross-solver validation on recorded real results, runs offline (04c) |
 | `05_gdsfactory/` | gdsfactory >= 9 conversion -> any solver |
-| `06_beamz/` | the open-source zero-cost engine — identical setup, no license, no credits |
+| `06_beamz/` | the open-source zero-cost engine — straight (06a), bend with real radiation physics (06b), and a FREE mesh-convergence study (06c); identical setup, no license, no credits |
 | `07_prefab/` | lithography-predicted geometry ([PreFab](https://github.com/PreFab-Photonics/PreFab)) |
 | `08_siepic/` | SiEPIC EBeam PDK cells on tidy3d / Lumerical |
 | `09_smatrix/` | SMatrix I/O: .dat/Touchstone/HDF5, physics checks, plotting (runs offline on recorded real data) |
@@ -74,7 +74,7 @@ pip install gds-fdtd
 To install the core functionality of `gds_fdtd`, clone the repository and install using `pip`:
 
 ```bash
-git clone git@github.com:mustafacc/gds_fdtd.git
+git clone https://github.com/SiEPIC/gds_fdtd.git
 cd gds_fdtd
 pip install -e .
 ```
@@ -84,18 +84,12 @@ pip install -e .
 For contributing to the development or if you need testing utilities, install with the dev dependencies:
 
 ```bash
-git clone git@github.com:mustafacc/gds_fdtd.git
+git clone https://github.com/SiEPIC/gds_fdtd.git
 cd gds_fdtd
 pip install -e .[dev]
 ```
 
 This will install additional tools like `pytest` and `coverage` for testing.
-
-### Editable + dev tools
-
-```bash
-pip install -e .[dev]
-```
 
 ### Optional extras
 

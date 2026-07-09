@@ -424,6 +424,23 @@ Jul–Aug 2025: 32, then dormant since Sep 2025). Four identities:
   **PUSH BLOCKED:** HTTPS uploads >~100 KB stall through the current VPN (chunked AND
   buffered POSTs both time out; reads fine; no SSH keys) — commits queued locally with a
   background retry loop; lands the moment the uplink clears.
+- **FINDING F14 (2026-07-08, found by validating a NEW example before shipping it):**
+  beamz 0.4.3 mis-normalizes the modal wave separation on **y-normal monitors**: a bend
+  (one y-facing port) returned thru −36 dB while its field plot showed clean propagation;
+  the controlled experiment — a vertical straight, both ports y-facing — returned
+  S21 +1.9 dB and **S11 +40 dB** (energy flows correctly; only the incident-amplitude
+  normalization is wrong, F9's bigger sibling — beamz's own examples never exercise
+  y-ports). Mitigation: BeamzSolver.validate() now REJECTS y-oriented ports with the
+  finding quoted (offline regression test); example 06b uses an S-bend (both ports
+  x-facing, still real radiation physics). Upstream issue to beamzorg/beamz is the
+  proper fix; candidate for the 7.x backlog alongside a possible adapter-side
+  reimplementation of y-plane extraction via gds_fdtd.extraction.
+- **Examples audit (owner asked "all up to date? enough beamz?"):** 01a aligned to the
+  standard flow; 01b (was a 03a duplicate) → engine-free load-and-inspect first-contact
+  example (validated); beamz series grew to THREE free examples: 06a straight, 06b S-bend
+  (F14-safe), 06c mesh convergence — the free way to learn the convergence workflow;
+  06c sweep starts at mesh 8 (mesh 6 delta was 12.97 dB = unresolved discretization,
+  not signal). README examples table + install URLs (mustafacc→SiEPIC) updated.
 - **Scorecard badge removed from README (owner found it broken):** api.scorecard.dev only
   serves results after scorecard.yml has run with publish_results on the DEFAULT branch —
   impossible until PR #23 merges. RE-ADD the badge as part of WP6.3 release polish, after

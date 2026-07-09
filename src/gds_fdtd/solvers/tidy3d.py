@@ -96,7 +96,11 @@ class Tidy3DSolver(Solver):
         workdir = (
             str(self.workdir)
             if self.workdir is not None
-            else tempfile.mkdtemp(prefix="gds_fdtd_t3d_")
+            # Default to a fresh subdir under the current working directory.
+            # Avoid the system temp dir: it is often a small RAM-backed tmpfs,
+            # and large result downloads (multi-GB with field monitors) can
+            # blow past its free space (OSError 28: No space left on device).
+            else tempfile.mkdtemp(prefix="gds_fdtd_t3d_", dir=os.getcwd())
         )
         s = self.spec
         legacy = fdtd_solver_tidy3d(
@@ -155,12 +159,21 @@ class Tidy3DSolver(Solver):
             if self.workdir is not None
             else os.path.dirname(str(self._artifacts.files["gds"]))
         )
-        modeler_data = web.run(
-            self._artifacts.native,
-            task_name=f"gdsfdtd_{self.component.name}",
-            path=os.path.join(workdir, f"{self.component.name}_modeler.hdf5"),
-            verbose=True,
-        )
+        # Route tidy3d's own download temp files into the workdir too. Its
+        # compressed-download tempfile (s3utils.download_gz_file) uses the
+        # process temp dir with no override, which is often a small RAM-backed
+        # tmpfs; multi-GB results then fail with OSError 28 (No space left).
+        prev_tempdir = tempfile.tempdir
+        tempfile.tempdir = workdir
+        try:
+            modeler_data = web.run(
+                self._artifacts.native,
+                task_name=f"gdsfdtd_{self.component.name}",
+                path=os.path.join(workdir, f"{self.component.name}_modeler.hdf5"),
+                verbose=True,
+            )
+        finally:
+            tempfile.tempdir = prev_tempdir
         self._modeler_data = modeler_data
         da = modeler_data.smatrix()
         return self._dataarray_to_smatrix(da)

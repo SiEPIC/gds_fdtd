@@ -177,3 +177,23 @@ def test_beamz_field_plane_orientation():
     assert img.shape == (ny, nx)
     assert (img.sum(axis=1) > 0).sum() == 10  # stripe occupies 10 y-rows
     assert (img.sum(axis=0) > 0).all()  # and spans every x column
+
+
+def test_beamz_rejects_y_oriented_ports():
+    """F14: beamz modal normalization on y-normal monitors is wrong by tens
+    of dB (measured S11 +40 dB on a vertical straight) - validate() must
+    fail loudly instead of run() returning garbage."""
+    pytest.importorskip("beamz")
+    gf = pytest.importorskip("gdsfactory")
+    gf.gpdk.PDK.activate()
+    from gds_fdtd.core import parse_yaml_tech
+    from gds_fdtd.layout.gdsfactory import from_gdsfactory
+
+    c = gf.Component(name="vstraight_f14")
+    ref = c.add_ref(gf.components.straight(length=5))
+    ref.rotate(90)
+    c.add_ports(ref.ports)
+    tech = parse_yaml_tech(str(TESTS_DIR / "tech_unified.yaml"))
+    comp = from_gdsfactory(c, tech)
+    problems = get_solver("beamz")(comp, technology=tech).validate()
+    assert any("F14" in p for p in problems), problems
