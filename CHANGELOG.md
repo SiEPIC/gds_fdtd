@@ -5,6 +5,97 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-07-08
+
+The solver-agnostic release: one component, one technology file, any engine —
+validated live on all three. 73 commits (PR [#23](https://github.com/SiEPIC/gds_fdtd/pull/23)).
+
+### Added
+
+#### Solver-agnostic core
+- `Solver` ABC with a strict lifecycle contract: `validate()` / `build()` /
+  `estimate()` are offline and free; **only `run()` spends** money, licenses,
+  or GPU time. Engine registry + `gds_fdtd.solvers` entry-point group so
+  third-party engines plug in (`docs/adding_a_solver.md` is the guide).
+- Adapters: **tidy3d** (≥ 2.11, ModalComponentModeler), **Lumerical FDTD**
+  (2024/2025, offline `.lsf` generation + licensed run), **beamz** (≥ 0.4,
+  free/Apache-2.0, JAX CPU/GPU) — identical setup on all three:
+  `get_solver(name)(component, tech, spec)`.
+- Canonical `SMatrix` (complex, multi-port, multi-mode, NaN partials) with
+  reciprocity/passivity/power-balance checks and I/O: INTERCONNECT `.dat`,
+  Touchstone `.sNp`, HDF5, npz. Validated `SimulationSpec` (pydantic)
+  replaces ~15 loose solver kwargs.
+- **Technology schema v2**: named materials defined once, referenced by
+  layers; each material carries a neutral `nk`, optional
+  refractiveindex.info `rii:` source, and per-engine hints — one YAML for
+  every solver. `gds-fdtd convert-tech` migrates v1 files (round-trip
+  guarded). Offline rii database reader.
+- Tier-B pipeline for kernel-level engines: `grid.rasterize` (sub-pixel
+  averaged permittivity, sidewall angles), `modes` (local tidy3d mode
+  solver: Si-strip n_eff(TE0) = 2.451), `extraction` (bidirectional mode
+  overlap, exact identities tested).
+- Convergence sweeps (`convergence.sweep` with recommended-value picking),
+  job-hash **result caching** (`run_cached`: repeat runs are free), and
+  cross-solver validation (`validation.validate_across`).
+- Serializable `JobSpec` + `LocalBackend`/`SubprocessBackend` + `gds-fdtd`
+  CLI (`validate|build|estimate|run|convert|convert-tech|solvers`; exit
+  codes 0/2/3/4; secrets from environment only) — remote-compute ready
+  (Modal/AWS/SLURM recipes in `docs/remote_compute.md`, beamz-first).
+- Standardized example flow (geometry+ports+FDTD-region plot → offline
+  setup → S-parameters → field profile), RdBu as the package-wide
+  visualization scheme, port-extension stubs drawn in every geometry plot.
+- gdsfactory (≥ 9) converter with port auto-detection; SiEPIC and PreFab
+  integrations updated; 16 runnable examples incl. three free beamz ones.
+- Exception hierarchy (`GdsFdtdError` tree, backward-compatible),
+  `GDS_FDTD_*` settings (pydantic-settings), JSON-lines logging option.
+
+#### Validation (all on real engines, recorded into the repo)
+- **Three-engine agreement on the identical job**: tidy3d ↔ Lumerical
+  within **0.0033 dB**, beamz within 0.052 dB (recorded in
+  `tests/recorded/`, asserted every PR). Per-solver status in
+  `SOLVER_STATUS.md`.
+- Honest branch coverage **80%** (was a gamed ~100% badge over a 16%
+  reality); coverage gate ratchets up only. Recording mocks run both
+  legacy adapters' full setup paths offline; recorded real artifacts
+  replay the results pipelines.
+
+#### Infrastructure
+- CI: 9-leg OS/Python matrix + all-extras leg + required typecheck
+  (mypy --strict on the typed core) + single `pass` gate; weekly
+  lowest-floors job; pip-audit/dependency-review/zizmor/Scorecard;
+  SHA-pinned actions with hardened permissions; SBOM attached to
+  releases; tag-driven trusted publishing (hatch-vcs — no version bumps).
+- Budget-gated tidy3d cloud-smoke workflow (human-approved) and a
+  self-hosted Lumerical nightly lane (off until a runner exists).
+
+### Changed
+- Examples rewritten on the modern API and ONE technology file; legacy
+  15-kwarg constructor examples removed (the classes remain, deprecated,
+  until v1.0).
+- README rebuilt around real solver output (field profiles, curated
+  S-parameters, three-engine agreement plot).
+
+### Fixed
+- 19 audited legacy bugs (B-series) plus findings F1–F14 discovered by
+  live validation — highlights: `tidy3d.web` lazy-import crash in
+  examples (F10), beamz reference-monitor mis-normalization (+2 dB, F9),
+  beamz y-normal monitor mis-normalization (F14 — y-facing ports now
+  rejected loudly), eager tidy3d import breaking engine-free loading
+  (F13), test fixture/GDS layer mismatch that silently mis-assigned a
+  port to the superstrate (F4).
+- 646 lines of dead code removed (write-only field-monitor plumbing,
+  uncalled log-metrics chains, legacy `sparam`/`s_parameters`).
+
+### Removed
+- Fake-coverage test that exec-compiled `pass` statements to inflate
+  codecov; jekyll/python-publish workflows; per-solver example
+  technology files.
+
+### Note on 0.4.0
+The 0.4.0 entry below described several features that did not exist at the
+time (Touchstone/JSON export, energy-conservation checks, group-delay
+tools). Those capabilities ship — for real, with tests — in this release.
+
 ## [0.4.0] - 2025-08-05
 
 ### Major Release - New Architecture

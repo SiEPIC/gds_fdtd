@@ -21,9 +21,15 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_toggleprompt",  # For interactive prompts
     "sphinx_copybutton",  # Adds copy buttons to code blocks
+    "myst_parser",  # Markdown pages (adding_a_solver, remote_compute, ...)
 ]
 
+myst_enable_extensions = ["colon_fence"]
+
 autosummary_generate = True
+
+# engine packages are optional extras; docs build without them installed
+autodoc_mock_imports = ["tidy3d", "lumapi", "beamz", "gdsfactory", "prefab", "SiEPIC", "pya", "jax"]
 
 # Theme
 html_theme = "furo"

@@ -153,3 +153,4 @@ directional_coupler_te1550/
 *_modeler.hdf5
 mode_solver.hdf5
 *_with_extensions.gds
+docs/_autosummary/
