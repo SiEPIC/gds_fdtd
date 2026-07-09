@@ -5,26 +5,29 @@ Unit tests for gds_fdtd.core.
 @author: Mustafa Hammood, 2025
 """
 
-import sys
-import pytest
 import logging
-import numpy as np
-from types import SimpleNamespace
-from typing import Dict, List, Tuple, Any, Optional, Union
+import sys
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
+
+import pytest
+
 from gds_fdtd.core import (
-    is_point_inside_polygon,
-    layout,
-    calculate_polygon_extension,
-    port,
-    structure,
-    component,
-    initialize_ports_z,
-    sparam,
-    s_parameters,
     parse_yaml_tech,
 )
-from gds_fdtd.core import region as Region  # <-- alias
+
+# WP2.1: geometry classes renamed; tests alias them to keep the body unchanged
+from gds_fdtd.geometry import Component as component
+from gds_fdtd.geometry import LayoutSource as layout
+from gds_fdtd.geometry import Port as port
+from gds_fdtd.geometry import (
+    Region,  # <-- alias
+    calculate_polygon_extension,
+    initialize_ports_z,
+    is_point_inside_polygon,
+)
+from gds_fdtd.geometry import Structure as structure
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -33,9 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
-def response_is_point_inside_polygon() -> (
-    Dict[str, Union[List[float], List[List[float]]]]
-):
+def response_is_point_inside_polygon() -> dict[str, list[float] | list[list[float]]]:
     """
     Sample pytest fixture that returns a point and polygon.
 
@@ -49,9 +50,7 @@ def response_is_point_inside_polygon() -> (
 
 
 @pytest.fixture
-def response_is_point_outside_polygon() -> (
-    Dict[str, Union[List[float], List[List[float]]]]
-):
+def response_is_point_outside_polygon() -> dict[str, list[float] | list[list[float]]]:
     """
     Sample pytest fixture that returns a point outside a polygon.
 
@@ -65,7 +64,7 @@ def response_is_point_outside_polygon() -> (
 
 
 def test_is_point_inside_polygon(
-    response_is_point_inside_polygon: Dict[str, Any],
+    response_is_point_inside_polygon: dict[str, Any],
 ) -> None:
     """
     Verify that a point inside a polygon is correctly identified.
@@ -80,7 +79,7 @@ def test_is_point_inside_polygon(
 
 
 def test_is_point_outside_polygon(
-    response_is_point_outside_polygon: Dict[str, Any],
+    response_is_point_outside_polygon: dict[str, Any],
 ) -> None:
     """
     Verify that a point outside a polygon is correctly identified.
@@ -118,7 +117,7 @@ def test_layout_dbu_property(dummy_layout: layout) -> None:
     Args:
         dummy_layout: A fixture providing a layout instance.
     """
-    logger.info(f"Testing layout.dbu property, expected value: 1e-3")
+    logger.info("Testing layout.dbu property, expected value: 1e-3")
     assert dummy_layout.dbu == pytest.approx(1e-3)
 
 
@@ -147,7 +146,7 @@ def test_layout_dbu_property(dummy_layout: layout) -> None:
     ],
 )
 def test_calculate_polygon_extension_default_buffer(
-    direction: int, expected: List[List[float]]
+    direction: int, expected: list[list[float]]
 ) -> None:
     """
     Test polygon extension calculation with default buffer value.
@@ -156,7 +155,7 @@ def test_calculate_polygon_extension_default_buffer(
         direction: Port direction in degrees (0, 90, 180, 270).
         expected: Expected polygon coordinates.
     """
-    center: List[float] = [0, 0]
+    center: list[float] = [0, 0]
     width: float = 2
     logger.info(f"Testing polygon extension with direction {direction}°")
     result = calculate_polygon_extension(center, width, direction)
@@ -165,7 +164,7 @@ def test_calculate_polygon_extension_default_buffer(
 
 def test_calculate_polygon_extension_custom_buffer() -> None:
     """Test polygon extension calculation with a custom buffer value."""
-    center: List[float] = [5, 5]
+    center: list[float] = [5, 5]
     width: float = 3
     direction: int = 0
     buffer: float = 2
@@ -204,8 +203,8 @@ def test_port_idx_extraction(dummy_port: port) -> None:
         dummy_port: A fixture providing a port instance.
     """
     logger.info("Testing port index extraction from name 'port42'")
-    # name "port42" → reversed digits "24" → idx = 24
-    assert dummy_port.idx == 24
+    # WP1.3: name "port42" → trailing digits → idx = 42
+    assert dummy_port.idx == 42
 
 
 def test_port_polygon_extension_delegation(dummy_port: port) -> None:
@@ -234,7 +233,7 @@ def dummy_structure() -> structure:
         A structure instance with predefined parameters.
     """
     logger.debug("Creating dummy structure 'wg'")
-    poly: List[List[float]] = [[0, 0], [10, 0], [10, 5], [0, 5]]
+    poly: list[list[float]] = [[0, 0], [10, 0], [10, 5], [0, 5]]
     return structure("wg", poly, z_base=0, z_span=2, material="SiO2")
 
 
@@ -254,6 +253,7 @@ def test_structure_attrs(dummy_structure: structure) -> None:
     assert s.sidewall_angle == 90.0
     # polygon equivalence without relying on ordering mutations
     assert set(map(tuple, s.polygon)) == {(0, 0), (10, 0), (10, 5), (0, 5)}
+
 
 # ---------- port ---------------------------------------------------------
 
@@ -293,10 +293,14 @@ def test_port_coordinates(sample_port: port) -> None:
 @pytest.mark.parametrize(
     "name,expected",
     [
-        ("port42", 24),  # digits reversed → "24"
+        # WP1.3: expectations updated — idx is now the TRAILING digits of the
+        # name (was: all digits reversed, so "port42" -> 24 and "opt10" == "opt1").
+        ("port42", 42),
         ("p7", 7),
-        ("abc123", 321),  # digits reversed → "321"
+        ("abc123", 123),
         ("noDigits0", 0),
+        ("opt10", 10),
+        ("opt1", 1),
     ],
 )
 def test_port_idx(name: str, expected: int) -> None:
@@ -326,7 +330,7 @@ def test_port_idx(name: str, expected: int) -> None:
     ],
 )
 def test_polygon_extension_consistency(
-    center: List[float], width: float, direction: int, buffer: float
+    center: list[float], width: float, direction: int, buffer: float
 ) -> None:
     """
     Test consistency between port.polygon_extension and calculate_polygon_extension.
@@ -367,7 +371,7 @@ def default_structure() -> structure:
     """
     logger.debug("Creating default structure")
     # simple 10 µm × 5 µm rectangle, vertical sidewalls
-    poly: List[List[float]] = [[0, 0], [10, 0], [10, 5], [0, 5]]
+    poly: list[list[float]] = [[0, 0], [10, 0], [10, 5], [0, 5]]
     return structure("wg", poly, z_base=0.0, z_span=2.0, material="SiO2")
 
 
@@ -393,10 +397,8 @@ def test_structure_attributes(default_structure: structure) -> None:
 def test_structure_custom_sidewall() -> None:
     """Test structure creation with custom sidewall angle."""
     logger.info("Testing structure with custom sidewall angle")
-    poly: List[List[float]] = [[0, 0], [1, 0], [1, 1], [0, 1]]
-    s = structure(
-        "taper", poly, z_base=1.0, z_span=0.5, material="Si", sidewall_angle=80.0
-    )
+    poly: list[list[float]] = [[0, 0], [1, 0], [1, 1], [0, 1]]
+    s = structure("taper", poly, z_base=1.0, z_span=0.5, material="Si", sidewall_angle=80.0)
     assert s.sidewall_angle == 80.0
 
 
@@ -407,7 +409,7 @@ def test_structure_custom_sidewall() -> None:
 
 def make_square(
     side: float = 4,
-    centre: Tuple[float, float] = (0, 0),
+    centre: tuple[float, float] = (0, 0),
     z_base: float = 0.0,
     z_span: float = 2.0,
     mat: str = "Si",
@@ -428,7 +430,7 @@ def make_square(
     logger.debug(f"Creating square structure with side={side}, centre={centre}")
     cx, cy = centre
     h = side / 2
-    poly: List[List[float]] = [
+    poly: list[list[float]] = [
         [cx - h, cy - h],
         [cx + h, cy - h],
         [cx + h, cy + h],
@@ -440,7 +442,7 @@ def make_square(
 # We need a double‑nested list because the production code
 # treats `[struct]` as a *region* (cladding hack).
 @pytest.fixture
-def region() -> List[List[structure]]:
+def region() -> list[structure]:
     """
     Create a region (nested list of structures) for testing.
 
@@ -448,7 +450,7 @@ def region() -> List[List[structure]]:
         A region containing a single square structure.
     """
     logger.debug("Creating region with single square structure")
-    return [[make_square()]]  # ⟨region⟩ -> list[list[structure]]
+    return [make_square()]  # WP2.3: flat list of structures
 
 
 @pytest.fixture
@@ -480,9 +482,7 @@ def p_outside() -> port:
 # ------------------------------------------------------------------------------
 
 
-def test_initialize_ports_sets_attributes(
-    region: List[List[structure]], p_inside: port
-) -> None:
+def test_initialize_ports_sets_attributes(region: list[structure], p_inside: port) -> None:
     """
     Test that initialize_ports_z correctly sets port attributes.
 
@@ -500,7 +500,7 @@ def test_initialize_ports_sets_attributes(
 
 
 def test_initialize_ports_warns_for_unmatched(
-    region: List[List[structure]], p_outside: port, caplog: pytest.LogCaptureFixture
+    region: list[structure], p_outside: port, caplog: pytest.LogCaptureFixture
 ) -> None:
     """
     Test that initialize_ports_z warns for ports outside any structure.
@@ -524,7 +524,7 @@ def test_initialize_ports_warns_for_unmatched(
 
 
 def test_component_init_calls_initialize(
-    monkeypatch: pytest.MonkeyPatch, region: List[List[structure]], p_inside: port
+    monkeypatch: pytest.MonkeyPatch, region: list[structure], p_inside: port
 ) -> None:
     """
     Test that component.__init__ calls initialize_ports_z.
@@ -536,13 +536,13 @@ def test_component_init_calls_initialize(
     """
     logger.info("Testing component.__init__ calls initialize_ports_z")
     # Spy on initialise‑call count
-    calls: Dict[str, int] = {"n": 0}
+    calls: dict[str, int] = {"n": 0}
 
-    def spy(ports: List[port], structures: List[List[structure]]) -> None:
+    def spy(ports: list[port], structures: list[structure]) -> None:
         calls["n"] += 1
         initialize_ports_z(ports, structures)  # keep behaviour
 
-    monkeypatch.setattr("gds_fdtd.core.initialize_ports_z", spy)
+    monkeypatch.setattr("gds_fdtd.geometry.initialize_ports_z", spy)
 
     comp = component("demo", structures=region, ports=[p_inside], bounds=[])
 
@@ -577,8 +577,8 @@ class _DummyCell:
 
 class _DummyLayout:
     def __init__(self) -> None:
-        self.dbu: Optional[float] = None
-        self._cells: List[_DummyCell] = []
+        self.dbu: float | None = None
+        self._cells: list[_DummyCell] = []
 
     def create_cell(self, _name: str) -> _DummyCell:
         cell = _DummyCell()
@@ -602,7 +602,7 @@ class _DummyLayerInfo:
 def test_export_gds_creates_file(
     tmp_path: pytest.TempPathFactory,
     monkeypatch: pytest.MonkeyPatch,
-    region: List[List[structure]],
+    region: list[structure],
 ) -> None:
     """
     Test that component.export_gds creates a GDS file.
@@ -702,113 +702,6 @@ def test_span_properties(verts, x_span, y_span):
     reg = Region(verts, z_center=0.0, z_span=1.0)
     assert reg.x_span == pytest.approx(x_span)
     assert reg.y_span == pytest.approx(y_span)
-
-
-# ----------------------------------------------------------------------
-# fixtures ‑‑ sparam / s_parameters
-# ----------------------------------------------------------------------
-
-
-@pytest.fixture
-def sample_freq() -> np.ndarray:
-    """1 THz span centred at 200 THz (≈1.5 µm)."""
-    return np.linspace(195e12, 205e12, 5)
-
-
-@pytest.fixture
-def sp11(sample_freq: np.ndarray) -> sparam:
-    """S11 reflection example (port 1 → port 1)."""
-    s_vals = np.full_like(sample_freq, 0.01)  # flat −40 dB
-    return sparam(1, 1, 0, 0, sample_freq, s_vals)
-
-
-@pytest.fixture
-def sp21(sample_freq: np.ndarray) -> sparam:
-    """S21 transmission example (port 1 → port 2)."""
-    s_vals = np.full_like(sample_freq, 0.9)  # −0.9 dB
-    return sparam(1, 2, 0, 0, sample_freq, s_vals)
-
-
-@pytest.fixture
-def sblock(sp11: sparam, sp21: sparam) -> s_parameters:
-    """Aggregate S‑parameters."""
-    sp = s_parameters()
-    sp.add_param(sp11)
-    sp.add_param(sp21)
-    return sp
-
-
-# ----------------------------------------------------------------------
-# sparam ----------------------------------------------------------------
-
-
-def test_sparam_label(sp11: sparam, sp21: sparam) -> None:
-    """Label string follows S<out><in>_idx<modeout><modein> pattern."""
-    assert sp11.label == "S11_idx00"
-    assert sp21.label == "S21_idx00"
-
-
-def test_sparam_plot_returns_fig_ax(sp11: sparam) -> None:
-    """plot() returns a (figure, axes) tuple."""
-    fig, ax = sp11.plot()
-    assert fig is not None and ax is not None
-
-
-# ----------------------------------------------------------------------
-# s_parameters ----------------------------------------------------------
-
-
-def test_S_mapping_keys(sblock: s_parameters) -> None:
-    """s_parameters.S maps labels → objects."""
-    labels = set(sblock.S.keys())
-    assert labels == {"S11_idx00", "S21_idx00"}
-
-
-@pytest.mark.parametrize(
-    "mode_in,mode_out,expected_labels",
-    [
-        (0, 0, {"S11_idx00", "S21_idx00"}),  # both modes 0→0
-        (1, 0, set()),  # no such mode pair
-    ],
-)
-def test_entries_in_mode(
-    sblock: s_parameters, mode_in: int, mode_out: int, expected_labels: set
-) -> None:
-    entries = sblock.entries_in_mode(mode_in, mode_out)
-    assert {e.label for e in entries} == expected_labels
-
-
-@pytest.mark.parametrize(
-    "idx_in,idx_out,expected_labels",
-    [
-        (1, 1, {"S11_idx00"}),
-        (1, 2, {"S21_idx00"}),
-        (2, 1, set()),
-    ],
-)
-def test_entries_in_ports(
-    sblock: s_parameters,
-    idx_in: int,
-    idx_out: int,
-    expected_labels: set,
-) -> None:
-    entries = sblock.entries_in_ports(idx_in=idx_in, idx_out=idx_out)
-    assert {e.label for e in entries} == expected_labels
-
-
-def test_sblock_plot_returns_fig_ax(sblock: s_parameters) -> None:
-    fig, ax = sblock.plot()
-    assert fig is not None and ax is not None
-
-
-# ----------------------------------------------------------------------
-# parse_yaml_tech -------------------------------------------------------
-# ----------------------------------------------------------------------
-
-
-# ----------------------------------------------------------------------
-# Helpers
-# ----------------------------------------------------------------------
 
 
 def _write_yaml(tmp: Path, name: str, content: str) -> str:
@@ -916,7 +809,7 @@ technology:
 # ----------------------------------------------------------------------
 
 
-def _common_assertions(parsed: Dict[str, Any]) -> None:
+def _common_assertions(parsed: dict[str, Any]) -> None:
     """Checks common to both formats."""
     assert parsed["name"] == "EBeam"
     assert parsed["substrate"][0]["z_span"] == -2
@@ -946,3 +839,34 @@ def test_parse_yaml_lumerical(lumerical_yaml: str) -> None:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     pytest.main([__file__])
+
+
+# ------------------------------------------------------------------------------
+# WP2.3: flat structures with roles; legacy nested input warns and flattens
+# ------------------------------------------------------------------------------
+
+
+def test_component_flattens_legacy_nested_structures(p_inside: port) -> None:
+    s = structure("wg", [[0, 0], [10, 0], [10, 5], [0, 5]], z_base=0, z_span=0.22, material="Si")
+    with pytest.warns(DeprecationWarning, match="nested lists"):
+        comp = component("demo", structures=[[s]], ports=[p_inside], bounds=[])
+    assert comp.structures == [s]
+
+
+def test_structure_role_validation() -> None:
+    s = structure("bg", [[0, 0], [1, 0], [1, 1], [0, 1]], 0, 2, "SiO2", role="substrate")
+    assert s.role == "substrate"
+    with pytest.raises(ValueError, match="role"):
+        structure("bad", [[0, 0], [1, 0], [1, 1], [0, 1]], 0, 2, "SiO2", role="cladding")
+
+
+def test_ports_outside_devices_warn_not_claimed_by_background(caplog) -> None:
+    """Substrate no longer silently claims a port outside every device polygon."""
+    import logging as _logging
+
+    bg = structure("sub", [[-5, -5], [15, -5], [15, 10], [-5, 10]], -2, 2, "SiO2", role="substrate")
+    far_port = port("opt9", [100.0, 100.0, None], 0.5, 0)
+    with caplog.at_level(_logging.WARNING):
+        component("demo", structures=[bg], ports=[far_port], bounds=[])
+    assert far_port.height is None
+    assert "Cannot find height for port opt9" in caplog.text

@@ -1,0 +1,66 @@
+# ONE technology file for EVERY solver (owner directive, 2026-07-08).
+#
+# Each material carries every hint an engine might want:
+#   nk        - neutral constant index: beamz, the grid/mode pipeline, and
+#               quick estimates use this; it is engine-independent.
+#   tidy3d_db - tidy3d's dispersive material database entry (best accuracy
+#               on tidy3d; falls back to nk when only that is given).
+#   lum_db    - the Lumerical material database name.
+# A neutral dispersive source can replace nk via
+#   rii: {shelf: main, book: Si, page: Li-293}   (refractiveindex.info)
+# when a local copy of the database is available (GDS_FDTD_RII_DB).
+#
+# Pick the engine at run time - the technology never changes:
+#   solver = get_solver("tidy3d" | "lumerical" | "beamz")(component, tech, spec)
+
+technology:
+  name: "EBeam"
+
+  substrate:
+      z_base: 0.0
+      z_span: -2
+      material:
+        nk: 1.444
+        tidy3d_db:
+          nk: 1.444
+        lum_db:
+          model: SiO2 (Glass) - Palik
+
+  superstrate:
+      z_base: 0.0
+      z_span: 3
+      material:
+        nk: 1.444
+        tidy3d_db:
+          nk: 1.444
+        lum_db:
+          model: SiO2 (Glass) - Palik
+
+  pinrec:
+    - layer: [1, 10]
+
+  devrec:
+    - layer: [68, 0]
+
+  device:
+    - layer: [1, 0]
+      z_base: 0.0
+      z_span: 0.22
+      material:
+        nk: 3.476
+        tidy3d_db:
+          model: [cSi, Li1993_293K]
+        lum_db:
+          model: Si (Silicon) - Palik
+      sidewall_angle: 85
+
+    - layer: [4, 0]
+      z_base: .3
+      z_span: 0.4
+      material:
+        nk: 1.997
+        tidy3d_db:
+          model: [Si3N4, Luke2015PMLStable]
+        lum_db:
+          model: Si3N4 (Silicon Nitride) - Luke
+      sidewall_angle: 83

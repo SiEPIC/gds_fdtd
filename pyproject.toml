@@ -2,18 +2,18 @@
 
 
 [build-system]
-requires = ["flit_core>=3.2,<4"]
-build-backend = "flit_core.buildapi"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 # ────────────────────────── project meta ─────────────────────────
 [project]
 name            = "gds_fdtd"
-version         = "0.4.0"
+dynamic         = ["version"]
 description     = "Minimalist utilities for photonic FDTD workflows."
 authors         = [{ name = "Mustafa Hammood", email = "mustafa@siepic.com" }]
 license         = { text = "MIT" }
 readme          = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.11,<3.15"
 keywords        = [
   "python", "photonics", "fdtd", "simulation", "optics",
   "eda", "electromagnetics", "gds", "silicon-photonics"
@@ -22,26 +22,33 @@ keywords        = [
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Operating System :: OS Independent",
   "License :: OSI Approved :: MIT License",
 ]
 
 # ─────────────── core runtime (always installed) ───────────────
 dependencies = [
-  "numpy>=1.25",
+  "numpy>=1.26",
   "klayout>=0.30.1",
   "matplotlib>=3.8",
   "shapely>=2.0",
-  "PyYAML>=6.0"
+  "PyYAML>=6.0",
+  "pydantic>=2.7",
+  "pydantic-settings>=2.4"
 ]
 
 # ──────────────── optional feature / tool sets ────────────────
+[project.scripts]
+gds-fdtd = "gds_fdtd.cli:main"
+
 [project.optional-dependencies]
 
-tidy3d      = ["tidy3d>=2.8.3,<2.9"]           # enables gds_fdtd.solver_tidy3d
+tidy3d      = ["tidy3d>=2.11,<3"]              # enables gds_fdtd.solver_tidy3d (2.8.x is numpy<2/py<=3.12 only; F5)
 gdsfactory  = ["gdsfactory>=9.5.7,<10"]
+beamz       = ["beamz>=0.4.3"]                 # open-source JAX FDTD engine
 prefab      = ["prefab>=1.2.0"]
 siepic      = ["SiEPIC>=0.5.25"]
 
@@ -50,20 +57,31 @@ dev = [
   "wheel>=0.42.0",
   "build>=1.0.0",
   "twine>=4.0.2",
-  "bump2version>=1.0.1",
   "watchdog>=3.0.0",
   "pytest>=8.1",
   "pytest-cov>=5.0",
   "coverage",
   "ruff>=0.4.3",
+  "codespell>=2.3",  # same spell check the CI prek hooks run
+  "mypy>=1.10",
+  "h5py>=3.10",  # SMatrix HDF5 I/O tests (optional at runtime)
+]
+
+docs = [
   "sphinx>=7.0",
   "sphinx-rtd-theme>=1.2.0",
   "docutils<0.23",
   "sphinx-toggleprompt>=0.1.0",
   "sphinx-copybutton>=0.5.2",
+  "myst-parser>=3.0",  # markdown docs (adding_a_solver, remote_compute)
   "sphinx-design>=0.5.0",
-  "furo>=2024.08.06"
+  "furo>=2024.08.06",
 ]
+
+# ─────────────── solver plugin entry points (WP3.1e) ───────────────
+[project.entry-points."gds_fdtd.solvers"]
+tidy3d    = "gds_fdtd.solvers.tidy3d:Tidy3DSolver"
+lumerical = "gds_fdtd.solvers.lumerical:LumericalSolver"
 
 # ───────────────────────── project links ────────────────────────
 [project.urls]
@@ -72,8 +90,69 @@ Repository  = "https://github.com/SiEPIC/gds_fdtd"
 "Bug Tracker" = "https://github.com/SiEPIC/gds_fdtd/issues"
 
 # ─────────────────────────── tooling ────────────────────────────
-[tool.pytest.ini_options]
-# addopts = "--cov=."  # Disabled - pytest-cov not available
+[tool.hatch.version]
+source = "vcs"
 
-[tool.flake8]
-max-line-length = 88
+[tool.hatch.build.targets.wheel]
+packages = ["src/gds_fdtd"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+markers = [
+  "physics: runs a real solver engine locally (beamz) - slow but free",
+  "gpu: requires a CUDA GPU",
+  "cloud: spends cloud credits (tidy3d FlexCredits)",
+  "licensed: needs a Lumerical license + lumapi",
+  "slow: long-running (>30 s)",
+]
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+# Two honest numbers (v0.5 release sprint, 2026-07-08, measured in CI):
+#   base profile (no engine extras installed): 75.28% - engine adapters
+#     genuinely cannot execute here; this is the floor below.
+#   all-extras (the full package): 81.05% - the CI all-extras leg enforces
+#     >= 80 via --cov-fail-under=80, and codecov reports THIS number.
+# Ratchet upward only.
+fail_under = 75
+exclude_also = [
+  "pragma: no cover - requires (license|cloud|gpu)",
+]
+filterwarnings = [
+  "error::DeprecationWarning:gds_fdtd.*",
+]
+
+[tool.codespell]
+# TE/TM = transverse electric/magnetic (photonics); OD/TE show up in SVG path data
+ignore-words-list = "TE,te,TETM,tetm,subtrate,Subtrate"  # Subtrate: intentional legacy-typo tolerance in _is_background
+skip = "*.svg,*.gds,*.lock,*.ipynb,docs/_build,docs/_autosummary,MODERNIZATION_PLAN.md"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+# examples/ are legacy and get rewritten in WP6.1; they join lint scope there.
+extend-exclude = ["examples"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "A", "C4"]
+# Temporary ignores — each is scheduled for a proper fix in MODERNIZATION_PLAN.md.
+# Do NOT silently fix these in unrelated PRs; remove each ignore in its owning WP.
+ignore = [
+  "E501",  # long comments/strings; wrapped progressively as files are touched in Phase 1/2
+  "B006",  # mutable default arguments — fixed properly in WP1.2 (bug B17)
+  "E722",  # bare except in solver_lumerical — hardened in WP3.2
+  "B904",  # raise-without-from — exception hierarchy lands in WP7.6
+  "F841",  # unused vars incl. catalogued bugs B8/B11/B13 — fixed in Phase 1, not here
+  "UP031", # %-formatting in .dat writer — rewritten in WP2.4b (numeric behavior risk)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011", "A003"]
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+# no python_version pin: analyze under the running interpreter (numpy 2.x stubs need >=3.12)
+ignore_missing_imports = true
+check_untyped_defs = true

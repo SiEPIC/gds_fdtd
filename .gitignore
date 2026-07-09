@@ -136,3 +136,33 @@ examples/private/
 
 .vscode/
 bin/act
+
+# generated example outputs
+examples/**/*.s2p
+examples/**/*.h5
+examples/**/*.png
+examples/**/*.fsp
+examples/**/*_setup.lsf
+
+# beamz raster cache
+.beamz_cache/
+
+# solver working directories created by running examples from the repo root
+crossing_te1550/
+directional_coupler_te1550/
+*_modeler.hdf5
+mode_solver.hdf5
+*_with_extensions.gds
+docs/_autosummary/
+
+# generated solver outputs must never be committed (1.1 GB of .fsp once was)
+/*.fsp
+/*_sparams/
+/crossing_te1550_sparams/
+/gds_fdtd_t3d_*/
+/*_geometry.png
+/*_fields.png
+/*_sparams.png
+/three_engine_agreement.png
+/*.dat
+/*.lsf

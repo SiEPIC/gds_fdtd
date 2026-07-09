@@ -1,31 +1,42 @@
-# %%
+"""Convert a gdsfactory component and set up any solver (gdsfactory >= 9).
+
+The converter puts port planes ON the simulation bounds (stubs reach the PML)
+and reads ports/polygons in um straight from the gf 9 API.
 """
-@author: Mustafa Hammood
-Build a tidy3d simulation from gdsfactory cell.
-"""
-import gds_fdtd as gtd
-import gdsfactory as gf
+
 import os
-from gds_fdtd.simprocessor import from_gdsfactory, make_sim
 
+import gdsfactory as gf
 
-if __name__ == '__main__':
-    tech_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "tech.yaml")
-    technology = gtd.core.parse_yaml_tech(tech_file_path)
+from gds_fdtd.core import parse_yaml_tech
+from gds_fdtd.layout.gdsfactory import from_gdsfactory
+from gds_fdtd.solvers import get_solver
+from gds_fdtd.spec import SimulationSpec
 
-    device = from_gdsfactory(c=gf.components.bend_circular(), tech=technology)
-    simulation = make_sim(
-        device=device,
-        in_port=device.ports[0],
-        z_span=2.,
-        symmetry=(0, 0, 1),
-        mode_index=0,
-        grid_cells_per_wvl=6,
+if __name__ == "__main__":
+    gf.gpdk.PDK.activate()  # gdsfactory >= 9.44 requires an active PDK
+
+    here = os.path.dirname(os.path.dirname(__file__))
+    tech = parse_yaml_tech(os.path.join(here, "tech.yaml"))
+
+    component = from_gdsfactory(gf.components.bend_circular(), tech)
+    print("ports:", [(p.name, p.center, p.direction) for p in component.ports])
+
+    solver = get_solver("lumerical")(
+        component,
+        technology=tech,
+        spec=SimulationSpec(z_min=-1.0, z_max=1.11),
     )
-    # %%
-    simulation.upload()
-    # run the simulation. CHECK THE SIMULATION IN THE UI BEFORE RUNNING!
-    #simulation.execute()
-    #  visualize the results
-    #simulation.visualize_results()
-# %%
+
+    # STANDARD VISUALIZATION STEP 1: geometry, ports, simulation region
+    from gds_fdtd.plotting import plot_component
+
+    plot_component(component, spec=solver.spec, savefig=f"{component.name}_geometry.png")
+    artifacts = solver.build()  # offline .lsf + GDS
+    print("setup script written:", artifacts.files["lsf"])
+    smatrix = solver.run()  # requires a Lumerical license
+    #
+    # STEP 3: S-parameters   |   STEP 4: field profile
+    from gds_fdtd.plotting import plot_smatrix
+    plot_smatrix(smatrix, kind="db")[0].savefig(f"{component.name}_sparams.png", dpi=150)
+    solver.plot_fields(axis="z", savefig=f"{component.name}_fields.png")

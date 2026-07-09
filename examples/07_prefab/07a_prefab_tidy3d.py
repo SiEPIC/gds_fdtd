@@ -1,44 +1,48 @@
-# %%!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""Lithography-aware simulation: PreFab prediction -> tidy3d.
+
+load_device() returns the component and writes derived GDS files (the input is
+never modified); prefab_model= adds a <cell>_predicted.gds fabrication
+prediction. Requires: pip install gds_fdtd[prefab,tidy3d] + PreFab account.
 """
-@author: Mustafa Hammood
-"""
-import gds_fdtd as gtd
-import tidy3d as td
-from gds_fdtd.lyprocessor import load_cell
-from gds_fdtd.core import parse_yaml_tech
-from gds_fdtd.simprocessor import make_t3d_sim, load_component_from_tech
+
 import os
 
+from gds_fdtd.core import parse_yaml_tech
+from gds_fdtd.lyprocessor import load_cell, load_device
+from gds_fdtd.simprocessor import load_component_from_tech
+from gds_fdtd.solvers import get_solver
+from gds_fdtd.spec import SimulationSpec
+
 if __name__ == "__main__":
+    here = os.path.dirname(os.path.dirname(__file__))
+    tech = parse_yaml_tech(os.path.join(here, "tech.yaml"))
+    gds = os.path.join(here, "devices.gds")
 
-    tech_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "tech_tidy3d.yaml")
-    technology = parse_yaml_tech(tech_path)
+    # nominal geometry
+    component = load_device(gds, tech=tech, top_cell="bragg_te1550", output_dir=os.getcwd())
 
-    # Define the path to the GDS file
-    file_gds = os.path.join(os.path.dirname(os.path.dirname(__file__)), "devices.gds")
+    # lithography-predicted geometry (runs the PreFab model, writes
+    # bragg_te1550_predicted.gds into output_dir):
+    # component = load_device(gds, tech=tech, top_cell="bragg_te1550",
+    #                         prefab_model="ANT_NanoSOI_ANF1_d10", output_dir=os.getcwd())
+    # predicted_cell, _ = load_cell(os.path.join(os.getcwd(), "bragg_te1550_predicted.gds"))
+    # component = load_component_from_tech(cell=predicted_cell, tech=tech)
 
-    cell, layout = load_cell(file_gds, top_cell='bragg_te1550', prefab="ANT_NanoSOI_ANF1_d10")
-    component = load_component_from_tech(cell=cell, tech=technology)
-    simulation = make_t3d_sim(
-        c=component,
-        in_port=component.ports[0],
-        wavl_min=1.4,
-        wavl_max=1.6,
-        wavl_pts=101,
-        grid_cells_per_wvl=6,
-        symmetry=(
-            0,
-            0,
-            1,
-        ),  # ensure structure is symmetric across symmetry axis before triggering this!
-        z_span=3,
+    solver = get_solver("tidy3d")(
+        component,
+        technology=tech,
+        spec=SimulationSpec(wavelength_start=1.4, wavelength_end=1.6, wavelength_points=101,
+                            mesh=8, z_min=-1.0, z_max=1.11, symmetry=(0, 0, 1)),
     )
 
-    simulation.upload()
-    # run the simulation. CHECK THE SIMULATION IN THE UI BEFORE RUNNING!
-    simulation.execute()
-    #  visualize the results
-    simulation.visualize_results()
+    # STANDARD VISUALIZATION STEP 1: geometry, ports, simulation region
+    from gds_fdtd.plotting import plot_component
 
-# %%
+    plot_component(component, spec=solver.spec, savefig=f"{component.name}_geometry.png")
+    solver.build()
+    # smatrix = solver.run()  # SPENDS FLEXCREDITS
+    #
+    # STEP 3: S-parameters   |   STEP 4: field profile
+    # from gds_fdtd.plotting import plot_smatrix
+    # plot_smatrix(smatrix, kind="db")[0].savefig(f"{component.name}_sparams.png", dpi=150)
+    # solver.plot_fields(axis="z", savefig=f"{component.name}_fields.png")

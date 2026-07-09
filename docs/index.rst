@@ -21,12 +21,15 @@ The sections below will show you how to install and use the package.
    :caption: Contents:
 
    architecture
+   adding_a_solver
    solvers
    simulations
    sparameters
    multimodal
    technology
    examples
+   remote_compute
+   self_hosted_runner
    modules
 
 

@@ -1,71 +1,90 @@
 name: Release
 
+# The ONLY publish path. Releasing = `git tag vX.Y.Z && git push --tags`.
+# Version comes from the tag via hatch-vcs; there is nothing to bump.
+#
+# OWNER SETUP (one-time, before first use): register this repo as a
+# Trusted Publisher on PyPI (project gds_fdtd, workflow release.yml,
+# environment pypi) and create the `pypi` environment in repo settings.
+# Then delete the legacy PYPI_API_TOKEN secret.
+
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ["v*"]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  release:
+  check-ci:
+    name: require green CI on tagged commit
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v5
+      - name: Assert the tagged commit passed CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # The tagged commit must have a successful `pass` check run (from ci.yml).
+          conclusion=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs" \
+            -q '[.check_runs[] | select(.name == "pass")] | max_by(.completed_at) | .conclusion' || echo "missing")
+          echo "CI 'pass' check conclusion for ${GITHUB_SHA}: ${conclusion}"
+          if [ "${conclusion}" != "success" ]; then
+            echo "::error::Tagged commit has no successful CI 'pass' check. Push the commit to main and let CI finish before tagging."
+            exit 1
+          fi
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+  build:
+    name: build (sdist + wheel, inspected)
+    needs: check-ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # hatch-vcs needs tags to derive the version
+      - uses: hynek/build-and-inspect-python-package@d44ca7d91762de7a7d5436ddae667c6da6d1c3df # v2
 
-    - name: Install dependencies
-      run: |
-        pip install --upgrade pip
-        pip install build twine
-        pip install .[dev]
+  publish-pypi:
+    name: publish to PyPI (trusted publishing + attestations)
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/gds_fdtd/
+    permissions:
+      id-token: write
+    steps:
+      - name: Download built dists
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: Packages
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
 
-    - name: Run tests
-      run: |
-        pytest --cov=gds_fdtd tests/
-
-    - name: Build documentation
-      run: |
-        cd docs
-        make html
-
-    - name: Build package
-      run: |
-        python -m build
-
-    - name: Create GitHub Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        body: |
-          ## Changes in this Release
-          
-          Please see the [CHANGELOG.md](https://github.com/SiEPIC/gds_fdtd/blob/main/CHANGELOG.md) for detailed changes.
-          
-          ## Installation
-          
-          ```bash
-          pip install gds_fdtd==${{ github.ref_name }}
-          ```
-          
-          ## Documentation
-          
-          Documentation is available at: https://siepic.github.io/gds_fdtd/
-        draft: false
-        prerelease: false
-
-    - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
-        verbose: true 
+  github-release:
+    name: create GitHub release
+    needs: publish-pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download built dists
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: Packages
+          path: dist
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          enable-cache: false # publishing job: no cache-poisoning surface
+      - name: Generate SBOM (CycloneDX, from the released sdist)
+        run: |
+          python3 -m venv /tmp/sbom-env
+          /tmp/sbom-env/bin/pip install --quiet dist/*.whl
+          uvx --from cyclonedx-bom cyclonedx-py environment /tmp/sbom-env -o sbom.cdx.json
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          files: |
+            dist/*
+            sbom.cdx.json
+          generate_release_notes: true
