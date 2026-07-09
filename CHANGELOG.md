@@ -85,6 +85,9 @@ validated live on all three. 73 commits (PR [#23](https://github.com/SiEPIC/gds_
   port to the superstrate (F4).
 - 646 lines of dead code removed (write-only field-monitor plumbing,
   uncalled log-metrics chains, legacy `sparam`/`s_parameters`).
+- Example `09_smatrix` no longer requires the optional h5py on a clean
+  install; library modules log instead of printing; shipped docstrings
+  scrubbed of internal project references (pre-PyPI polish audit).
 
 ### Removed
 - Fake-coverage test that exec-compiled `pass` statements to inflate
