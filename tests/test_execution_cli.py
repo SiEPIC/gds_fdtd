@@ -197,3 +197,55 @@ def test_registered_backend_satisfies_protocol():
 
     assert isinstance(LocalBackend(), ExecutionBackend)
     assert isinstance(SubprocessBackend(), ExecutionBackend)
+
+
+def test_cli_run_success_and_convert_chain(tmp_path, capsys):
+    """run -> npz, then convert npz -> dat -> snp -> h5 exercises every branch."""
+    pytest.importorskip("h5py")
+    path = _job().to_file(tmp_path / "job.json")
+    out = tmp_path / "out"
+    assert main(["run", str(path), "--out", str(out)]) == EXIT_OK
+    npz = out / "smatrix.npz"
+    assert npz.exists()
+    assert main(["convert", str(npz), "--to", "dat"]) == EXIT_OK
+    assert main(["convert", str(out / "smatrix.dat"), "--to", "npz"]) == EXIT_OK
+    assert main(["convert", str(npz), "--to", "h5"]) == EXIT_OK
+    # touchstone requires a COMPLETE matrix: clifake leaves reflections NaN,
+    # so snp conversion must refuse; a full recorded matrix converts fine
+    assert main(["convert", str(npz), "--to", "snp"]) != EXIT_OK
+    import shutil
+
+    shutil.copy(TESTS_DIR / "recorded" / "straight_mesh10_tidy3d.npz", tmp_path / "full.npz")
+    assert main(["convert", str(tmp_path / "full.npz"), "--to", "snp"]) == EXIT_OK
+    assert (tmp_path / "full.s2p").exists()
+    capsys.readouterr()
+
+
+def test_cli_convert_rejects_unknown_extension(tmp_path, capsys):
+    bad = tmp_path / "results.xyz"
+    bad.write_text("nope")
+    assert main(["convert", str(bad), "--to", "npz"]) == EXIT_INVALID
+    capsys.readouterr()
+
+
+def test_cli_solvers_lists_registry(capsys):
+    assert main(["solvers"]) == EXIT_OK
+    out = capsys.readouterr().out
+    assert "clifake" in out and "lumerical" in out
+
+
+def test_cli_solvers_json(capsys):
+    import json
+
+    assert main(["--json", "solvers"]) == EXIT_OK
+    data = json.loads(capsys.readouterr().out)
+    assert "clifake" in data
+
+
+def test_cli_run_json_reports_hash(tmp_path, capsys):
+    path = _job().to_file(tmp_path / "job.json")
+    import json
+
+    assert main(["--json", "run", str(path), "--out", str(tmp_path / "o")]) == EXIT_OK
+    rec = json.loads(capsys.readouterr().out)
+    assert len(rec["job_hash"]) == 64 and rec["solver"] == "clifake"

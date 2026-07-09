@@ -109,10 +109,10 @@ markers = [
 branch = true
 
 [tool.coverage.report]
-# measured honest branch coverage 2026-07-08: 53% (base profile,
-# `pytest --cov=gds_fdtd --cov-branch tests`); set 1 point under for
-# cross-platform variance. Ratchet +1 per release toward 92, never down.
-fail_under = 52
+# measured honest branch coverage 2026-07-08 (v0.5 release sprint): 80.04%
+# on the base profile (`pytest --cov=gds_fdtd --cov-branch tests`); set 1
+# point under for cross-platform variance. Ratchet upward only.
+fail_under = 79
 exclude_also = [
   "pragma: no cover - requires (license|cloud|gpu)",
 ]
