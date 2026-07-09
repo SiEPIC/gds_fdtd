@@ -424,6 +424,19 @@ Jul–Aug 2025: 32, then dormant since Sep 2025). Four identities:
   **PUSH BLOCKED:** HTTPS uploads >~100 KB stall through the current VPN (chunked AND
   buffered POSTs both time out; reads fine; no SSH keys) — commits queued locally with a
   background retry loop; lands the moment the uplink clears.
+- **v0.5 RELEASE PREP (2026-07-08 pm, owner directive):** (1) **coverage 63% → 80.04%**
+  honest branch coverage; fail_under ratcheted 52 → 79. New offline batteries: recording
+  lumapi mock (WP7.1.3 — legacy Lumerical setup+run on a RECORDED real .dat; F6/F7
+  regression-tested), permissive tidy3d fake (legacy scene construction + modern adapter
+  offline lifecycle; tidy3d.web access = assertion failure), sparams on recorded data,
+  CLI convert chain + exit codes, SubprocessBackend timeout/cancel, simprocessor material
+  branches, core shims, lyprocessor error paths. Found en route: pairing tech_unified with
+  the TESTS escalator GDS reproduces F4 (SiN on (1,5) there) — mocked tests pair with the
+  examples GDS. (2) CHANGELOG.md: honest 0.5.0 entry + correction note on the aspirational
+  0.4.0. (3) Docs: myst-parser wired, md pages in toctree, autodoc engine mocks, sphinx
+  builds ZERO warnings. (4) PR #23 title+description rewritten (small API payloads pass
+  the broken uplink). (5) Release = tag v0.5.0 after merge (hatch-vcs). PUSH still blocked
+  (uploads >~100 KB stall through VPN); 7-commit queue + retry monitor armed.
 - **FINDING F14 (2026-07-08, found by validating a NEW example before shipping it):**
   beamz 0.4.3 mis-normalizes the modal wave separation on **y-normal monitors**: a bend
   (one y-facing port) returned thru −36 dB while its field plot showed clean propagation;
