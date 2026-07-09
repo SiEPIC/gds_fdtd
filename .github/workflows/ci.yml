@@ -75,9 +75,15 @@ jobs:
         if: matrix.profile == 'all-extras'
         run: uv sync --locked --all-extras
       - name: Run tests with coverage
-        run: uv run pytest -m "not physics and not gpu and not cloud and not licensed" --cov=gds_fdtd --cov-branch --cov-report=xml tests
+        # base profile floor comes from pyproject (75); the all-extras leg is
+        # the FULL package and must hold the release bar of >= 80%
+        run: >
+          uv run pytest -m "not physics and not gpu and not cloud and not licensed"
+          --cov=gds_fdtd --cov-branch --cov-report=xml
+          ${{ matrix.profile == 'all-extras' && '--cov-fail-under=80' || '' }}
+          tests
       - name: Upload coverage to Codecov
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13' && matrix.profile == 'base'
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13' && matrix.profile == 'all-extras' # badge = the full package
         uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
