@@ -14,7 +14,7 @@ import tidy3d as td
 from tidy3d.plugins.smatrix import ModalComponentModeler, Port
 
 from gds_fdtd.logging_config import log_simulation_complete, log_simulation_start
-from gds_fdtd.solver import fdtd_solver
+from gds_fdtd.solvers._engine_base import fdtd_solver
 from gds_fdtd.sparams import sparameters
 
 
