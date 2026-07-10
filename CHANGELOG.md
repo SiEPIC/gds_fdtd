@@ -29,6 +29,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Per SemVer this is a pre-1.0 minor bump (0.5 → 0.6); 0.5 shipped the
   modern `get_solver` API and moved all docs/examples to it.
 
+- The legacy dict-flavored `gds_fdtd.core.technology` class (and its
+  `from gds_fdtd import technology` re-export) was removed. Use the validated
+  `gds_fdtd.technology.Technology` model (`Technology.from_yaml(...)`); its
+  `.to_legacy_dict()` reproduces the old dict shape if you need it. Nothing
+  inside the package used the class.
+- Dead code: the internal Tidy3D engine's unused results path
+  (`run`/`get_resources`/`get_results`/`get_log`/`visualize_field_monitors`
+  and the `sparameters` conversion) was deleted. The supported `Tidy3DSolver`
+  adapter runs the cloud job and builds the canonical `SMatrix` itself; the
+  engine only builds the scene. This also removes the engine's last dependency
+  on the legacy `sparams` module.
 
 ### Added
 - Seeded atheris fuzzing of the technology-YAML and INTERCONNECT `.dat`

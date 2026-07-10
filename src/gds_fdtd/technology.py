@@ -287,7 +287,7 @@ class Technology(BaseModel):
             raise ValueError(f"Invalid technology file {file_path}: {e}") from e
 
     def to_legacy_dict(self) -> dict[str, Any]:
-        """Exactly the dict shape core.technology.to_dict() produced (schema v1)."""
+        """The schema-v1 dict shape the solver adapters and simprocessor consume."""
         return {
             "name": self.name,
             "substrate": [
