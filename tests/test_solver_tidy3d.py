@@ -1,4 +1,4 @@
-"""Offline tests for gds_fdtd.solver_tidy3d (WP1.5: B9, B10, B11).
+"""Offline tests for the Tidy3D engine (gds_fdtd.solvers._tidy3d_engine).
 
 These construct the full solver setup — including the td.Simulation and the
 ComponentModeler — WITHOUT any network access or cloud credits. Skipped when
@@ -122,7 +122,7 @@ def test_web_submodule_resolves_in_fresh_interpreter():
     # dynamic, unmasked: fresh interpreter imports the solver module only, then
     # verifies the exact import run() performs is resolvable
     code = (
-        "import gds_fdtd.solver_tidy3d\n"
+        "import gds_fdtd.solvers._tidy3d_engine\n"
         "import tidy3d.web as web\n"
         "assert callable(web.run)\n"
         "print('web-ok')\n"
