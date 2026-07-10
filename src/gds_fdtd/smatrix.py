@@ -26,6 +26,11 @@ import numpy as np
 
 C_M_S = 299792458.0  # speed of light in m/s
 
+# Upper bound on the dense S-matrix element count (F·P²·M²). ~1.6 GB as
+# complex128 — orders of magnitude above any realistic device, but blocks the
+# unbounded allocation a corrupt mode/port index would otherwise cause.
+_MAX_SMATRIX_ELEMENTS = 100_000_000
+
 
 @dataclass
 class SMatrix:
@@ -109,6 +114,17 @@ class SMatrix:
         assert f_ref is not None  # entries is non-empty (checked above)
         order = np.argsort(f_ref)
         P, M, F = len(names), max_mode, f_ref.size
+        # Guard against corrupt port/mode indices (e.g. from a malformed .dat)
+        # driving an unbounded dense allocation: the array is (F, P, P, M, M).
+        # A realistic S-matrix is far below this cap; a mode id of ~10**6 would
+        # otherwise attempt a multi-TiB allocation (found by fuzzing).
+        n_elements = F * P * P * M * M
+        if n_elements > _MAX_SMATRIX_ELEMENTS:
+            raise ValueError(
+                f"refusing to build an S-matrix of {n_elements:,} elements "
+                f"(freqs={F}, ports={P}, modes={M}); the port or mode indices "
+                "look corrupt — check the input."
+            )
         s = np.full((F, P, P, M, M), np.nan + 0j, dtype=complex)
         for in_p, out_p, m_in, m_out, _f, s_c in entries:
             i, o = names.index(str(in_p)), names.index(str(out_p))

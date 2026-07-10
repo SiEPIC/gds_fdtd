@@ -227,3 +227,12 @@ def test_plot_component_geometry():
     texts = {t.get_text() for t in ax.texts}
     assert {"opt1", "opt2"} <= texts  # port names annotated
     del layout
+
+
+def test_from_entries_rejects_corrupt_indices():
+    """A corrupt mode/port index (e.g. from a malformed .dat) must raise a
+    clean ValueError, never attempt an unbounded allocation (found by the
+    fuzz/fuzz_dat.py target: mode id ~10**6 tried to allocate 623 TiB)."""
+    huge = [("opt1", "opt2", 1, 986_161, F, np.zeros(F.size, dtype=complex))]
+    with pytest.raises(ValueError, match="corrupt"):
+        SMatrix.from_entries(huge)

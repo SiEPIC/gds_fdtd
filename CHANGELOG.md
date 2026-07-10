@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Continuous fuzzing via ClusterFuzzLite + atheris (`fuzz/`), with fuzz
+  targets on the technology-YAML and INTERCONNECT `.dat` parsers; runs on
+  PRs that touch the library.
+- Release artifacts are now Sigstore-signed (keyless, GitHub OIDC); the
+  `.sigstore` bundles are attached to each GitHub Release.
+
+### Fixed
+- `SMatrix.from_entries` (and therefore `SMatrix.from_dat`) rejected a
+  corrupt mode/port index only by attempting an unbounded allocation — a
+  malformed `.dat` claiming a ~10**6 mode id tried to allocate 623 TiB and
+  raised `MemoryError`. It now raises a clean `ValueError` (found by the new
+  `.dat` fuzz target).
+
+### Security
+- Branch protection enabled on `main`; solo-friendly (PR + green CI +
+  linear history required, force-pushes blocked).
+
 ## [0.5.0] - 2026-07-08
 
 The solver-agnostic release: one component, one technology file, any engine —

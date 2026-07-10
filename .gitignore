@@ -166,3 +166,8 @@ docs/_autosummary/
 /three_engine_agreement.png
 /*.dat
 /*.lsf
+
+# fuzzing artifacts (atheris/libFuzzer)
+crash-*
+.fuzz-corpus/
+fuzz/corpus/
