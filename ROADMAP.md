@@ -91,12 +91,13 @@ low only because those extras aren't in the base test env) and in the legacy
 The released 0.5.0 is clean at the surface; the depth to attack is the
 **legacy `solver_*` layer** the modern adapters wrap.
 
-- **Flatten the legacy wrap:** `solvers/tidy3d.py` and `solvers/lumerical.py`
-  delegate into 400–600-line `solver_tidy3d.py` / `solver_lumerical.py`.
-  Fold the still-used logic into the adapters and delete the wrapper modules
-  (they are the last home of the deprecated class API — schedule with the
-  v1.0 shim removal, but the internal cleanup can start now behind the
-  stable adapter surface).
+- **Flatten the legacy wrap:** ✅ DONE (0.6.0). `solver_lumerical.py`
+  (pure duplicate) and `solver_tidy3d.py` (deprecated alias) were removed;
+  the base `solver.py` moved to the internal `solvers/_engine_base.py` and
+  the public `gds_fdtd.solver` module was removed. The Tidy3D scene-building
+  engine is now internal (`solvers/_tidy3d_engine`), and the supported
+  surface is `solvers/` (`get_solver` + the adapters) only. ~1050 lines of
+  pre-0.5 public API deleted; documented as a breaking 0.6.0 change.
 - **Errors everywhere:** audit every `raise` in user-input paths → the
   `GdsFdtdError` hierarchy; no bare `except:`.
 - **Types:** extend `mypy --strict` module-by-module beyond the current
