@@ -164,7 +164,7 @@ class fdtd_solver:
                     f"Invalid port object in port_input: {p!r}. Expected component "
                     "port objects (or None for all ports)."
                 )
-        # WP3.1a: all numeric settings are validated through one SimulationSpec;
+        # all numeric settings are validated through one SimulationSpec;
         # the legacy attribute surface below is kept identical (mutable lists).
         self.spec = SimulationSpec(
             wavelength_start=wavelength_start,
@@ -262,7 +262,7 @@ class fdtd_solver:
             # Fallback to default values if component doesn't have bbox
             self.center = [0.0, 0.0, (self.z_max + self.z_min) / 2]
             self.span = [5.0, 5.0, self.z_max - self.z_min]
-            print(
+            self.logger.info(
                 "Warning: Could not determine component geometry, using default simulation domain"
             )
 
@@ -329,7 +329,7 @@ class fdtd_solver:
     def _validate_simulation_parameters(self) -> None:
         """Re-validate the (possibly mutated) legacy attributes through SimulationSpec.
 
-        WP3.1a: the hand-written checks moved into gds_fdtd.spec.SimulationSpec
+        The hand-written checks moved into gds_fdtd.spec.SimulationSpec
         validators. Rebuilding the spec here keeps setup()-time validation
         meaningful for callers that mutated the legacy list attributes after
         construction, and refreshes self.spec to match.
@@ -402,42 +402,39 @@ class fdtd_solver:
         log_dict(self.logger, summary_data, "Simulation Configuration")
 
         # Console output (formatted for readability)
-        print("\n" + "=" * 60)
-        print("FDTD Simulation Summary")
-        print("=" * 60)
-        print(f"Component: {self.component.name}")
-        print(f"Technology: {getattr(self.tech, 'name', 'Custom')}")
-        print(f"Solver type: {self.__class__.__name__}")
-        print(f"Working directory: {self.working_dir}")
-        print()
-        print("Simulation Parameters:")
-        print(f"  Wavelength range: {self.wavelength_start} - {self.wavelength_end} μm")
-        print(f"  Wavelength points: {self.wavelength_points}")
-        print(
+        self.logger.info("\n" + "=" * 60)
+        self.logger.info("FDTD Simulation Summary")
+        self.logger.info("=" * 60)
+        self.logger.info(f"Component: {self.component.name}")
+        self.logger.info(f"Technology: {getattr(self.tech, 'name', 'Custom')}")
+        self.logger.info(f"Solver type: {self.__class__.__name__}")
+        self.logger.info(f"Working directory: {self.working_dir}")
+        self.logger.info("Simulation Parameters:")
+        self.logger.info(f"  Wavelength range: {self.wavelength_start} - {self.wavelength_end} μm")
+        self.logger.info(f"  Wavelength points: {self.wavelength_points}")
+        self.logger.info(
             f"  Simulation domain: {self.span[0]:.1f} × {self.span[1]:.1f} × {self.span[2]:.1f} μm"
         )
-        print(
+        self.logger.info(
             f"  Domain center: ({self.center[0]:.1f}, {self.center[1]:.1f}, {self.center[2]:.1f}) μm"
         )
-        print(f"  Mesh resolution: {self.mesh} cells/wavelength")
-        print(f"  Run time factor: {self.run_time_factor}")
-        print()
-        print("Port Configuration:")
-        print(f"  Total ports: {len(self.fdtd_ports)}")
-        print(f"  Active ports: {len(self._get_active_ports())}")
-        print(f"  Port dimensions: {self.width_ports} × {self.depth_ports} μm")
-        print(f"  Modes per port: {self.modes}")
-        print()
-        print("Boundary Conditions:")
-        print(f"  Boundaries: {self.boundary}")
-        print(f"  Symmetry: {self.symmetry}")
-        print("=" * 60 + "\n")
+        self.logger.info(f"  Mesh resolution: {self.mesh} cells/wavelength")
+        self.logger.info(f"  Run time factor: {self.run_time_factor}")
+        self.logger.info("Port Configuration:")
+        self.logger.info(f"  Total ports: {len(self.fdtd_ports)}")
+        self.logger.info(f"  Active ports: {len(self._get_active_ports())}")
+        self.logger.info(f"  Port dimensions: {self.width_ports} × {self.depth_ports} μm")
+        self.logger.info(f"  Modes per port: {self.modes}")
+        self.logger.info("Boundary Conditions:")
+        self.logger.info(f"  Boundaries: {self.boundary}")
+        self.logger.info(f"  Symmetry: {self.symmetry}")
+        self.logger.info("=" * 60 + "\n")
 
     @property
     def sparameters(self) -> sparameters:
         """Get the S-parameters results."""
         if self._sparameters is None:
-            print("S-parameters results not available. Please run the simulation first.")
+            self.logger.info("S-parameters results not available. Please run the simulation first.")
         return self._sparameters
 
     def setup(self) -> None:

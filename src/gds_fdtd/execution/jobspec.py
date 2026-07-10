@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-Serializable simulation jobs (WP7.3). A JobSpec is everything needed to run
+Serializable simulation jobs. A JobSpec is everything needed to run
 one simulation, as JSON: layout SOURCE references (GDS path + top cell +
 technology YAML), the SimulationSpec, and the solver registry name.
 

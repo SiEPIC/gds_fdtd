@@ -1,5 +1,5 @@
 """
-refractiveindex.info database support (WP2.2, owner-requested).
+refractiveindex.info database support.
 
 Reads material pages from a LOCAL copy of the refractiveindex.info database
 (https://github.com/polyanskiy/refractiveindex.info-database) — the DB is

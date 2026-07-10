@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-Package configuration (WP7.6): one pydantic-settings model, environment
+Package configuration: one pydantic-settings model, environment
 prefix ``GDS_FDTD_``. Nothing here reads config files or the network — env
 vars only, so behavior on a laptop, in CI, and inside a container is the
 same mechanism.

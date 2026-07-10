@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-Waveguide mode solving (WP5.2b) — the second Tier-B enabler. Kernel-level
+Waveguide mode solving — the second Tier-B enabler. Kernel-level
 engines need mode profiles at port cross-sections to synthesize sources and
 decompose recorded fields; ``ModeSolver`` is the backend-agnostic protocol
 (raw permittivity cross-section in, ``Mode`` list out) and

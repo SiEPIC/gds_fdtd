@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-Exception hierarchy (WP7.6). Every gds_fdtd-raised error derives from
+Exception hierarchy. Every gds_fdtd-raised error derives from
 ``GdsFdtdError`` so applications can catch the whole package with one
 except-clause — while each subclass ALSO derives from the builtin type the
 code historically raised (ValueError, RuntimeError, ...), so no existing

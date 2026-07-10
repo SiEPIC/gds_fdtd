@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-Command-line interface (WP7.3). Every simulation is a JSON JobSpec; every
+Command-line interface. Every simulation is a JSON JobSpec; every
 subcommand consumes one (except ``convert``/``solvers``).
 
     gds-fdtd solvers                        # what engines are available here

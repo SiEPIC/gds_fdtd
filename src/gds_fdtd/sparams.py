@@ -272,7 +272,7 @@ class sparameters:
             logging.error("No valid data to visualize")
 
     def to_smatrix(self, name: str | None = None):
-        """Convert to the canonical gds_fdtd.smatrix.SMatrix (WP2.4b).
+        """Convert to the canonical gds_fdtd.smatrix.SMatrix.
 
         Magnitude/phase entries become complex amplitudes; port names are
         carried through as-is; unmeasured paths stay NaN in the result.

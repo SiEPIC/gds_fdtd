@@ -1,14 +1,13 @@
 """
 gds_fdtd simulation toolbox.
 
-Tidy3DSolver: the tidy3d (>=2.11) adapter on the Phase-3 Solver contract
-(WP3.1c). Composition strategy: the scene construction reuses the validated
+Tidy3DSolver: the tidy3d (>=2.11) adapter on the Phase-3 Solver contract. Composition strategy: the scene construction reuses the validated
 legacy ``fdtd_solver_tidy3d`` machinery, but ONLY inside ``build()`` — the
 constructor stays pure per the contract, and ``run()`` is the only method
 that talks to the tidy3d cloud.
 
 The legacy class remains fully supported; it and this adapter share one
-implementation, so the WP1.5 offline tests and the live cloud validation
+implementation, so the offline tests and the live cloud validation
 cover both.
 """
 
@@ -81,7 +80,7 @@ class Tidy3DSolver(Solver):
                 if "tidy3d_db" not in mat:
                     problems.append(
                         f"device layer {i} has no 'tidy3d_db' material entry "
-                        "(rii/other sources are wired to tidy3d in WP5.x)"
+                        "(rii/other neutral sources are not wired to tidy3d yet)"
                     )
         return problems
 
@@ -215,7 +214,7 @@ def plot_tidy3d_fields(modeler_data, axis: str = "z", savefig: str | None = None
     """Plot |E| of the '{axis}_field' monitor from a ModalComponentModelerData.
 
     Shared by Tidy3DSolver.plot_fields and the legacy solver's
-    visualize_field_monitors (the WP1.9/WP4.1 promise, redeemed here).
+    visualize_field_monitors.
     """
     import matplotlib.pyplot as plt
 

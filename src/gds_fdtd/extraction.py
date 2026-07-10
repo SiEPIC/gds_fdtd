@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-Mode-overlap extraction (WP5.2c) — the last Tier-B enabler. Kernel engines
+Mode-overlap extraction — the last Tier-B enabler. Kernel engines
 (fdtdz, fdtdx) record raw DFT fields at port planes; this module turns them
 into the complex modal amplitudes that become SMatrix entries. Everything is
 solver-independent numpy: fields in, complex out.

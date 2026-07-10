@@ -56,7 +56,7 @@ class fdtd_solver_tidy3d(fdtd_solver):
 
         # Create the modeler for S-matrix calculation.
         # tidy3d >=2.9 renamed ComponentModeler -> ModalComponentModeler and
-        # moved web options (verbose/path_dir) to tidy3d.web.run (WP4.1).
+        # moved web options (verbose/path_dir) to tidy3d.web.run.
         self.component_modeler = ModalComponentModeler(
             simulation=self.base_simulation,
             ports=self.smatrix_ports,
@@ -70,12 +70,14 @@ class fdtd_solver_tidy3d(fdtd_solver):
         setup_info = f"Tidy3D solver setup complete with ComponentModeler: {len(self.smatrix_ports)} ports × {len(self.modes)} modes = {total_mode_combinations} mode combinations"
         self.logger.info(setup_info)
 
-        print("Tidy3D solver setup complete with ComponentModeler:")
-        print(
+        self.logger.info("Tidy3D solver setup complete with ComponentModeler:")
+        self.logger.info(
             f"  • {len(self.smatrix_ports)} ports × {len(self.modes)} modes = {total_mode_combinations} mode combinations"
         )
-        print("  • Multi-modal S-matrix calculation ready")
-        print(f"  • ComponentModeler will auto-generate task names for {self.component.name}")
+        self.logger.info("  • Multi-modal S-matrix calculation ready")
+        self.logger.info(
+            f"  • ComponentModeler will auto-generate task names for {self.component.name}"
+        )
 
     def _create_base_simulation(self):
         """Create base simulation without sources/monitors for ComponentModeler."""
@@ -193,7 +195,7 @@ class fdtd_solver_tidy3d(fdtd_solver):
 
     @staticmethod
     def _is_background(structure) -> bool:
-        """Background = substrate/superstrate, by ROLE (WP2.3), with a
+        """Background = substrate/superstrate, by ROLE, with a
         name-sniffing fallback only for td.Structure objects in tests."""
         role = getattr(structure, "role", None)
         if role is not None:
@@ -283,16 +285,16 @@ class fdtd_solver_tidy3d(fdtd_solver):
     def get_resources(self) -> None:
         """Get the resources used by the simulation."""
         if not hasattr(self, "component_modeler"):
-            print("No ComponentModeler available.")
+            self.logger.info("No ComponentModeler available.")
             return
 
         total_simulations = len(self.smatrix_ports) * len(self.modes)
-        print("ComponentModeler Multi-Modal Configuration:")
-        print(f"  • {len(self.smatrix_ports)} ports")
-        print(f"  • {len(self.modes)} modes per port: {self.modes}")
-        print(f"  • Total simulations required: {total_simulations}")
-        print(f"  • Component: {self.component.name}")
-        print("Resource estimation handled by Tidy3D cloud platform")
+        self.logger.info("ComponentModeler Multi-Modal Configuration:")
+        self.logger.info(f"  • {len(self.smatrix_ports)} ports")
+        self.logger.info(f"  • {len(self.modes)} modes per port: {self.modes}")
+        self.logger.info(f"  • Total simulations required: {total_simulations}")
+        self.logger.info(f"  • Component: {self.component.name}")
+        self.logger.info("Resource estimation handled by Tidy3D cloud platform")
 
     def run(self) -> None:
         """Run the simulation using ComponentModeler."""
@@ -302,7 +304,7 @@ class fdtd_solver_tidy3d(fdtd_solver):
             raise RuntimeError(error_msg)
 
         log_simulation_start(self.logger, "Tidy3D ComponentModeler", self.component.name)
-        print("Running S-matrix calculation with ComponentModeler...")
+        self.logger.info("Running S-matrix calculation with ComponentModeler...")
 
         # Run the S-matrix calculation through the tidy3d web API (2.11 workflow).
         # tidy3d.web is a LAZILY imported submodule: `import tidy3d as td` does
@@ -328,7 +330,7 @@ class fdtd_solver_tidy3d(fdtd_solver):
         self._convert_smatrix_to_sparameters(smatrix_result)
 
         log_simulation_complete(self.logger, "Tidy3D ComponentModeler")
-        print("S-matrix calculation completed successfully!")
+        self.logger.info("S-matrix calculation completed successfully!")
 
     def _convert_smatrix_to_sparameters(self, smatrix_result):
         """Convert Tidy3D S-matrix results to sparameters format with multi-modal support."""
@@ -339,9 +341,9 @@ class fdtd_solver_tidy3d(fdtd_solver):
         freqs = smatrix_result.coords["f"].values
         wavelengths = td.C_0 / freqs
 
-        print(f"Converting S-matrix results: {len(freqs)} frequency points")
-        print(f"Available ports: {list(smatrix_result.coords['port_in'].values)}")
-        print(f"Available modes: {list(smatrix_result.coords['mode_index_in'].values)}")
+        self.logger.info(f"Converting S-matrix results: {len(freqs)} frequency points")
+        self.logger.info(f"Available ports: {list(smatrix_result.coords['port_in'].values)}")
+        self.logger.info(f"Available modes: {list(smatrix_result.coords['mode_index_in'].values)}")
 
         # Process all S-matrix elements for multi-modal case
         for port_in in smatrix_result.coords["port_in"].values:
@@ -386,14 +388,14 @@ class fdtd_solver_tidy3d(fdtd_solver):
                             s_phase=list(s_phase),
                         )
 
-                        print(
+                        self.logger.info(
                             f"Added S-parameter: Port {in_port_num}(mode {mode_in_1based}) -> Port {out_port_num}(mode {mode_out_1based})"
                         )
 
         # Store the raw Tidy3D results for field visualization
         self.smatrix_result = smatrix_result
 
-        print(
+        self.logger.info(
             f"Multi-modal S-matrix conversion complete: {len(self._sparameters.data)} S-parameter entries"
         )
 
@@ -410,7 +412,7 @@ class fdtd_solver_tidy3d(fdtd_solver):
     def get_results(self) -> None:
         """Get the results of the simulation."""
         if not hasattr(self, "_sparameters") or self._sparameters is None:
-            print("No results available. Run simulation first.")
+            self.logger.info("No results available. Run simulation first.")
             return
         # Results are already stored in self._sparameters by _convert_smatrix_to_sparameters
 
@@ -429,17 +431,17 @@ class fdtd_solver_tidy3d(fdtd_solver):
                     logs.append(f"=== {task_name} ===\n{log}")
             return "\n".join(logs) if logs else "No per-task logs exposed by this tidy3d version."
         except Exception as e:
-            print(f"Error retrieving Tidy3D log: {e}")
+            self.logger.info(f"Error retrieving Tidy3D log: {e}")
             return f"Log retrieval error: {str(e)}"
 
     def visualize_field_monitors(self, freq=None, axis: str = "z", savefig: str | None = None):
-        """Plot the run's field profile (redeems the WP1.9 deferral).
+        """Plot the run's field profile.
 
         Uses the per-task SimulationData from the 2.11 modeler results.
         """
         data = getattr(self, "_modeler_data", None)
         if data is None:
-            print("No field data: run() has not completed.")
+            self.logger.info("No field data: run() has not completed.")
             return None
         from gds_fdtd.solvers.tidy3d import plot_tidy3d_fields
 

@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-gdsfactory (>= 9) ingestion (WP4.2). Rewritten from scratch for the gf 9 API
+gdsfactory (>= 9) ingestion. Rewritten from scratch for the gf 9 API
 (verified against gdsfactory 9.45, 2026-07-07):
 
 - ``Component.get_polygons_points(by="tuple")`` -> {(layer, datatype): [Nx2 um]}

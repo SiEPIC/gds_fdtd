@@ -52,20 +52,29 @@ def test_model_pair_lookup(fake_tidy3d):
     assert _load({"model": ["Si3N4", "Luke2015PMLStable"]}, fake_tidy3d) == "SIN_MEDIUM"
 
 
-def test_model_pair_unknown_falls_back_to_silicon(fake_tidy3d, capsys):
-    assert _load({"model": ["Unobtainium", "X"]}, fake_tidy3d) == "CSI_MEDIUM"
-    assert "not found" in capsys.readouterr().out
+def test_model_pair_unknown_falls_back_to_silicon(fake_tidy3d, caplog):
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="gds_fdtd.simprocessor"):
+        assert _load({"model": ["Unobtainium", "X"]}, fake_tidy3d) == "CSI_MEDIUM"
+    assert "not found" in caplog.text
 
 
 def test_model_string_takes_first_variant(fake_tidy3d):
     assert _load({"model": "Si3N4"}, fake_tidy3d) == "SIN_MEDIUM"
 
 
-def test_model_string_unknown_falls_back(fake_tidy3d, capsys):
-    assert _load({"model": "Nothingite"}, fake_tidy3d) == "CSI_MEDIUM"
-    assert "not found" in capsys.readouterr().out
+def test_model_string_unknown_falls_back(fake_tidy3d, caplog):
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="gds_fdtd.simprocessor"):
+        assert _load({"model": "Nothingite"}, fake_tidy3d) == "CSI_MEDIUM"
+    assert "not found" in caplog.text
 
 
-def test_unparseable_spec_falls_back(fake_tidy3d, capsys):
-    assert _load({"weird": True}, fake_tidy3d) == "CSI_MEDIUM"
-    assert "Could not parse" in capsys.readouterr().out
+def test_unparseable_spec_falls_back(fake_tidy3d, caplog):
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="gds_fdtd.simprocessor"):
+        assert _load({"weird": True}, fake_tidy3d) == "CSI_MEDIUM"
+    assert "Could not parse" in caplog.text

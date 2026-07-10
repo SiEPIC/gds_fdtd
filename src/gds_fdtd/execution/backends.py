@@ -1,12 +1,12 @@
 """
 gds_fdtd simulation toolbox.
 
-Execution backends (WP7.3): where a JobSpec runs. ``LocalBackend`` executes
+Execution backends: where a JobSpec runs. ``LocalBackend`` executes
 in-process; ``SubprocessBackend`` spawns ``gds-fdtd run job.json --out dir``
 — proving the serialization boundary and giving crash isolation and
 parallelism (a sweep can submit N jobs and collect as they finish).
 
-Handles are in-memory only (no job database) — a deliberate WP7.3 non-goal.
+Handles are in-memory only (no job database) — deliberately out of scope.
 """
 
 from __future__ import annotations

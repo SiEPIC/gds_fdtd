@@ -1,6 +1,6 @@
 # gds_fdtd
 
-![alternative text](/docs/logo.png)
+![gds_fdtd logo](docs/logo.png)
 
 [![CI](https://github.com/SiEPIC/gds_fdtd/actions/workflows/ci.yml/badge.svg)](https://github.com/SiEPIC/gds_fdtd/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/siepic/gds_fdtd/branch/main/graph/badge.svg)](https://codecov.io/gh/siepic/gds_fdtd)
@@ -8,6 +8,7 @@
 [![PyPI](https://img.shields.io/pypi/v/gds_fdtd)](https://pypi.org/project/gds-fdtd/)
 [![Python](https://img.shields.io/pypi/pyversions/gds_fdtd)](https://pypi.org/project/gds-fdtd/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/SiEPIC/gds_fdtd/badge)](https://scorecard.dev/viewer/?uri=github.com/SiEPIC/gds_fdtd)
 
 **gds_fdtd** turns a photonic chip layout (GDS) into ready-to-run 3D FDTD simulations on the engine of your choice, and returns standardized S-parameters. EDA-agnostic on the front (KLayout/SiEPIC, gdsfactory), solver-agnostic on the back — one component, one technology file, any engine:
 
@@ -32,7 +33,7 @@ smatrix = solver.run()
 - **Layout ingestion:** raw GDS via KLayout with SiEPIC pin/devrec conventions, [SiEPIC](https://github.com/SiEPIC/SiEPIC-Tools) PDK cells, and [gdsfactory](https://github.com/gdsfactory/gdsfactory) (>= 9) components — ports auto-detected, never hand-placed.
 - **Validated technology files:** the layer stack is a pydantic-validated YAML (bad files fail with the offending key named). Materials can carry per-solver entries or a neutral [refractiveindex.info](https://refractiveindex.info) reference (`rii: {shelf, book, page}`), resolved offline from a local database copy.
 - **Canonical S-matrix:** one `SMatrix` type with NaN-aware partial matrices, reciprocity/passivity/power-balance checks, and I/O to Lumerical INTERCONNECT `.dat`, Touchstone `.sNp` (scikit-rf compatible), HDF5/npz, plus plotting.
-- **Cross-validated engines** (see [SOLVER_STATUS.md](SOLVER_STATUS.md) for per-engine last-verified dates): the tidy3d (>= 2.11, cloud) and Lumerical (2024/2025, local) adapters were validated live against each other on identical geometry (< 0.15 dB agreement, locked into CI via recorded artifacts). [beamz](https://github.com/beamzorg/beamz) provides a fully open-source, zero-cost local engine (JAX, CPU/GPU).
+- **Cross-validated engines** (see [SOLVER_STATUS.md](SOLVER_STATUS.md) for per-engine last-verified dates): the tidy3d (>= 2.11, cloud) and Lumerical (2024/2025, local) adapters were validated live against each other on identical geometry — within **0.0033 dB**, with the free [beamz](https://github.com/beamzorg/beamz) engine (JAX, CPU/GPU) inside 0.052 dB of both; the agreement is locked into CI via recorded artifacts.
 - **Multimode/dual-polarization** simulations on the engines that support them (tidy3d, Lumerical).
 - **Serializable jobs + CLI:** every simulation is a JSON `JobSpec`; `gds-fdtd validate|build|estimate|run|convert|solvers` drives it from the shell, and `SubprocessBackend` runs sweeps crash-isolated and in parallel. Secrets stay in the environment — job files are safe to ship to a cluster or cloud runner ([docs/remote_compute.md](docs/remote_compute.md)).
 - **Convergence sweeps, caching, cross-solver validation:** `convergence.sweep()` steps any `SimulationSpec` field and recommends the converged value; `run_cached()` hashes the full job (geometry + technology + spec + engine version) so repeat runs are free; `validation.validate_across()` quantifies worst-case |ΔS| between engines on the same job.
@@ -107,7 +108,7 @@ This will install additional tools like `pytest` and `coverage` for testing.
 ### Requirements
 
 - Python ≥ 3.11
-- Runtime deps: numpy, matplotlib, shapely, PyYAML, klayout
+- Runtime deps: numpy, matplotlib, shapely, PyYAML, klayout, pydantic, pydantic-settings
 
 
 ### Running tests
