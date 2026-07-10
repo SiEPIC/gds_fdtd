@@ -1,8 +1,9 @@
-"""Solver adapters implementing the Phase-3 contract (gds_fdtd.solvers.base).
+"""Solver adapters implementing the Solver contract (gds_fdtd.solvers.base).
 
-The tidy3d/lumerical/beamz adapters implement this contract; the
-legacy gds_fdtd.solver_tidy3d / solver_lumerical modules keep working until
-then.
+The tidy3d / lumerical / beamz adapters are the supported API, reached via
+``get_solver(name)``. The pre-0.5 ``fdtd_solver_*`` classes were removed in
+0.6; the tidy3d scene-building engine lives in the internal ``_tidy3d_engine``
+module.
 """
 
 import contextlib

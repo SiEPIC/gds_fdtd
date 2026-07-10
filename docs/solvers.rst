@@ -116,6 +116,5 @@ conformance test suite your adapter inherits for free.
 .. note::
 
     The pre-0.5 class interface (``fdtd_solver_tidy3d`` /
-    ``fdtd_solver_lumerical`` with per-solver keyword arguments) still works
-    but is deprecated and will be removed at v1.0. New code should use
-    ``get_solver(name)(component, tech, spec)``.
+    ``fdtd_solver_lumerical`` with per-solver keyword arguments) was **removed
+    in 0.6**. Use ``get_solver(name)(component, tech, spec)``.
