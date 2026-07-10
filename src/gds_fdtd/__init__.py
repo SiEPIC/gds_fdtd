@@ -17,7 +17,6 @@ from . import (
     sparams,
     validation,
 )
-from .core import technology
 from .geometry import Component, LayoutSource, Port, Region, Structure
 from .smatrix import SMatrix
 
@@ -43,7 +42,6 @@ __all__ = [
     "modes",
     "simprocessor",
     "sparams",
-    "technology",
     "validation",
 ]
 

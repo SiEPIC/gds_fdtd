@@ -1,4 +1,4 @@
-"""Deprecation shims + legacy technology class (core.py) — release coverage."""
+"""Deprecation shims + parse_yaml_tech bridge (core.py) — release coverage."""
 
 from __future__ import annotations
 
@@ -31,18 +31,6 @@ def test_unknown_attribute_raises():
 
     with pytest.raises(AttributeError, match="no attribute"):
         _ = core.definitely_not_a_symbol
-
-
-def test_legacy_technology_from_yaml_roundtrip():
-    """The legacy dict-flavored technology class still reads v1 files."""
-    from gds_fdtd.core import technology
-
-    tech = technology.from_yaml(str(TESTS_DIR / "tech_lumerical.yaml"))
-    d = tech.to_dict()
-    assert d["name"] == "EBeam"
-    assert len(d["device"]) == 2
-    assert d["substrate"][0]["z_span"] == -2
-    assert "technology" in repr(tech)
 
 
 def test_load_cell_missing_top_cell_raises():

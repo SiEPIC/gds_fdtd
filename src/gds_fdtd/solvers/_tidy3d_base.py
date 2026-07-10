@@ -12,7 +12,6 @@ public module.
 from __future__ import annotations
 
 import os
-from abc import abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -22,7 +21,6 @@ from gds_fdtd.logging_config import (
     log_separator,
     setup_logging,
 )
-from gds_fdtd.sparams import sparameters
 from gds_fdtd.spec import SimulationSpec
 
 if TYPE_CHECKING:
@@ -238,9 +236,6 @@ class _TidyEngineBase:
         # Convert component ports to _TidyPort objects for modular solver implementation
         self.tidy_ports: list[_TidyPort] = self._build_tidy_ports()
 
-        self.field_monitors_objs = []
-        self._sparameters = None
-
         # Log field monitor objects creation
         if self.field_monitors:
             self.logger.debug(f"Field monitors requested: {self.field_monitors}")
@@ -438,34 +433,3 @@ class _TidyEngineBase:
         self.logger.info(f"  Boundaries: {self.boundary}")
         self.logger.info(f"  Symmetry: {self.symmetry}")
         self.logger.info("=" * 60 + "\n")
-
-    @property
-    def sparameters(self) -> sparameters:
-        """Get the S-parameters results."""
-        if self._sparameters is None:
-            self.logger.info("S-parameters results not available. Please run the simulation first.")
-        return self._sparameters
-
-    def setup(self) -> None:
-        """Setup the simulation."""
-        pass
-
-    @abstractmethod
-    def run(self) -> None:
-        """Run the simulation."""
-        pass
-
-    @abstractmethod
-    def get_resources(self) -> None:
-        """Get the resources used by the simulation."""
-        pass
-
-    @abstractmethod
-    def get_results(self) -> None:
-        """Get the results of the simulation."""
-        pass
-
-    @abstractmethod
-    def get_log(self) -> None:
-        """Get the log of the simulation."""
-        pass
