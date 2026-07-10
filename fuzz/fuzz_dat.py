@@ -1,7 +1,7 @@
 """Fuzz target: Lumerical INTERCONNECT ``.dat`` S-parameter parsing.
 
 Feeds arbitrary bytes to ``SMatrix.from_dat`` (the hand-written text parser
-in gds_fdtd.sparams). Malformed input must fail with a validation error,
+in gds_fdtd._sparams). Malformed input must fail with a validation error,
 never an unhandled crash.
 
 Run locally:  python fuzz/fuzz_dat.py -atheris_runs=20000

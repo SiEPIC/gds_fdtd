@@ -195,7 +195,7 @@ class SMatrix:
         Port names are mapped to numeric ids by their trailing digits (or by
         position when a name has none); NaN (unmeasured) paths are skipped.
         """
-        from .sparams import sparameters, write_dat
+        from ._sparams import sparameters, write_dat
 
         def _num(i: int) -> int:
             digits = "".join(ch for ch in self.port_names[i] if ch.isdigit())
@@ -226,7 +226,7 @@ class SMatrix:
     @classmethod
     def from_dat(cls, path: str, name: str | None = None) -> SMatrix:
         """Read a Lumerical INTERCONNECT .dat into an SMatrix."""
-        from .sparams import process_dat
+        from ._sparams import process_dat
 
         spar = process_dat(path, name=name, verbose=False)
         return cast("SMatrix", spar.to_smatrix(name=name))

@@ -385,7 +385,7 @@ class LumericalSolver(Solver):
         finally:
             fdtd.close()
 
-        from ..sparams import process_dat
+        from .._sparams import process_dat
 
         spar = process_dat(dat_path, verbose=False)
         sm = spar.to_smatrix(name=self.component.name)

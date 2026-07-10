@@ -12,7 +12,7 @@ zero cloud/license access. All files are scrubbed before commit
 
 Refresh procedure: with `TIDY3D_API_KEY` configured (`~/.tidy3d/config`), run a
 solver on `tests/si_sin_escalator.gds` + `tests/tech_tidy3d.yaml` (coarse mesh,
-few wavelengths), export via `sparameters.to_smatrix()` → `to_hdf5()`/`to_dat()`,
+few wavelengths), export the resulting `SMatrix` via `to_hdf5()`/`to_dat()`,
 re-run the scrub grep, and update this table.
 
 NOTE (finding F5): tidy3d 2.8.x requires numpy<2 (undeclared) and therefore a

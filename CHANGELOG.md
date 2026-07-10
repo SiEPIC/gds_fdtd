@@ -52,6 +52,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `component`→`Component`, `layout`→`LayoutSource`); the non-deprecated helpers
   (`c0_um`, `calculate_polygon_extension`, `initialize_ports_z`,
   `is_point_inside_polygon`) are exported from `gds_fdtd.geometry` too.
+- The `gds_fdtd.sparams` module is no longer public — it moved to the internal
+  `gds_fdtd._sparams` (the legacy `sparameters` container + INTERCONNECT `.dat`
+  reader/writer). The supported surface is the `SMatrix` API (`SMatrix.from_dat`/
+  `to_dat`, `from_hdf5`/`to_hdf5`, `from_npz`/`to_npz`, `to_touchstone`);
+  `import gds_fdtd.sparams` now raises `ModuleNotFoundError`.
 - Removed the stray pre-0.5 `examples/notebooks/faid/` notebook (unreferenced,
   superseded by the standardized `examples/0X_*` set; it had also once logged a
   license token).
