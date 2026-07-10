@@ -45,6 +45,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `gds_fdtd.technology.Technology.from_yaml(path)` directly and pass the
   `Technology` to `load_component_from_tech`/`load_device`/the solvers (all of
   which accept it). Use `.to_solver_dict()` if you specifically need the dict.
+- The `gds_fdtd.core` module itself was removed — the last thing it held was
+  the PEP-562 shim serving the pre-0.5 lowercase geometry names (deprecated in
+  0.5). **Migration:** import the geometry classes from `gds_fdtd.geometry`
+  (`port`→`Port`, `structure`→`Structure`, `region`→`Region`,
+  `component`→`Component`, `layout`→`LayoutSource`); the non-deprecated helpers
+  (`c0_um`, `calculate_polygon_extension`, `initialize_ports_z`,
+  `is_point_inside_polygon`) are exported from `gds_fdtd.geometry` too.
 - Removed the stray pre-0.5 `examples/notebooks/faid/` notebook (unreferenced,
   superseded by the standardized `examples/0X_*` set; it had also once logged a
   license token).

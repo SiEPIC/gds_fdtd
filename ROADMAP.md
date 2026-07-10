@@ -181,8 +181,9 @@ Deferred with documented rationale; resume when the blocker clears.
   paths deserves its own live-revalidation session; make task submission
   idempotent (`task_name = gdsfdtd-{job_hash[:12]}`) first.
 - **CITATION.cff** + Zenodo DOI for academic citation.
-- **v1.0** — remove the deprecated `core`/`solver_*` shims, freeze the public
-  API, finalize the deprecation policy.
+- **v1.0** — freeze the public API and finalize the deprecation policy. (The
+  `core` and `solver_*` shims were removed early, in 0.6.0; the remaining
+  `Component.structures` nested-list deprecation shim is the last one to retire.)
 
 ## Owner-only actions (need admin / external accounts)
 

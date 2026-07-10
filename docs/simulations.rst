@@ -8,11 +8,11 @@ From a GDS layout to S-parameters in four steps, on any engine.
 
 .. code-block:: python
 
-    from gds_fdtd.core import parse_yaml_tech
+    from gds_fdtd.technology import Technology
     from gds_fdtd.lyprocessor import load_cell
     from gds_fdtd.simprocessor import load_component_from_tech
 
-    tech = parse_yaml_tech("examples/tech.yaml")
+    tech = Technology.from_yaml("examples/tech.yaml")
     cell, layout = load_cell("examples/devices.gds", top_cell="crossing_te1550")
     component = load_component_from_tech(cell=cell, tech=tech)
 

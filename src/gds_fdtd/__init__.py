@@ -6,7 +6,6 @@ from importlib.metadata import PackageNotFoundError, version
 from . import (
     caching,
     convergence,
-    core,
     errors,
     extraction,
     geometry,
@@ -33,7 +32,6 @@ __all__ = [
     "Structure",
     "caching",
     "convergence",
-    "core",
     "errors",
     "extraction",
     "geometry",

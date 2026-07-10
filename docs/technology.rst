@@ -407,11 +407,11 @@ Load technology files in your simulation scripts:
 
 .. code-block:: python
 
-    from gds_fdtd.core import parse_yaml_tech
+    from gds_fdtd.technology import Technology
 
     # Load technology file
     tech_path = "examples/tech.yaml"
-    technology = parse_yaml_tech(tech_path)
+    technology = Technology.from_yaml(tech_path)
 
     # Inspect loaded technology
     print(f"Technology name: {technology.name}")

@@ -5,7 +5,6 @@ API Reference
    :toctree: _autosummary
    :recursive:
 
-   gds_fdtd.core
    gds_fdtd.lyprocessor
    gds_fdtd.simprocessor
    gds_fdtd.sparams
