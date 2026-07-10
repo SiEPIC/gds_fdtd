@@ -64,8 +64,8 @@ def v2_file(tmp_path):
 def test_v2_equals_v1_unified(v2_file):
     """The v2 doc above is the named-materials form of tech_unified.yaml —
     both must produce the IDENTICAL legacy dict (equivalence by construction)."""
-    v1 = Technology.from_yaml(TESTS_DIR / "tech_unified.yaml").to_legacy_dict()
-    v2 = Technology.from_yaml(v2_file).to_legacy_dict()
+    v1 = Technology.from_yaml(TESTS_DIR / "tech_unified.yaml").to_solver_dict()
+    v2 = Technology.from_yaml(v2_file).to_solver_dict()
     assert v2 == v1
 
 
@@ -123,5 +123,5 @@ def test_convert_tech_cli_roundtrip(tmp_path):
     assert doc["schema_version"] == 2
     # SiO2 appears twice in v1 (substrate + superstrate) -> ONE named material
     assert len(doc["materials"]) == 3
-    v1 = Technology.from_yaml(TESTS_DIR / "tech_unified.yaml").to_legacy_dict()
-    assert Technology.from_yaml(out).to_legacy_dict() == v1
+    v1 = Technology.from_yaml(TESTS_DIR / "tech_unified.yaml").to_solver_dict()
+    assert Technology.from_yaml(out).to_solver_dict() == v1

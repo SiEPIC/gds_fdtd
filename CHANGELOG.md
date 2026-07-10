@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The legacy dict-flavored `gds_fdtd.core.technology` class (and its
   `from gds_fdtd import technology` re-export) was removed. Use the validated
   `gds_fdtd.technology.Technology` model (`Technology.from_yaml(...)`); its
-  `.to_legacy_dict()` reproduces the old dict shape if you need it. Nothing
+  `.to_solver_dict()` reproduces the old dict shape if you need it. Nothing
   inside the package used the class.
 - Dead code: the internal Tidy3D engine's unused results path
   (`run`/`get_resources`/`get_results`/`get_log`/`visualize_field_monitors`
@@ -41,10 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   engine only builds the scene. This also removes the engine's last dependency
   on the legacy `sparams` module.
 - `gds_fdtd.core.parse_yaml_tech` was removed. It was a one-line bridge to
-  `Technology.from_yaml(path).to_legacy_dict()`; call sites now use
+  `Technology.from_yaml(path).to_solver_dict()`; call sites now use
   `gds_fdtd.technology.Technology.from_yaml(path)` directly and pass the
   `Technology` to `load_component_from_tech`/`load_device`/the solvers (all of
-  which accept it). Use `.to_legacy_dict()` if you specifically need the dict.
+  which accept it). Use `.to_solver_dict()` if you specifically need the dict.
 - Removed the stray pre-0.5 `examples/notebooks/faid/` notebook (unreferenced,
   superseded by the standardized `examples/0X_*` set; it had also once logged a
   license token).
@@ -63,6 +63,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `.dat` fuzz target).
 
 ### Changed
+- (BREAKING) Renamed the technology-to-dict method: `Technology.to_legacy_dict()`
+  → `Technology.to_solver_dict()`, and the per-material `MaterialSpec.to_legacy()`
+  → `MaterialSpec.to_solver_dict()`. The returned schema-v1 dict — consumed by the
+  simprocessor, the gdsfactory bridge, the CLI, and the tidy3d/lumerical/beamz
+  adapters — is unchanged; only the misleading "legacy" name is gone. No
+  deprecation alias (consistent with the rest of this 0.6.0 cleanup). Migration:
+  replace `tech.to_legacy_dict()` with `tech.to_solver_dict()`.
 - The Tidy3D scene-building engine is now fully internal and honestly named.
   The generic `fdtd_solver`/`fdtd_port` engine classes (the last pre-0.5 names
   in the tree) were renamed to `_TidyEngineBase`/`_TidyPort`, and the module

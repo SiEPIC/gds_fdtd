@@ -80,7 +80,7 @@ def test_bend_circular_smoke(tech):
 def test_component_without_tech_layers_raises(tech):
     import copy
 
-    bad_tech = copy.deepcopy(tech.to_legacy_dict())
+    bad_tech = copy.deepcopy(tech.to_solver_dict())
     for d in bad_tech["device"]:
         d["layer"] = [42, 7]
     with pytest.raises(ValueError, match="no polygons on any technology device layer"):

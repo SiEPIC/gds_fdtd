@@ -11,7 +11,7 @@ frozen through the 1.x series). Additions in this module are additive-only:
 - optional ``rii:`` material source referencing the refractiveindex.info
   database (see gds_fdtd.materials.rii).
 
-``Technology.to_legacy_dict()`` reproduces exactly the dict shape the rest of
+``Technology.to_solver_dict()`` reproduces exactly the dict shape the rest of
 the package consumes today; the golden fixtures prove equivalence with the
 original parser.
 """
@@ -72,8 +72,8 @@ class MaterialSpec(BaseModel):
             raise ValueError("'tidy3d_db' must be a mapping containing 'nk' or 'model'")
         return v
 
-    def to_legacy(self) -> dict[str, Any]:
-        """The raw mapping shape the legacy dict flow carries for materials."""
+    def to_solver_dict(self) -> dict[str, Any]:
+        """The solver-facing dict mapping for one material (per-solver hints + neutral nk/rii)."""
         out: dict[str, Any] = {}
         if self.tidy3d_db is not None:
             out["tidy3d_db"] = self.tidy3d_db
@@ -286,7 +286,7 @@ class Technology(BaseModel):
         except Exception as e:
             raise ValueError(f"Invalid technology file {file_path}: {e}") from e
 
-    def to_legacy_dict(self) -> dict[str, Any]:
+    def to_solver_dict(self) -> dict[str, Any]:
         """The schema-v1 dict shape the solver adapters and simprocessor consume."""
         return {
             "name": self.name,
@@ -294,14 +294,14 @@ class Technology(BaseModel):
                 {
                     "z_base": self.substrate.z_base,
                     "z_span": self.substrate.z_span,
-                    "material": self.substrate.material.to_legacy(),
+                    "material": self.substrate.material.to_solver_dict(),
                 }
             ],
             "superstrate": [
                 {
                     "z_base": self.superstrate.z_base,
                     "z_span": self.superstrate.z_span,
-                    "material": self.superstrate.material.to_legacy(),
+                    "material": self.superstrate.material.to_solver_dict(),
                 }
             ],
             "pinrec": [{"layer": list(layer)} for layer in self.pinrec],
@@ -311,7 +311,7 @@ class Technology(BaseModel):
                     "layer": list(d.layer),
                     "z_base": d.z_base,
                     "z_span": d.z_span,
-                    "material": d.material.to_legacy(),
+                    "material": d.material.to_solver_dict(),
                     "sidewall_angle": d.sidewall_angle,
                 }
                 for d in self.device

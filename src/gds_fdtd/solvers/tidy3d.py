@@ -67,8 +67,8 @@ class Tidy3DSolver(Solver):
             problems.append("Tidy3DSolver requires a technology (materials)")
         else:
             tech_dict = (
-                self.technology.to_legacy_dict()
-                if hasattr(self.technology, "to_legacy_dict")
+                self.technology.to_solver_dict()
+                if hasattr(self.technology, "to_solver_dict")
                 else self.technology
             )
             for i, d in enumerate(tech_dict.get("device", [])):

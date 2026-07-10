@@ -109,7 +109,7 @@ class LumericalSolver(Solver):
 
     def _tech_dict(self) -> dict:
         t = self.technology
-        return t.to_legacy_dict() if hasattr(t, "to_legacy_dict") else t
+        return t.to_solver_dict() if hasattr(t, "to_solver_dict") else t
 
     def build(self) -> SetupArtifacts:
         """Export the GDS and generate the full .lsf setup script (offline)."""
