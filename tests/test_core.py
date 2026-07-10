@@ -1,7 +1,7 @@
 """
-gds_fdtd.core unit tests.
+gds_fdtd geometry/technology core unit tests.
 
-Unit tests for gds_fdtd.core.
+Unit tests for the geometry, technology, and layout-processing core.
 @author: Mustafa Hammood, 2025
 """
 

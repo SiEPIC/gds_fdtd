@@ -5,13 +5,13 @@ Every engine sets up the same way — swap engines by changing one string:
 
 .. code-block:: python
 
-    from gds_fdtd.core import parse_yaml_tech
+    from gds_fdtd.technology import Technology
     from gds_fdtd.lyprocessor import load_cell
     from gds_fdtd.simprocessor import load_component_from_tech
     from gds_fdtd.solvers import get_solver
     from gds_fdtd.spec import SimulationSpec
 
-    tech = parse_yaml_tech("tech.yaml")            # ONE tech, every engine
+    tech = Technology.from_yaml("tech.yaml")       # ONE tech, every engine
     cell, layout = load_cell("devices.gds", top_cell="crossing_te1550")
     component = load_component_from_tech(cell=cell, tech=tech)
 

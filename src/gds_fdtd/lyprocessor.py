@@ -103,7 +103,7 @@ def load_device(
     built component was discarded, and the function returned None; bug B15).
 
     Returns:
-        core.component: The parsed component.
+        Component: The parsed component.
     """
     import os
     import tempfile
@@ -308,7 +308,7 @@ def load_structure_from_bounds(
     """Load a structure from a region definition
 
     Args:
-        bounds (core.region): Input region to use to generate structure.
+        bounds (Region): Input region to use to generate structure.
         name (_type_): Name of structure.
         z_base (float): Z base of structure.
         z_span (float): Z span (thickness) of structure, can be negative for downward growth.
@@ -317,7 +317,7 @@ def load_structure_from_bounds(
         layer (list[int], optional): GDS layer specification as [layer_number, datatype]. Defaults to [1, 0].
 
     Returns:
-        core.structure: Structure generated from input region.
+        Structure: Structure generated from input region.
     """
     return Structure(
         name=name,

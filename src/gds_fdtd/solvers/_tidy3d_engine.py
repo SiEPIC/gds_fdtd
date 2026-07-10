@@ -202,7 +202,7 @@ class _TidyEngine(_TidyEngineBase):
         return "substrate" in n or "superstrate" in n or "subtrate" in n
 
     def _to_td_structure(self, s):
-        """Convert one core.structure into a td.Structure."""
+        """Convert one geometry.Structure into a td.Structure."""
         if s.z_span < 0:
             bounds = (s.z_base + s.z_span, s.z_base)
         else:

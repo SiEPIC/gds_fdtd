@@ -34,13 +34,13 @@ def main() -> int:
     out = pathlib.Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
 
-    from gds_fdtd.core import parse_yaml_tech
     from gds_fdtd.lyprocessor import load_cell
     from gds_fdtd.simprocessor import load_component_from_tech
     from gds_fdtd.solvers import get_solver
     from gds_fdtd.spec import SimulationSpec
+    from gds_fdtd.technology import Technology
 
-    tech = parse_yaml_tech(str(REPO / "tests" / "tech_tidy3d.yaml"))
+    tech = Technology.from_yaml(str(REPO / "tests" / "tech_tidy3d.yaml"))
     cell, layout = load_cell(str(REPO / "tests" / "si_sin_escalator.gds"))
     component = load_component_from_tech(cell=cell, tech=tech)
     spec = SimulationSpec(wavelength_points=11, mesh=6, z_min=-1.0, z_max=1.11)

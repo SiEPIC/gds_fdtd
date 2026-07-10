@@ -130,3 +130,18 @@ def test_load_device_returns_component_and_preserves_input(tmp_path):
     assert comp is not None and len(comp.ports) == 2  # previously returned None
     assert gds.read_bytes() == before, "input GDS was modified"
     assert (out_dir / "si_sin_escalator_with_extensions.gds").exists()
+
+
+# =============================================================================
+# load_cell top-cell resolution (relocated from test_core_shims.py when the
+# gds_fdtd.core shim was removed in 0.6) — the only coverage of these two
+# load_cell error branches
+# =============================================================================
+def test_load_cell_missing_top_cell_raises():
+    with pytest.raises(ValueError, match="not found"):
+        lp.load_cell(str(pathlib.Path(__file__).parent / "si_sin_escalator.gds"), top_cell="nope")
+
+
+def test_load_cell_ambiguous_top_cell_raises():
+    with pytest.raises(ValueError, match="More than one top cell"):
+        lp.load_cell(str(pathlib.Path(__file__).parent.parent / "examples" / "devices.gds"))
