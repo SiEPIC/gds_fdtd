@@ -110,11 +110,11 @@ def test_web_submodule_resolves_in_fresh_interpreter():
     import subprocess
     import sys
 
-    import gds_fdtd.solver_tidy3d as legacy
+    import gds_fdtd.solvers._tidy3d_engine as engine
     import gds_fdtd.solvers.tidy3d as adapter
 
     # static: the lazy-import-unsafe idiom must not reappear
-    for module in (legacy, adapter):
+    for module in (engine, adapter):
         assert "td.web" not in inspect.getsource(module).replace("tidy3d.web", ""), (
             f"{module.__name__} uses td.web — tidy3d.web must be imported explicitly"
         )
