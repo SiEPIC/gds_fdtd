@@ -31,9 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ### Added
-- Continuous fuzzing via ClusterFuzzLite + atheris (`fuzz/`), with fuzz
-  targets on the technology-YAML and INTERCONNECT `.dat` parsers; runs on
-  PRs that touch the library.
+- Seeded atheris fuzzing of the technology-YAML and INTERCONNECT `.dat`
+  parsers (`fuzz/`), run directly on PRs that touch the library.
 - Release artifacts are now Sigstore-signed (keyless, GitHub OIDC); the
   `.sigstore` bundles are attached to each GitHub Release.
 

@@ -1,0 +1,46 @@
+name: fuzz
+
+# Seeded atheris fuzzing of the parsers on PRs that touch the library or the
+# fuzz targets. Runs the targets directly (no OSS-Fuzz/PyInstaller Docker
+# bundling, which is incompatible with numpy 2.x C-extensions); a crash fails
+# the job. The `import atheris` in fuzz/ is what OpenSSF Scorecard detects.
+
+on:
+  pull_request:
+    paths:
+      - "src/gds_fdtd/**"
+      - "fuzz/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fuzz-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  atheris:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          python-version: "3.13"
+      - name: Install with the fuzz extra
+        run: uv sync --extra fuzz
+      - name: Fuzz the .dat and technology-YAML parsers (seeded)
+        run: |
+          mkdir -p corpus/dat corpus/tech
+          cp tests/recorded/si_sin_escalator.dat corpus/dat/
+          cp examples/tech.yaml tests/tech_unified.yaml tests/tech_lumerical.yaml corpus/tech/
+          uv run python fuzz/fuzz_dat.py -atheris_runs=60000 -timeout=25 corpus/dat
+          uv run python fuzz/fuzz_technology.py -atheris_runs=60000 -timeout=25 corpus/tech
+      - name: Upload any crash artifacts
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fuzz-crashes
+          path: crash-*
+          if-no-files-found: ignore

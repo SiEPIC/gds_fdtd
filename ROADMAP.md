@@ -110,7 +110,7 @@ The released 0.5.0 is clean at the surface; the depth to attack is the
 
 - **Signed releases** (also WS5): sign wheels+sdist with Sigstore in
   `release.yml`, attach `.sigstore` bundles to the GitHub Release.
-- **Fuzzing** (also WS5): ClusterFuzzLite + atheris targets on the parsers.
+- **Fuzzing** (also WS5): atheris fuzz targets on the parsers (run directly in CI).
 - **Coverage reporting:** wire codecov `project`/`patch` gates so PRs that
   drop coverage fail; surface the number on the PR.
 - **Dependency freshness canary:** alongside the weekly lowest-floors job,
@@ -129,7 +129,7 @@ CRITICAL/HIGH move the needle most.
 | **Branch-Protection** | 0 | HIGH | Protect `main`: require PR + passing `pass`/CodeQL checks, up-to-date branches, ≥1 review, dismiss stale approvals, linear history, block force-push, enforce for admins, require conversation resolution. | owner (admin API/settings) |
 | **Code-Review** | 0 | HIGH | Route *all* changes through PRs (principle 5) and get an approving review before merge. Solo dev is the ceiling here — a second reviewer/maintainer or a review bot is the only way to fully satisfy it. | owner + process |
 | **Signed-Releases** | 0 | HIGH | Sigstore-sign release artifacts in `release.yml`; attach signatures to the GitHub Release. (PyPI already gets PEP 740 attestations via trusted publishing.) | executor (workflow) |
-| **Fuzzing** | 0 | MEDIUM | ClusterFuzzLite with atheris fuzz targets on `technology` YAML, `.dat`/Touchstone/`SMatrix` parsers, port-id parsing. | executor |
+| **Fuzzing** | 0 | MEDIUM | atheris fuzz targets on the technology-YAML and `.dat` parsers, run directly in CI (import atheris is the Scorecard signal). | executor |
 | **Packaging** | ? | MEDIUM | Resolves to 10 once the package publishes to PyPI via the recognized workflow — pending Lukas registering the trusted publisher. | pending PyPI |
 | **CII-Best-Practices** | 0 | LOW | Register at bestpractices.dev and complete the passing questionnaire (we already meet most: VCS, tests, CI, docs, license, CONTRIBUTING, SECURITY, no known vulns). Executor can pre-fill answers. | owner registers |
 
