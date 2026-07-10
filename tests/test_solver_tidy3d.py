@@ -16,7 +16,7 @@ td = pytest.importorskip("tidy3d")
 from gds_fdtd.core import parse_yaml_tech  # noqa: E402
 from gds_fdtd.lyprocessor import load_cell  # noqa: E402
 from gds_fdtd.simprocessor import load_component_from_tech  # noqa: E402
-from gds_fdtd.solvers._tidy3d_engine import _TidyEngine as fdtd_solver_tidy3d  # noqa: E402
+from gds_fdtd.solvers._tidy3d_engine import _TidyEngine  # noqa: E402
 
 TESTS_DIR = pathlib.Path(__file__).parent
 
@@ -26,7 +26,7 @@ def solver(tmp_path_factory):
     tech = parse_yaml_tech(str(TESTS_DIR / "tech_tidy3d.yaml"))
     cell, layout = load_cell(str(TESTS_DIR / "si_sin_escalator.gds"))
     comp = load_component_from_tech(cell=cell, tech=tech)
-    s = fdtd_solver_tidy3d(
+    s = _TidyEngine(
         component=comp,
         tech=tech,
         boundary=["PML", "Metal", "Periodic"],  # deliberately mixed (B10)
@@ -51,7 +51,7 @@ def test_unknown_boundary_raises():
     cell, layout = load_cell(str(TESTS_DIR / "si_sin_escalator.gds"))
     comp = load_component_from_tech(cell=cell, tech=tech)
     with pytest.raises(ValueError, match="Unsupported boundary"):
-        fdtd_solver_tidy3d(
+        _TidyEngine(
             component=comp, tech=tech, boundary=["PML", "PML", "Bogus"], working_dir="/tmp"
         )
     del layout

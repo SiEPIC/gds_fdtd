@@ -3,9 +3,8 @@ gds_fdtd simulation toolbox.
 
 Tidy3DSolver: the tidy3d (>=2.11) adapter on the Phase-3 Solver contract.
 Scene construction runs inside ``build()`` via the internal
-``_tidy3d_engine`` module (shared with the deprecated ``fdtd_solver_tidy3d``
-public alias); the constructor stays pure per the contract, and ``run()`` is
-the only method that talks to the tidy3d cloud.
+``_tidy3d_engine`` module; the constructor stays pure per the contract, and
+``run()`` is the only method that talks to the tidy3d cloud.
 """
 
 from __future__ import annotations

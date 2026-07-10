@@ -50,8 +50,8 @@ def test_extra_keys_rejected():
         SimulationSpec(mesh_size=5)
 
 
-def test_legacy_solver_exposes_spec(tmp_path):
-    """The fdtd_solver adapter builds a spec and mirrors it into legacy attrs."""
+def test_engine_base_exposes_spec(tmp_path):
+    """The Tidy3D engine base builds a spec and mirrors it into legacy attrs."""
     import pathlib
 
     from gds_fdtd.core import parse_yaml_tech
