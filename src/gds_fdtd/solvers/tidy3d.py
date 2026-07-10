@@ -1,14 +1,11 @@
 """
 gds_fdtd simulation toolbox.
 
-Tidy3DSolver: the tidy3d (>=2.11) adapter on the Phase-3 Solver contract. Composition strategy: the scene construction reuses the validated
-legacy ``fdtd_solver_tidy3d`` machinery, but ONLY inside ``build()`` — the
-constructor stays pure per the contract, and ``run()`` is the only method
-that talks to the tidy3d cloud.
-
-The legacy class remains fully supported; it and this adapter share one
-implementation, so the offline tests and the live cloud validation
-cover both.
+Tidy3DSolver: the tidy3d (>=2.11) adapter on the Phase-3 Solver contract.
+Scene construction runs inside ``build()`` via the internal
+``_tidy3d_engine`` module (shared with the deprecated ``fdtd_solver_tidy3d``
+public alias); the constructor stays pure per the contract, and ``run()`` is
+the only method that talks to the tidy3d cloud.
 """
 
 from __future__ import annotations
@@ -90,7 +87,7 @@ class Tidy3DSolver(Solver):
         if problems:
             raise JobValidationError("cannot build: " + "; ".join(problems))
 
-        from ..solver_tidy3d import fdtd_solver_tidy3d
+        from ._tidy3d_engine import _TidyEngine
 
         workdir = (
             str(self.workdir)
@@ -102,7 +99,7 @@ class Tidy3DSolver(Solver):
             else tempfile.mkdtemp(prefix="gds_fdtd_t3d_", dir=os.getcwd())
         )
         s = self.spec
-        legacy = fdtd_solver_tidy3d(
+        engine = _TidyEngine(
             component=self.component,
             tech=self.technology,
             wavelength_start=s.wavelength_start,
@@ -122,15 +119,15 @@ class Tidy3DSolver(Solver):
             field_monitors=list(s.field_monitors),
             working_dir=workdir,
         )
-        self._legacy = legacy
+        self._engine = engine
         self._artifacts = SetupArtifacts(
-            native=legacy.component_modeler,
-            files={"gds": legacy._gds_filepath},
+            native=engine.component_modeler,
+            files={"gds": engine._gds_filepath},
             summary={
-                "n_ports": len(legacy.smatrix_ports),
+                "n_ports": len(engine.smatrix_ports),
                 "n_modes": len(s.modes),
-                "n_simulations": len(legacy.component_modeler.sim_dict),
-                "run_time_s": float(legacy.base_simulation.run_time),
+                "n_simulations": len(engine.component_modeler.sim_dict),
+                "run_time_s": float(engine.base_simulation.run_time),
             },
         )
         return self._artifacts

@@ -85,6 +85,10 @@ def install(monkeypatch) -> types.ModuleType:
         "tidy3d.web": web,
     }.items():
         monkeypatch.setitem(sys.modules, name, mod)
-    for mod_name in ("gds_fdtd.solver_tidy3d", "gds_fdtd.solvers.tidy3d"):
+    for mod_name in (
+        "gds_fdtd.solver_tidy3d",
+        "gds_fdtd.solvers._tidy3d_engine",
+        "gds_fdtd.solvers.tidy3d",
+    ):
         monkeypatch.delitem(sys.modules, mod_name, raising=False)
     return td
