@@ -4,7 +4,7 @@ Every adapter registered in gds_fdtd.solvers must pass these tests. They run
 against FakeSolver today; as WP3.1c/d land, the ported adapters join the
 `all_solver_classes` list automatically via the registry.
 
-Contract highlights (Part 4 of MODERNIZATION_PLAN.md):
+Contract highlights (from the 0.5 solver-contract design):
 - constructor is cheap and PURE: no files created, no sockets;
 - validate() returns list[str];
 - build() is offline, deterministic, and returns SetupArtifacts;

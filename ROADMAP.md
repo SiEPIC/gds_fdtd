@@ -5,17 +5,27 @@ should be able to read this, understand the current state, and pick up work
 without losing context. Keep it current; move granular tracking to GitHub
 Issues under the `v0.5.1` milestone as items are picked up.
 
-## Where we are — v0.5.0 (released 2026-07-09)
+## Where we are — v0.6.0 (breaking legacy cleanup; on `main`, not yet tagged)
 
 Solver-agnostic FDTD: one `Component` + one technology file + one
 `SimulationSpec`, any engine (tidy3d / Lumerical / beamz) behind
 `get_solver(name)(component, tech, spec)`. Three-engine agreement within
 0.052 dB on identical jobs (tidy3d↔Lumerical within 0.0033 dB), recorded and
-asserted every PR. Honest branch coverage 81% (full package). Docs on GitHub
-Pages. OpenSSF Scorecard 7.0.
+asserted every PR. Branch coverage ~82.7% (all-extras leg; base floor 75).
+Docs on GitHub Pages. OpenSSF Scorecard 7.0 (branch protection now enabled).
 
-The modernization arc (Phases 0–7, ~80 commits) is complete and shipped; its
-plan has been retired. Deferred items from that arc are captured in the
+**0.6.0 (breaking) — landed on `main` (PRs #27–#32), not yet tagged.** The
+staged legacy cleanup removed the entire pre-0.5 public surface: the
+`gds_fdtd.solver` / `solver_tidy3d` / `solver_lumerical` modules, the
+`core.technology` class + `core.parse_yaml_tech` + the whole `gds_fdtd.core`
+shim module, the `Technology.to_legacy_dict()` name (→ `to_solver_dict()`), and
+the public `gds_fdtd.sparams` module (→ internal `_sparams`). The supported API
+is `get_solver(name)` + `Technology` + `SimulationSpec` + `SMatrix`. See
+[`HANDOFF.md`](HANDOFF.md) for the full development arc and the live-validation
+runbook (tidy3d/Lumerical) — which has NOT been re-run since the cleanup.
+
+The modernization arc (Phases 0–7, ~80 commits) that produced 0.5.0 is complete
+and shipped; its plan has been retired. Deferred items are captured in the
 [Carry-forward backlog](#carry-forward-backlog) below.
 
 ## Guiding principles (non-negotiable)
@@ -93,7 +103,7 @@ The released 0.5.0 is clean at the surface; the depth to attack is the
 
 - **Flatten the legacy wrap:** ✅ DONE (0.6.0). `solver_lumerical.py`
   (pure duplicate) and `solver_tidy3d.py` (deprecated alias) were removed;
-  the base `solver.py` moved to the internal `solvers/_engine_base.py` and
+  the base `solver.py` moved to the internal `solvers/_tidy3d_base.py` and
   the public `gds_fdtd.solver` module was removed. The Tidy3D scene-building
   engine is now internal (`solvers/_tidy3d_engine`), and the supported
   surface is `solvers/` (`get_solver` + the adapters) only. ~1050 lines of
@@ -126,7 +136,7 @@ CRITICAL/HIGH move the needle most.
 
 | Check | Now | Weight | Action | Who |
 |---|---|---|---|---|
-| **Branch-Protection** | 0 | HIGH | Protect `main`: require PR + passing `pass`/CodeQL checks, up-to-date branches, ≥1 review, dismiss stale approvals, linear history, block force-push, enforce for admins, require conversation resolution. | owner (admin API/settings) |
+| **Branch-Protection** | ✅ | HIGH | DONE — `main` requires a PR + the passing `pass` check + up-to-date branches + linear history; force-pushes blocked; enforced for admins. Solo-friendly: 0 required reviews (raising this needs a second maintainer / review bot). | owner ✅ |
 | **Code-Review** | 0 | HIGH | Route *all* changes through PRs (principle 5) and get an approving review before merge. Solo dev is the ceiling here — a second reviewer/maintainer or a review bot is the only way to fully satisfy it. | owner + process |
 | **Signed-Releases** | 0 | HIGH | Sigstore-sign release artifacts in `release.yml`; attach signatures to the GitHub Release. (PyPI already gets PEP 740 attestations via trusted publishing.) | executor (workflow) |
 | **Fuzzing** | 0 | MEDIUM | atheris fuzz targets on the technology-YAML and `.dat` parsers, run directly in CI (import atheris is the Scorecard signal). | executor |
@@ -189,8 +199,8 @@ Deferred with documented rationale; resume when the blocker clears.
 
 Tracked here so they don't get lost; none block executor work.
 
-- [ ] **Branch protection on `main`** (WS5) — the single biggest Scorecard
-      lever.
+- [x] **Branch protection on `main`** (WS5) — ✅ enabled: PR + green `pass` +
+      up-to-date + linear history required, force-pushes blocked, admins enforced.
 - [ ] **PyPI trusted publisher** (project `gds_fdtd`, owner `SiEPIC`,
       workflow `release.yml`, env `pypi`) — in progress with Lukas; then
       re-run the release build's publish job. Unlocks Packaging (WS5).
