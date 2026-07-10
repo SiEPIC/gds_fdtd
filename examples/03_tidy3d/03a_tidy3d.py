@@ -7,16 +7,16 @@ FlexCredits (~0.3 FC at these settings — check estimate + the web UI first).
 
 import os
 
-from gds_fdtd.core import parse_yaml_tech
 from gds_fdtd.lyprocessor import load_cell
 from gds_fdtd.plotting import plot_component, plot_smatrix
 from gds_fdtd.simprocessor import load_component_from_tech
 from gds_fdtd.solvers import get_solver
 from gds_fdtd.spec import SimulationSpec
+from gds_fdtd.technology import Technology
 
 if __name__ == "__main__":
     here = os.path.dirname(os.path.dirname(__file__))
-    tech = parse_yaml_tech(os.path.join(here, "tech.yaml"))  # ONE tech, every engine
+    tech = Technology.from_yaml(os.path.join(here, "tech.yaml"))  # ONE tech, every engine
     cell, layout = load_cell(os.path.join(here, "devices.gds"), top_cell="crossing_te1550")
     component = load_component_from_tech(cell=cell, tech=tech)
 
@@ -47,9 +47,12 @@ if __name__ == "__main__":
     # mode-preserving only (TE<->TM conversion is noise-floor for this device).
     smatrix = solver.run()
     paths = [
-        ("opt4", "opt1", 1, 1), ("opt4", "opt1", 2, 2),  # thru TE / TM
-        ("opt2", "opt1", 1, 1), ("opt2", "opt1", 2, 2),  # cross TE / TM
-        ("opt1", "opt1", 1, 1), ("opt1", "opt1", 2, 2),  # reflection TE / TM
+        ("opt4", "opt1", 1, 1),
+        ("opt4", "opt1", 2, 2),  # thru TE / TM
+        ("opt2", "opt1", 1, 1),
+        ("opt2", "opt1", 2, 2),  # cross TE / TM
+        ("opt1", "opt1", 1, 1),
+        ("opt1", "opt1", 2, 2),  # reflection TE / TM
     ]
     fig, _ = plot_smatrix(smatrix, kind="db", paths=paths)
     fig.savefig(f"{component.name}_sparams.png", dpi=150, bbox_inches="tight")

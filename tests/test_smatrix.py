@@ -206,14 +206,14 @@ def test_plot_component_geometry():
     import matplotlib
 
     matplotlib.use("Agg")
-    from gds_fdtd.core import parse_yaml_tech
     from gds_fdtd.lyprocessor import load_cell
     from gds_fdtd.plotting import plot_component
     from gds_fdtd.simprocessor import load_component_from_tech
     from gds_fdtd.spec import SimulationSpec
+    from gds_fdtd.technology import Technology
 
     tests_dir = pathlib.Path(__file__).parent
-    tech = parse_yaml_tech(str(tests_dir / "tech_lumerical.yaml"))
+    tech = Technology.from_yaml(str(tests_dir / "tech_lumerical.yaml"))
     cell, layout = load_cell(str(tests_dir / "si_sin_escalator.gds"))
     comp = load_component_from_tech(cell=cell, tech=tech)
 

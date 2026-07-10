@@ -20,7 +20,6 @@ import socket
 import numpy as np
 import pytest
 
-from gds_fdtd.core import parse_yaml_tech
 from gds_fdtd.lyprocessor import load_cell
 from gds_fdtd.simprocessor import load_component_from_tech
 from gds_fdtd.smatrix import SMatrix
@@ -34,6 +33,7 @@ from gds_fdtd.solvers import (
     register_solver,
 )
 from gds_fdtd.spec import SimulationSpec
+from gds_fdtd.technology import Technology
 
 TESTS_DIR = pathlib.Path(__file__).parent.parent
 
@@ -111,13 +111,13 @@ def _make_job(cls):
         # AGNOSTIC setup (owner directive): the unified tech carries neutral
         # nk entries and from_gdsfactory attaches the source component, so
         # beamz needs NO solver-specific kwargs.
-        tech_dict = parse_yaml_tech(str(TESTS_DIR / "tech_unified.yaml"))
+        tech_dict = Technology.from_yaml(str(TESTS_DIR / "tech_unified.yaml")).to_legacy_dict()
         gf_c = gf.components.straight(length=5)
         comp = from_gdsfactory(gf_c, tech_dict)
         return comp, tech_dict, None, {}
 
     tech_file = "tech_tidy3d.yaml" if cls.name == "tidy3d" else "tech_lumerical.yaml"
-    tech_dict = parse_yaml_tech(str(TESTS_DIR / tech_file))
+    tech_dict = Technology.from_yaml(str(TESTS_DIR / tech_file)).to_legacy_dict()
     cell, layout = load_cell(str(TESTS_DIR / "si_sin_escalator.gds"))
     comp = load_component_from_tech(cell=cell, tech=tech_dict)
     technology = tech_dict if cls.name != "fake" else None
@@ -126,7 +126,7 @@ def _make_job(cls):
 
 @pytest.fixture(scope="module")
 def component():
-    tech = parse_yaml_tech(str(TESTS_DIR / "tech_lumerical.yaml"))
+    tech = Technology.from_yaml(str(TESTS_DIR / "tech_lumerical.yaml"))
     cell, layout = load_cell(str(TESTS_DIR / "si_sin_escalator.gds"))
     comp = load_component_from_tech(cell=cell, tech=tech)
     yield comp

@@ -13,10 +13,6 @@ from typing import Any
 
 import pytest
 
-from gds_fdtd.core import (
-    parse_yaml_tech,
-)
-
 # WP2.1: geometry classes renamed; tests alias them to keep the body unchanged
 from gds_fdtd.geometry import Component as component
 from gds_fdtd.geometry import LayoutSource as layout
@@ -28,6 +24,7 @@ from gds_fdtd.geometry import (
     is_point_inside_polygon,
 )
 from gds_fdtd.geometry import Structure as structure
+from gds_fdtd.technology import Technology
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -819,14 +816,14 @@ def _common_assertions(parsed: dict[str, Any]) -> None:
 
 
 def test_parse_yaml_tidy3d(tidy3d_yaml: str) -> None:
-    parsed = parse_yaml_tech(tidy3d_yaml)
+    parsed = Technology.from_yaml(tidy3d_yaml).to_legacy_dict()
     _common_assertions(parsed)
     # material dict carries tidy3d_db key
     assert "tidy3d_db" in parsed["device"][0]["material"]
 
 
 def test_parse_yaml_lumerical(lumerical_yaml: str) -> None:
-    parsed = parse_yaml_tech(lumerical_yaml)
+    parsed = Technology.from_yaml(lumerical_yaml).to_legacy_dict()
     _common_assertions(parsed)
     # material dict carries lum_db key
     assert "lum_db" in parsed["device"][0]["material"]

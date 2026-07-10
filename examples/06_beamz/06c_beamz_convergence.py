@@ -11,11 +11,11 @@ import os
 import gdsfactory as gf
 
 from gds_fdtd.convergence import sweep
-from gds_fdtd.core import parse_yaml_tech
 from gds_fdtd.layout.gdsfactory import from_gdsfactory
 from gds_fdtd.plotting import plot_component
 from gds_fdtd.solvers import get_solver
 from gds_fdtd.spec import SimulationSpec
+from gds_fdtd.technology import Technology
 
 ENGINE = "beamz"  # free — compare with 02b (lumerical) and 03b (tidy3d)
 
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     gf.gpdk.PDK.activate()
 
     here = os.path.dirname(os.path.dirname(__file__))
-    tech = parse_yaml_tech(os.path.join(here, "tech.yaml"))
+    tech = Technology.from_yaml(os.path.join(here, "tech.yaml"))
     component = from_gdsfactory(gf.components.straight(length=5), tech)
 
     spec = SimulationSpec(wavelength_points=5)

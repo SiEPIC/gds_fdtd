@@ -12,8 +12,8 @@ import pytest
 
 gf = pytest.importorskip("gdsfactory")
 
-from gds_fdtd.core import parse_yaml_tech  # noqa: E402
 from gds_fdtd.layout.gdsfactory import from_gdsfactory  # noqa: E402
+from gds_fdtd.technology import Technology  # noqa: E402
 
 TESTS_DIR = pathlib.Path(__file__).parent
 
@@ -26,7 +26,7 @@ def _activate_pdk():
 
 @pytest.fixture(scope="module")
 def tech():
-    return parse_yaml_tech(str(TESTS_DIR / "tech_lumerical.yaml"))
+    return Technology.from_yaml(str(TESTS_DIR / "tech_lumerical.yaml"))
 
 
 def test_straight_ports_um_and_directions(tech):

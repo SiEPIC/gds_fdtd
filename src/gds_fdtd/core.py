@@ -4,8 +4,8 @@ gds_fdtd simulation toolbox.
 Legacy core module. The geometry classes moved to gds_fdtd.geometry in 0.5
 (port -> Port, structure -> Structure, region -> Region, component -> Component,
 layout -> LayoutSource); importing the old names from here still works but
-emits a DeprecationWarning. ``parse_yaml_tech`` remains as a thin bridge that
-routes through the modern ``gds_fdtd.technology.Technology`` model.
+emits a DeprecationWarning. Nothing else lives here; this module is slated for
+removal once the deprecation window closes.
 @author: Mustafa Hammood, 2025
 """
 
@@ -45,22 +45,3 @@ def __getattr__(name: str):
 
         return getattr(geometry, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-
-def parse_yaml_tech(file_path: str) -> dict:
-    """
-    Legacy function for parsing YAML technology files.
-
-    Args:
-        file_path (str): Path to the YAML file.
-
-    Returns:
-        dict: Parsed technology data in dictionary format.
-
-    Note:
-        Routes through the validated pydantic model (gds_fdtd.technology.Technology,
-        the returned dict shape is identical to the legacy parser's.
-    """
-    from .technology import Technology
-
-    return Technology.from_yaml(file_path).to_legacy_dict()

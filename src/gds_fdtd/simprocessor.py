@@ -139,11 +139,8 @@ def _load_tidy3d_material(material_spec: dict):
 
 
 def load_component_from_tech(cell, tech, z_span=4, z_center=None):
-    # Convert technology object to dict if needed (for backward compatibility)
-    if hasattr(tech, "to_dict"):
-        tech_dict = tech.to_dict()
-    else:
-        tech_dict = tech
+    # Accept either a Technology model or an already-materialized legacy dict.
+    tech_dict = tech.to_legacy_dict() if hasattr(tech, "to_legacy_dict") else tech
 
     # load the structures in the device
     device_wg = []

@@ -99,12 +99,12 @@ def test_run_cached_uses_settings_default(monkeypatch, tmp_path):
     monkeypatch.setenv("GDS_FDTD_CACHE_DIR", str(tmp_path / "auto_cache"))
     reset_settings()
     try:
-        from gds_fdtd.core import parse_yaml_tech
         from gds_fdtd.lyprocessor import load_cell
         from gds_fdtd.simprocessor import load_component_from_tech
+        from gds_fdtd.technology import Technology
         from tests.test_convergence import TESTS_DIR, CannedSolver  # noqa: F401
 
-        tech = parse_yaml_tech(str(TESTS_DIR / "tech_lumerical.yaml"))
+        tech = Technology.from_yaml(str(TESTS_DIR / "tech_lumerical.yaml"))
         cell, layout = load_cell(str(TESTS_DIR / "si_sin_escalator.gds"))
         comp = load_component_from_tech(cell=cell, tech=tech)
         solver = CannedSolver(comp, None)

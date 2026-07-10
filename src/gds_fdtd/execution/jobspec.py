@@ -76,11 +76,11 @@ class JobSpec(BaseModel):
 
     def load_component(self) -> tuple[Any, Any]:
         """Load (component, technology) through the standard loading path."""
-        from ..core import parse_yaml_tech
         from ..lyprocessor import load_cell
         from ..simprocessor import load_component_from_tech
+        from ..technology import Technology
 
-        tech = parse_yaml_tech(str(self.technology_path))
+        tech = Technology.from_yaml(str(self.technology_path))
         cell, layout = load_cell(str(self.gds_path), top_cell=self.top_cell)
         component = load_component_from_tech(cell=cell, tech=tech)  # type: ignore[no-untyped-call]
         component._layout_keepalive = layout  # klayout object must outlive the cell

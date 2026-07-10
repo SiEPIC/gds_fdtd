@@ -105,11 +105,11 @@ def component_to_dict(comp) -> dict:
 
 
 def build_component(gds_path: pathlib.Path, top_cell: str | None, tech_path: pathlib.Path):
-    from gds_fdtd.core import parse_yaml_tech
     from gds_fdtd.lyprocessor import load_cell
     from gds_fdtd.simprocessor import load_component_from_tech
+    from gds_fdtd.technology import Technology
 
-    tech = parse_yaml_tech(str(tech_path))
+    tech = Technology.from_yaml(str(tech_path))
     cell, _layout = load_cell(str(gds_path), top_cell=top_cell)
     return load_component_from_tech(cell=cell, tech=tech)
 

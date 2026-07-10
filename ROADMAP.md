@@ -58,9 +58,9 @@ honest by CI.
 - **Gallery:** render executed notebooks into the Sphinx docs
   (`nbsphinx` or `myst-nb`) so the website shows real field profiles and
   S-parameters, not just code.
-- **Cleanup:** the stray `examples/notebooks/faid/` notebook predates the
-  standardized flow and once carried a base64 license token in its logs —
-  sanitize and fold it into the standard set, or remove it.
+- **Cleanup:** ✅ DONE. The stray `examples/notebooks/faid/` notebook (pre-0.5,
+  unreferenced, once carried a base64 license token in its logs) was removed;
+  the standardized `examples/0X_*` set is the single source of truth.
 - *Done when:* every example has a committed executed notebook; the offline
   set runs green in a dedicated CI job; the docs gallery shows real outputs.
 

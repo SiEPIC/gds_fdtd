@@ -1,4 +1,4 @@
-"""Deprecation shims + parse_yaml_tech bridge (core.py) — release coverage."""
+"""Deprecation shims (core.py) — release coverage."""
 
 from __future__ import annotations
 
@@ -48,10 +48,10 @@ def test_load_cell_ambiguous_top_cell_raises():
 
 
 def test_load_device_writes_extended_gds(tmp_path):
-    from gds_fdtd.core import parse_yaml_tech
     from gds_fdtd.lyprocessor import load_device
+    from gds_fdtd.technology import Technology
 
-    tech = parse_yaml_tech(str(TESTS_DIR / "tech_lumerical.yaml"))
+    tech = Technology.from_yaml(str(TESTS_DIR / "tech_lumerical.yaml"))
     comp = load_device(str(TESTS_DIR / "si_sin_escalator.gds"), tech, output_dir=str(tmp_path))
     assert comp.ports
     assert list(tmp_path.glob("*_with_extensions.gds"))
