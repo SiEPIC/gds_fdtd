@@ -20,7 +20,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from dataclasses import field as dc_field
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -100,11 +100,11 @@ class ConvergenceReport:
     """Result of a convergence sweep over one SimulationSpec field."""
 
     field: str
-    values: list
+    values: list[Any]
     smatrices: list[SMatrix]
     deltas_db: list[float] = dc_field(default_factory=list)  # len(values) - 1
 
-    def recommend(self, tol_db: float = 0.05):
+    def recommend(self, tol_db: float = 0.05) -> Any:
         """Smallest swept value whose S-matrix moved < tol_db from the
         previous step; None if the sweep never converged."""
         for i, d in enumerate(self.deltas_db):
@@ -122,7 +122,7 @@ class ConvergenceReport:
         lines.append(f"  recommended: {self.field}={rec}" if rec is not None else "  NOT converged")
         return "\n".join(lines)
 
-    def plot(self, tol_db: float = 0.05, savefig: str | None = None):
+    def plot(self, tol_db: float = 0.05, savefig: str | None = None) -> tuple[Any, Any]:
         """Delta-vs-value plot (semilogy) with the tolerance line."""
         import matplotlib.pyplot as plt
 
@@ -150,7 +150,7 @@ def sweep(
     spec: SimulationSpec | None = None,
     *,
     field: str = "mesh",
-    values: Sequence,
+    values: Sequence[Any],
     cache_dir: str | Path | None = None,
     workdir: str | Path | None = None,
     floor_db: float = -30.0,

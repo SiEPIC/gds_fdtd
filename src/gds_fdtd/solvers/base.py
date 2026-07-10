@@ -135,7 +135,7 @@ class Solver(ABC):
             except PackageNotFoundError:  # pragma: no cover - not installed
                 return "unknown"
 
-    def plot_fields(self, axis: str = "z", savefig: str | None = None):
+    def plot_fields(self, axis: str = "z", savefig: str | None = None) -> tuple[Any, Any]:
         """Plot the frequency-domain field profile recorded by the run.
 
         Part of the standardized visualization flow (geometry -> S-params ->
@@ -168,7 +168,7 @@ class Solver(ABC):
         )
         return np.sort(c_um_s / wavelengths)
 
-    def injection_plan(self) -> list[dict]:
+    def injection_plan(self) -> list[dict[str, Any]]:
         """Solver-agnostic port injection descriptors, sorted by port index.
 
         Each entry: name, position [x,y,z], axis ('x'|'y'), direction

@@ -36,7 +36,7 @@ class Mode:
     v: np.ndarray
     wavelength_um: float
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         missing = [k for k in FIELD_KEYS if k not in self.fields]
         if missing:
             raise ValueError(f"mode is missing field components: {missing}")

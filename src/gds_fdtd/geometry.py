@@ -408,9 +408,7 @@ class Component:
     or exported to GDS format.
     """
 
-    def __init__(
-        self, name: str, structures: list[Structure], ports: list[Port], bounds: list[Region]
-    ):
+    def __init__(self, name: str, structures: list[Structure], ports: list[Port], bounds: Region):
         """
         Initialize a photonic component.
 
@@ -418,7 +416,7 @@ class Component:
             name: The name of the component.
             structures: List of structures (geometries) in the component.
             ports: List of ports for input/output connections.
-            bounds: Boundaries of the component.
+            bounds: Bounding region of the component (devrec).
         """
         self.name = name
         flat: list[Structure] = []
