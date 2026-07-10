@@ -140,7 +140,7 @@ def test_beamz_resolves_index_from_rii(tmp_path, monkeypatch):
 
     monkeypatch.setenv("GDS_FDTD_RII_DB", str(_pl.Path(__file__).parent / "rii_db"))
     comp, tech, layout = _job("tech_tidy3d.yaml")
-    rii_tech = copy.deepcopy(tech)
+    rii_tech = copy.deepcopy(tech.to_legacy_dict())
     # v1 needs exactly ONE device layer present: keep [1,0] only, rii material
     rii_tech["device"] = [rii_tech["device"][0]]
     rii_tech["device"][0]["material"] = {"rii": {"shelf": "main", "book": "Si", "page": "Li-293"}}
