@@ -130,7 +130,7 @@ filterwarnings = [
 [tool.codespell]
 # TE/TM = transverse electric/magnetic (photonics); OD/TE show up in SVG path data
 ignore-words-list = "TE,te,TETM,tetm,subtrate,Subtrate"  # Subtrate: intentional legacy-typo tolerance in _is_background
-skip = "*.svg,*.gds,*.lock,*.ipynb,docs/_build,docs/_autosummary,MODERNIZATION_PLAN.md"
+skip = "*.svg,*.gds,*.lock,*.ipynb,docs/_build,docs/_autosummary"
 
 [tool.ruff]
 line-length = 100
@@ -140,7 +140,7 @@ extend-exclude = ["examples"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "A", "C4"]
-# Temporary ignores — each is scheduled for a proper fix in MODERNIZATION_PLAN.md.
+# Temporary ignores — tracked in ROADMAP.md; remove each in its owning cleanup.
 # Do NOT silently fix these in unrelated PRs; remove each ignore in its owning WP.
 ignore = [
   "E501",  # long comments/strings; wrapped progressively as files are touched in Phase 1/2

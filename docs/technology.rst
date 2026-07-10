@@ -441,7 +441,7 @@ Validate technology definitions:
         if hasattr(tech, 'device') and tech.device:
             print(f"Device layers: {len(tech.device)}")
             for i, layer in enumerate(tech.device):
-                print(f"  Layer {i}: GDS {layer['layer']} at z={layer['z_base']}μm")
+                print(f"  Layer {i}: GDS {layer.layer} at z={layer.z_base}μm")
 
         print()
 
@@ -458,15 +458,9 @@ Debug material and layer issues:
         print("-" * 20)
 
         for structure in component.structures:
-            if isinstance(structure, list):
-                for s in structure:
-                    print(f"Structure {s.name}:")
-                    print(f"  Material: {s.material}")
-                    print(f"  Layer: {s.layer}")
-            else:
-                print(f"Structure {structure.name}:")
-                print(f"  Material: {structure.material}")
-                print(f"  Layer: {structure.layer}")
+            print(f"Structure {structure.name} (role={structure.role}):")
+            print(f"  Material: {structure.material}")
+            print(f"  Layer: {structure.layer}")
 
 Creating Technology Files
 -------------------------

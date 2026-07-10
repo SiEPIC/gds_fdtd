@@ -4,10 +4,10 @@
 Welcome to gds_fdtd's documentation!
 =====================================
 
-``gds_fdtd`` is a Python package that helps you set up FDTD simulations for photonic devices. It works with both Tidy3D and Lumerical solvers.
+``gds_fdtd`` is a Python package that helps you set up FDTD simulations for photonic devices. One component + one technology file + one ``SimulationSpec`` runs on any engine — tidy3d (cloud), Lumerical (local), or beamz (free/JAX) — behind a single ``get_solver(name)`` contract.
 
 What you can do with it:
-- Run simulations using either Tidy3D or Lumerical
+- Run simulations on tidy3d, Lumerical, or beamz via ``get_solver(name)``
 - Handle TE and TM polarizations in the same simulation
 - Extract and analyze S-parameters from your results
 - Monitor electromagnetic fields during simulation

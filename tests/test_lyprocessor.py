@@ -8,8 +8,8 @@ every test collected after it (the golden tests received a fake simprocessor) â€
 that exec-compiled `pass` statements at every line of the module under test,
 faking 100% coverage. All three are gone. Module fakes are now scoped with
 monkeypatch inside the tests that need them. Real KLayout-backed tests for
-load_cell/load_region/load_structure/load_ports arrive with the Phase 1 bug-fix
-WPs (see MODERNIZATION_PLAN.md).
+load_cell/load_region/load_structure/load_ports were added in the 0.5
+modernization arc (git history).
 """
 
 from __future__ import annotations

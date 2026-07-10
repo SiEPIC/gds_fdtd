@@ -1,5 +1,5 @@
 """
-Golden (characterization) tests — WP0.3 of MODERNIZATION_PLAN.md.
+Golden (characterization) tests (WP0.3 of the 0.5 modernization arc).
 
 These pin the CURRENT geometry-building behavior of load_component_from_tech
 (bugs and all) so that the Phase 1/2 refactors can prove geometric equivalence.

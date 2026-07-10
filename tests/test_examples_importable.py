@@ -1,5 +1,5 @@
 """
-Examples import check — WP0.4 of MODERNIZATION_PLAN.md.
+Examples import check (WP0.4 of the 0.5 modernization arc).
 
 For every examples/**/*.py, parse the AST (never execute) and assert that every
 `gds_fdtd` symbol it imports actually exists in the installed package. This makes

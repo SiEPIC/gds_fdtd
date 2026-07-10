@@ -149,7 +149,7 @@ The version is derived **from git tags** via `hatch-vcs` — there is nothing to
 version string in the source. To release:
 
 ```bash
-git tag v0.5.0
+git tag v0.6.0
 git push --tags
 ```
 

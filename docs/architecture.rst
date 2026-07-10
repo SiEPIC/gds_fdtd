@@ -55,9 +55,11 @@ Solver layer
     group (see :doc:`adding_a_solver`).
 
 ``solvers.tidy3d`` / ``solvers.lumerical`` / ``solvers.beamz``
-    The engine adapters. The tidy3d and Lumerical adapters wrap the
-    pre-0.5 implementation modules (``solver_tidy3d`` / ``solver_lumerical``,
-    deprecated as public API, removal at v1.0).
+    The engine adapters. The tidy3d adapter drives an internal scene builder
+    (``solvers/_tidy3d_base`` + ``solvers/_tidy3d_engine``); the Lumerical
+    adapter generates ``.lsf`` directly; beamz builds a JAX FDTD grid. The
+    pre-0.5 ``solver_tidy3d`` / ``solver_lumerical`` modules were removed in
+    0.6.0.
 
 ``grid`` / ``modes`` / ``extraction``
     The kernel-engine pipeline: permittivity rasterization with sub-pixel

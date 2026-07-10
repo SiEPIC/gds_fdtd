@@ -54,7 +54,7 @@ There is no version to bump (hatch-vcs derives it from the tag).
 
 These require admin permissions; PRs cannot change them:
 
-- [ ] Branch protection/ruleset on `main`: required checks `pass` + CodeQL,
+- [x] Branch protection/ruleset on `main`: required checks `pass` + CodeQL,
       linear history, no force pushes
 - [ ] Merge queue enabled with `pass` as its gate
 - [ ] Secret scanning + push protection enabled
