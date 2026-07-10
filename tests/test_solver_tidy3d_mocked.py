@@ -40,7 +40,7 @@ def escalator(fake_td):
 
 
 def _make(escalator, tmp_path, **kwargs):
-    from gds_fdtd.solvers._tidy3d_engine import _TidyEngine as fdtd_solver_tidy3d
+    from gds_fdtd.solvers._tidy3d_engine import _TidyEngine
 
     comp, tech = escalator
     defaults = {
@@ -53,7 +53,7 @@ def _make(escalator, tmp_path, **kwargs):
         "working_dir": str(tmp_path),
     }
     defaults.update(kwargs)
-    return fdtd_solver_tidy3d(**defaults)
+    return _TidyEngine(**defaults)
 
 
 def test_setup_constructs_scene_offline(fake_td, escalator, tmp_path):

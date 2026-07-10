@@ -1,4 +1,4 @@
-"""Tests for the internal engine base (solvers._engine_base)."""
+"""Tests for the internal Tidy3D engine base (solvers._tidy3d_base)."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import pytest
 from gds_fdtd.core import parse_yaml_tech
 from gds_fdtd.lyprocessor import load_cell
 from gds_fdtd.simprocessor import load_component_from_tech
-from gds_fdtd.solvers._engine_base import fdtd_port, fdtd_solver
+from gds_fdtd.solvers._tidy3d_base import _TidyEngineBase, _TidyPort
 
 TESTS_DIR = pathlib.Path(__file__).parent
 
@@ -24,9 +24,10 @@ def escalator_component():
 
 
 def _make_solver(comp, tmp_path, **kwargs):
-    # fdtd_solver's "abstract" methods don't use ABCMeta, so the base class is
-    # directly instantiable — which conveniently exercises the full base __init__.
-    return fdtd_solver(component=comp, tech=None, working_dir=str(tmp_path), **kwargs)
+    # _TidyEngineBase's "abstract" methods don't use ABCMeta, so the base class
+    # is directly instantiable — which conveniently exercises the full base
+    # __init__ without needing tidy3d.
+    return _TidyEngineBase(component=comp, tech=None, working_dir=str(tmp_path), **kwargs)
 
 
 # ---------- B5: port_input default ----------
@@ -72,9 +73,9 @@ def test_solver_instances_share_no_mutable_state(escalator_component, tmp_path):
     assert s2.field_monitors == ["z"]
 
 
-def test_fdtd_port_instances_share_no_mutable_state():
-    p1 = fdtd_port(name="opt1")
-    p2 = fdtd_port(name="opt2")
+def test_tidy_port_instances_share_no_mutable_state():
+    p1 = _TidyPort(name="opt1")
+    p2 = _TidyPort(name="opt2")
     p1.position[0] = 123.0
     p1.modes.append(7)
     p1.span[1] = 99.0

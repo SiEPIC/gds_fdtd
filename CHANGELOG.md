@@ -44,17 +44,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `.dat` fuzz target).
 
 ### Changed
-- The Tidy3D scene-building engine moved to an internal module
-  (`gds_fdtd.solvers._tidy3d_engine`); the supported `Tidy3DSolver` adapter
-  no longer depends on the deprecated `fdtd_solver_tidy3d` class (the
-  dependency now points deprecated → supported, not the reverse).
+- The Tidy3D scene-building engine is now fully internal and honestly named.
+  The generic `fdtd_solver`/`fdtd_port` engine classes (the last pre-0.5 names
+  in the tree) were renamed to `_TidyEngineBase`/`_TidyPort`, and the module
+  `solvers/_engine_base.py` → `solvers/_tidy3d_base.py`. The supported
+  `Tidy3DSolver` adapter is the only entry point; the engine base no longer
+  imports the legacy `core.technology` type (it took the modern `Technology`
+  in practice). No public API changed — all of these names are internal.
 - `mypy --strict` is now enforced on 13 modules (was 5), covering the whole
   modern core; two latent type bugs were fixed in the process.
-
-### Deprecated
-- `fdtd_solver_tidy3d` and `fdtd_solver_lumerical` emit `DeprecationWarning`
-  on instantiation and will be removed in 1.0. Use
-  `gds_fdtd.solvers.get_solver("tidy3d" | "lumerical")(component, tech, spec)`.
 
 ### Security
 - Branch protection enabled on `main`; solo-friendly (PR + green CI +

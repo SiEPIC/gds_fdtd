@@ -1,18 +1,21 @@
 """
 gds_fdtd simulation toolbox.
 
-Internal engine base (``fdtd_solver`` + ``fdtd_port``): geometry/port/domain
-setup shared by the Tidy3D scene-building engine. Not a public module.
-
-FDTD solver module.
+Internal base for the Tidy3D scene-building engine: the solver-agnostic
+geometry/port/domain setup (``_TidyEngineBase`` + ``_TidyPort``) that the
+Tidy3D engine builds on. Kept separate from the tidy3d-specific engine so this
+setup logic stays importable and testable WITHOUT tidy3d installed. Not a
+public module.
 @author: Mustafa Hammood, 2025
 """
+
+from __future__ import annotations
 
 import os
 from abc import abstractmethod
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from gds_fdtd.core import technology
 from gds_fdtd.geometry import Component, Port
 from gds_fdtd.logging_config import (
     log_dict,
@@ -22,8 +25,11 @@ from gds_fdtd.logging_config import (
 from gds_fdtd.sparams import sparameters
 from gds_fdtd.spec import SimulationSpec
 
+if TYPE_CHECKING:
+    from gds_fdtd.technology import Technology
 
-class fdtd_port:
+
+class _TidyPort:
     """
     Represents a port in an FDTD simulation.
 
@@ -74,13 +80,13 @@ class fdtd_port:
             raise ValueError("Modes must be a list of integers")
 
 
-class fdtd_solver:
+class _TidyEngineBase:
     """
     FDTD solver for electromagnetic simulations.
 
     Attributes:
         component (component): Component to simulate.
-        tech (technology): Technology to use for the simulation.
+        tech (Technology): Technology to use for the simulation.
         port_input (list of port): Input ports of the component.
         wavelength_start (float): Starting wavelength for simulation.
         wavelength_end (float): Ending wavelength for simulation.
@@ -99,14 +105,14 @@ class fdtd_solver:
         field_monitors (list of str): List of field monitoring directions.
         working_dir (str): Base directory where a component-specific subdirectory will be created for FDTD project files.
         component_working_dir (str): Same as working_dir, the component-specific directory path.
-        fdtd_ports (list of fdtd_port): List of converted FDTD port objects.
+        tidy_ports (list of _TidyPort): List of converted FDTD port objects.
 
     """
 
     def __init__(
         self,
         component: Component,
-        tech: technology,
+        tech: Technology | None,
         port_input: Port | list[Port] | None = None,
         wavelength_start: float = 1.5,
         wavelength_end: float = 1.6,
@@ -130,7 +136,7 @@ class fdtd_solver:
 
         Parameters:
             component (component): Component to simulate.
-            tech (technology): Technology to use for the simulation.
+            tech (Technology): Technology to use for the simulation.
             port_input (list of port): Input ports of the component.
             wavelength_start (float): Simulation start wavelength in micrometers.
             wavelength_end (float): Simulation end wavelength in micrometers.
@@ -229,8 +235,8 @@ class fdtd_solver:
         # Auto-calculate center and span from component geometry
         self._calculate_simulation_domain()
 
-        # Convert component ports to fdtd_port objects for modular solver implementation
-        self.fdtd_ports: list[fdtd_port] = self._convert_component_ports_to_fdtd_ports()
+        # Convert component ports to _TidyPort objects for modular solver implementation
+        self.tidy_ports: list[_TidyPort] = self._build_tidy_ports()
 
         self.field_monitors_objs = []
         self._sparameters = None
@@ -269,9 +275,9 @@ class fdtd_solver:
                 "Warning: Could not determine component geometry, using default simulation domain"
             )
 
-    def _convert_component_ports_to_fdtd_ports(self) -> list[fdtd_port]:
+    def _build_tidy_ports(self) -> list[_TidyPort]:
         """
-        Convert component ports to fdtd_port objects for modular solver implementation.
+        Convert component ports to _TidyPort objects for modular solver implementation.
 
         This method creates a solver-agnostic representation of ports that can be used
         by different FDTD solver implementations (Lumerical, Tidy3D, etc.).
@@ -279,9 +285,9 @@ class fdtd_solver:
         Ports are sorted by their index (extracted from port names) to ensure consistent ordering.
 
         Returns:
-            list[fdtd_port]: List of fdtd_port objects with standardized attributes, sorted by port index.
+            list[_TidyPort]: List of _TidyPort objects with standardized attributes, sorted by port index.
         """
-        fdtd_ports = []
+        ports = []
 
         # Sort ports by their index to ensure consistent ordering
         # This uses the port.idx property which extracts the numeric part from port names
@@ -312,8 +318,8 @@ class fdtd_solver:
                     f"Port direction {p.direction}° not supported. Supported directions: 0°, 90°, 180°, 270°"
                 )
 
-            # Create standardized fdtd_port object
-            fdtd_port_obj = fdtd_port(
+            # Create standardized _TidyPort object
+            tidy_port = _TidyPort(
                 name=p.name,
                 position=[p.center[0], p.center[1], p.center[2]],
                 span=span,
@@ -321,9 +327,9 @@ class fdtd_solver:
                 modes=self.modes,  # Use solver's mode configuration
             )
 
-            fdtd_ports.append(fdtd_port_obj)
+            ports.append(tidy_port)
 
-        return fdtd_ports
+        return ports
 
     def _get_active_ports(self) -> list[str]:
         """Names of the ports to excite (port_input is normalized to a list in __init__)."""
@@ -394,7 +400,7 @@ class fdtd_solver:
             "Domain center": f"({self.center[0]:.1f}, {self.center[1]:.1f}, {self.center[2]:.1f}) μm",
             "Mesh resolution": f"{self.mesh} cells/wavelength",
             "Run time factor": self.run_time_factor,
-            "Total ports": len(self.fdtd_ports),
+            "Total ports": len(self.tidy_ports),
             "Active ports": len(self._get_active_ports()),
             "Port dimensions": f"{self.width_ports} × {self.depth_ports} μm",
             "Modes per port": self.modes,
@@ -424,7 +430,7 @@ class fdtd_solver:
         self.logger.info(f"  Mesh resolution: {self.mesh} cells/wavelength")
         self.logger.info(f"  Run time factor: {self.run_time_factor}")
         self.logger.info("Port Configuration:")
-        self.logger.info(f"  Total ports: {len(self.fdtd_ports)}")
+        self.logger.info(f"  Total ports: {len(self.tidy_ports)}")
         self.logger.info(f"  Active ports: {len(self._get_active_ports())}")
         self.logger.info(f"  Port dimensions: {self.width_ports} × {self.depth_ports} μm")
         self.logger.info(f"  Modes per port: {self.modes}")

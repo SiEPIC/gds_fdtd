@@ -1,9 +1,9 @@
 """
 gds_fdtd simulation toolbox.
 
-Internal Tidy3D scene-building engine. Shared implementation used by the
-supported ``gds_fdtd.solvers.tidy3d.Tidy3DSolver`` adapter and by the
-deprecated ``gds_fdtd.solver_tidy3d.fdtd_solver_tidy3d`` public alias.
+Internal Tidy3D scene-building engine, the implementation behind the supported
+``gds_fdtd.solvers.tidy3d.Tidy3DSolver`` adapter. The tidy3d-independent
+geometry/port/domain setup lives in the sibling ``_tidy3d_base`` module.
 Not a public module.
 """
 
@@ -14,11 +14,11 @@ import tidy3d as td
 from tidy3d.plugins.smatrix import ModalComponentModeler, Port
 
 from gds_fdtd.logging_config import log_simulation_complete, log_simulation_start
-from gds_fdtd.solvers._engine_base import fdtd_solver
+from gds_fdtd.solvers._tidy3d_base import _TidyEngineBase
 from gds_fdtd.sparams import sparameters
 
 
-class _TidyEngine(fdtd_solver):
+class _TidyEngine(_TidyEngineBase):
     """Tidy3D ComponentModeler scene builder + runner (internal engine)."""
 
     def __init__(self, *args, visualize: bool = True, **kwargs):
@@ -150,23 +150,23 @@ class _TidyEngine(fdtd_solver):
         """Create Tidy3D Port objects for S-matrix calculation with multi-modal support."""
         ports = []
 
-        for fdtd_port in self.fdtd_ports:
-            # Determine port direction and size based on fdtd_port configuration
-            if fdtd_port.span[0] is None:  # x-axis injection
-                direction = "+" if fdtd_port.direction == "forward" else "-"
+        for tp in self.tidy_ports:
+            # Determine port direction and size based on the _TidyPort configuration
+            if tp.span[0] is None:  # x-axis injection
+                direction = "+" if tp.direction == "forward" else "-"
                 size = [0, self.width_ports, self.depth_ports]
-            elif fdtd_port.span[1] is None:  # y-axis injection
-                direction = "+" if fdtd_port.direction == "forward" else "-"
+            elif tp.span[1] is None:  # y-axis injection
+                direction = "+" if tp.direction == "forward" else "-"
                 size = [self.width_ports, 0, self.depth_ports]
             else:
-                raise ValueError(f"Invalid span configuration for port {fdtd_port.name}")
+                raise ValueError(f"Invalid span configuration for port {tp.name}")
 
             # Create Tidy3D Port object with multi-modal support
             port = Port(
-                center=fdtd_port.position,
+                center=tp.position,
                 size=size,
                 direction=direction,
-                name=fdtd_port.name,
+                name=tp.name,
                 mode_spec=td.ModeSpec(
                     num_modes=max(self.modes)
                 ),  # Ensure enough modes are calculated

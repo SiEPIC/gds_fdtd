@@ -4,11 +4,11 @@ gds_fdtd simulation toolbox.
 LumericalSolver: the Ansys Lumerical FDTD adapter on the Phase-3 Solver
 contract. ``build()`` generates the COMPLETE setup script (.lsf) as
 pure text plus the exported GDS — offline, deterministic, no license, no
-lumapi import — mirroring the validated legacy ``fdtd_solver_lumerical``
-semantics (incl. the F6/F7 Lumerical-2025 fixes). ``run()`` is the only
-method that opens a lumapi session (license checkout).
+lumapi import — mirroring the original validated Lumerical setup flow (incl.
+the F6/F7 Lumerical-2025 fixes). ``run()`` is the only method that opens a
+lumapi session (license checkout).
 
-Unlike the legacy layer-builder flow (which asked the live session which GDS
+Unlike the original layer-builder flow (which asked the live session which GDS
 layers exist), the script generator derives the present layers from the
 component's structures — one reason build() needs no session.
 """

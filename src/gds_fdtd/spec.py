@@ -2,12 +2,12 @@
 gds_fdtd simulation toolbox.
 
 SimulationSpec: one validated pydantic model for every numeric
-simulation setting that was previously ~15 loose solver kwargs. Defaults are
-IDENTICAL to the historical fdtd_solver defaults. All lengths are um, angles
-degrees, frequencies Hz (package-wide convention).
+simulation setting that was previously ~15 loose solver kwargs. Defaults match
+the original solver defaults. All lengths are um, angles degrees, frequencies
+Hz (package-wide convention).
 
-The legacy fdtd_solver consumes this via a thin adapter (its keyword surface
-is unchanged); the Phase-3 Solver ABC takes a SimulationSpec directly.
+The Tidy3D scene-building engine consumes these settings via its keyword
+surface; the Phase-3 Solver ABC takes a SimulationSpec directly.
 """
 
 from __future__ import annotations
