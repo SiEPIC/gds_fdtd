@@ -21,6 +21,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   raised `MemoryError`. It now raises a clean `ValueError` (found by the new
   `.dat` fuzz target).
 
+### Changed
+- The Tidy3D scene-building engine moved to an internal module
+  (`gds_fdtd.solvers._tidy3d_engine`); the supported `Tidy3DSolver` adapter
+  no longer depends on the deprecated `fdtd_solver_tidy3d` class (the
+  dependency now points deprecated → supported, not the reverse).
+- `mypy --strict` is now enforced on 13 modules (was 5), covering the whole
+  modern core; two latent type bugs were fixed in the process.
+
+### Deprecated
+- `fdtd_solver_tidy3d` and `fdtd_solver_lumerical` emit `DeprecationWarning`
+  on instantiation and will be removed in 1.0. Use
+  `gds_fdtd.solvers.get_solver("tidy3d" | "lumerical")(component, tech, spec)`.
+
 ### Security
 - Branch protection enabled on `main`; solo-friendly (PR + green CI +
   linear history required, force-pushes blocked).

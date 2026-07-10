@@ -6,6 +6,7 @@ Lumerical tools interface module.
 """
 
 import os
+import warnings
 
 from lumapi import FDTD
 
@@ -15,15 +16,25 @@ from gds_fdtd.sparams import process_dat
 
 
 class fdtd_solver_lumerical(fdtd_solver):
-    """
-    FDTD solver for electromagnetic simulations using Lumerical.
+    """FDTD solver for electromagnetic simulations using Lumerical.
+
+    .. deprecated:: 0.5
+        Use :func:`gds_fdtd.solvers.get_solver` with ``"lumerical"``; removed in 1.0.
     """
 
     def __init__(self, *args, gpu: bool = False, **kwargs):
         """Initialize the Lumerical solver by calling the parent constructor.
+
         Args:
             gpu (bool): Whether to use GPU acceleration.
         """
+        warnings.warn(
+            "fdtd_solver_lumerical is deprecated since gds_fdtd 0.5 and will be "
+            "removed in 1.0; use gds_fdtd.solvers.get_solver('lumerical')"
+            "(component, technology, spec).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(*args, **kwargs)
         self.gpu = gpu
         self.setup()

@@ -19,6 +19,9 @@ from .mocks.lumapi import install
 
 TESTS_DIR = pathlib.Path(__file__).parent
 
+# these tests exercise the DEPRECATED fdtd_solver_lumerical on purpose
+pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
+
 
 @pytest.fixture()
 def mock_lumapi(monkeypatch):
@@ -125,3 +128,20 @@ def test_run_completes_on_recorded_dat(mock_lumapi, escalator, tmp_path):
     import numpy as np
 
     assert 10 * np.log10(max(np.abs(thru.s_mag)) ** 2) > -1.0
+
+
+def test_deprecation_warning(mock_lumapi, escalator, tmp_path):
+    """fdtd_solver_lumerical warns on use; users should move to get_solver."""
+    from gds_fdtd.solver_lumerical import fdtd_solver_lumerical
+
+    comp, tech = escalator
+    with pytest.warns(DeprecationWarning, match="deprecated since gds_fdtd 0.5"):
+        fdtd_solver_lumerical(
+            component=comp,
+            tech=tech,
+            wavelength_points=5,
+            mesh=4,
+            z_min=-1.0,
+            z_max=1.11,
+            working_dir=str(tmp_path),
+        )
