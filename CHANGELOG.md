@@ -40,6 +40,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   adapter runs the cloud job and builds the canonical `SMatrix` itself; the
   engine only builds the scene. This also removes the engine's last dependency
   on the legacy `sparams` module.
+- `gds_fdtd.core.parse_yaml_tech` was removed. It was a one-line bridge to
+  `Technology.from_yaml(path).to_legacy_dict()`; call sites now use
+  `gds_fdtd.technology.Technology.from_yaml(path)` directly and pass the
+  `Technology` to `load_component_from_tech`/`load_device`/the solvers (all of
+  which accept it). Use `.to_legacy_dict()` if you specifically need the dict.
+- Removed the stray pre-0.5 `examples/notebooks/faid/` notebook (unreferenced,
+  superseded by the standardized `examples/0X_*` set; it had also once logged a
+  license token).
 
 ### Added
 - Seeded atheris fuzzing of the technology-YAML and INTERCONNECT `.dat`

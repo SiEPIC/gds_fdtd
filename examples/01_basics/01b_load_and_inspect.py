@@ -8,15 +8,15 @@ like this before an engine enters the picture.
 
 import os
 
-from gds_fdtd.core import parse_yaml_tech
 from gds_fdtd.lyprocessor import load_cell
 from gds_fdtd.plotting import plot_component
 from gds_fdtd.simprocessor import load_component_from_tech
 from gds_fdtd.spec import SimulationSpec
+from gds_fdtd.technology import Technology
 
 if __name__ == "__main__":
     here = os.path.dirname(os.path.dirname(__file__))
-    tech = parse_yaml_tech(os.path.join(here, "tech.yaml"))  # ONE tech, every engine
+    tech = Technology.from_yaml(os.path.join(here, "tech.yaml"))  # ONE tech, every engine
     cell, layout = load_cell(os.path.join(here, "devices.gds"), top_cell="crossing_te1550")
     component = load_component_from_tech(cell=cell, tech=tech)
 

@@ -8,14 +8,14 @@ import os
 import siepic_ebeam_pdk as pdk  # noqa: F401  (registers the PDK technology)
 from pya import Layout
 
-from gds_fdtd.core import parse_yaml_tech
 from gds_fdtd.simprocessor import load_component_from_tech
 from gds_fdtd.solvers import get_solver
 from gds_fdtd.spec import SimulationSpec
+from gds_fdtd.technology import Technology
 
 if __name__ == "__main__":
     here = os.path.dirname(os.path.dirname(__file__))
-    tech = parse_yaml_tech(os.path.join(here, "tech.yaml"))
+    tech = Technology.from_yaml(os.path.join(here, "tech.yaml"))
 
     ly = Layout()
     ly.technology_name = pdk.tech.name
@@ -25,8 +25,14 @@ if __name__ == "__main__":
     solver = get_solver("tidy3d")(
         component,
         technology=tech,
-        spec=SimulationSpec(wavelength_start=1.45, wavelength_end=1.65,
-                            wavelength_points=101, mesh=8, z_min=-1.0, z_max=1.11),
+        spec=SimulationSpec(
+            wavelength_start=1.45,
+            wavelength_end=1.65,
+            wavelength_points=101,
+            mesh=8,
+            z_min=-1.0,
+            z_max=1.11,
+        ),
     )
 
     # STANDARD VISUALIZATION STEP 1: geometry, ports, simulation region

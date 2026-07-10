@@ -6,17 +6,17 @@ import pathlib
 
 import pytest
 
-from gds_fdtd.core import parse_yaml_tech
 from gds_fdtd.lyprocessor import load_cell
 from gds_fdtd.simprocessor import load_component_from_tech
 from gds_fdtd.solvers import get_solver
 from gds_fdtd.spec import SimulationSpec
+from gds_fdtd.technology import Technology
 
 TESTS_DIR = pathlib.Path(__file__).parent
 
 
 def _job(tech_file: str):
-    tech = parse_yaml_tech(str(TESTS_DIR / tech_file))
+    tech = Technology.from_yaml(str(TESTS_DIR / tech_file))
     cell, layout = load_cell(str(TESTS_DIR / "si_sin_escalator.gds"))
     comp = load_component_from_tech(cell=cell, tech=tech)
     return comp, tech, layout
@@ -89,7 +89,7 @@ def test_lum_validate_flags_missing_materials():
     import copy
 
     comp, tech, layout = _job("tech_lumerical.yaml")
-    bad = copy.deepcopy(tech)
+    bad = copy.deepcopy(tech.to_legacy_dict())
     for d in bad["device"]:
         d["material"].pop("lum_db", None)
     solver = get_solver("lumerical")(comp, technology=bad)
@@ -140,7 +140,7 @@ def test_beamz_resolves_index_from_rii(tmp_path, monkeypatch):
 
     monkeypatch.setenv("GDS_FDTD_RII_DB", str(_pl.Path(__file__).parent / "rii_db"))
     comp, tech, layout = _job("tech_tidy3d.yaml")
-    rii_tech = copy.deepcopy(tech)
+    rii_tech = copy.deepcopy(tech.to_legacy_dict())
     # v1 needs exactly ONE device layer present: keep [1,0] only, rii material
     rii_tech["device"] = [rii_tech["device"][0]]
     rii_tech["device"][0]["material"] = {"rii": {"shelf": "main", "book": "Si", "page": "Li-293"}}
@@ -186,14 +186,14 @@ def test_beamz_rejects_y_oriented_ports():
     pytest.importorskip("beamz")
     gf = pytest.importorskip("gdsfactory")
     gf.gpdk.PDK.activate()
-    from gds_fdtd.core import parse_yaml_tech
     from gds_fdtd.layout.gdsfactory import from_gdsfactory
+    from gds_fdtd.technology import Technology
 
     c = gf.Component(name="vstraight_f14")
     ref = c.add_ref(gf.components.straight(length=5))
     ref.rotate(90)
     c.add_ports(ref.ports)
-    tech = parse_yaml_tech(str(TESTS_DIR / "tech_unified.yaml"))
+    tech = Technology.from_yaml(str(TESTS_DIR / "tech_unified.yaml"))
     comp = from_gdsfactory(c, tech)
     problems = get_solver("beamz")(comp, technology=tech).validate()
     assert any("F14" in p for p in problems), problems

@@ -9,11 +9,11 @@ import textwrap
 import numpy as np
 import pytest
 
-from gds_fdtd.core import parse_yaml_tech
 from gds_fdtd.lyprocessor import load_cell
 from gds_fdtd.simprocessor import load_component_from_tech
 from gds_fdtd.solvers import get_solver
 from gds_fdtd.spec import SimulationSpec
+from gds_fdtd.technology import Technology
 
 from .mocks.lumapi import install
 
@@ -22,7 +22,7 @@ TESTS_DIR = pathlib.Path(__file__).parent
 
 @pytest.fixture()
 def escalator():
-    tech = parse_yaml_tech(str(TESTS_DIR / "tech_unified.yaml"))
+    tech = Technology.from_yaml(str(TESTS_DIR / "tech_unified.yaml"))
     cell, layout = load_cell(
         str(TESTS_DIR.parent / "examples" / "devices.gds"),
         top_cell="si_sin_escalator_te1550",

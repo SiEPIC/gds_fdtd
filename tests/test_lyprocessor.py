@@ -116,14 +116,14 @@ def test_load_region_missing_devrec_layer_raises(escalator_cell):
 # load_device (WP1.8, bug B15) — returns the component, never touches the input
 # =============================================================================
 def test_load_device_returns_component_and_preserves_input(tmp_path):
-    from gds_fdtd.core import parse_yaml_tech
+    from gds_fdtd.technology import Technology
 
     src = pathlib.Path(__file__).parent / "si_sin_escalator.gds"
     gds = tmp_path / "device.gds"
     gds.write_bytes(src.read_bytes())
     before = gds.read_bytes()
 
-    tech = parse_yaml_tech(str(pathlib.Path(__file__).parent / "tech_lumerical.yaml"))
+    tech = Technology.from_yaml(str(pathlib.Path(__file__).parent / "tech_lumerical.yaml"))
     out_dir = tmp_path / "out"
     comp = lp.load_device(str(gds), tech=tech, output_dir=str(out_dir))
 

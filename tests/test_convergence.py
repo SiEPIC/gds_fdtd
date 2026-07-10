@@ -14,12 +14,12 @@ import pytest
 
 from gds_fdtd.caching import cached_run, job_hash
 from gds_fdtd.convergence import ConvergenceReport, max_delta_db, sweep
-from gds_fdtd.core import parse_yaml_tech
 from gds_fdtd.lyprocessor import load_cell
 from gds_fdtd.simprocessor import load_component_from_tech
 from gds_fdtd.smatrix import SMatrix
 from gds_fdtd.solvers import SetupArtifacts, Solver, SolverCapabilities
 from gds_fdtd.spec import SimulationSpec
+from gds_fdtd.technology import Technology
 from gds_fdtd.validation import compare_smatrices, validate_across
 
 TESTS_DIR = pathlib.Path(__file__).parent
@@ -71,7 +71,7 @@ class CannedSolverB(CannedSolver):
 
 @pytest.fixture(scope="module")
 def component():
-    tech = parse_yaml_tech(str(TESTS_DIR / "tech_lumerical.yaml"))
+    tech = Technology.from_yaml(str(TESTS_DIR / "tech_lumerical.yaml"))
     cell, layout = load_cell(str(TESTS_DIR / "si_sin_escalator.gds"))
     comp = load_component_from_tech(cell=cell, tech=tech)
     yield comp
@@ -148,7 +148,7 @@ def test_job_hash_is_process_stable(component):
 
     from gds_fdtd.caching import job_fingerprint
 
-    tech = parse_yaml_tech(str(TESTS_DIR / "tech_lumerical.yaml"))
+    tech = Technology.from_yaml(str(TESTS_DIR / "tech_lumerical.yaml"))
     fp = json.dumps(job_fingerprint(CannedSolver(component, tech, SimulationSpec())))
     assert " at 0x" not in fp
 

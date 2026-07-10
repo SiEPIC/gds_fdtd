@@ -6,7 +6,6 @@ import pathlib
 
 import pytest
 
-from gds_fdtd.core import parse_yaml_tech
 from gds_fdtd.technology import Technology
 
 TESTS_DIR = pathlib.Path(__file__).parent
@@ -28,8 +27,8 @@ def test_all_shipped_tech_files_load(path):
 
 
 def test_legacy_dict_matches_old_parser_shape(tmp_path):
-    """parse_yaml_tech routes through the model; shape must stay identical."""
-    d = parse_yaml_tech(str(TESTS_DIR / "tech_tidy3d.yaml"))
+    """Technology.to_legacy_dict() reproduces the old parser's shape exactly."""
+    d = Technology.from_yaml(str(TESTS_DIR / "tech_tidy3d.yaml")).to_legacy_dict()
     assert d["device"][0]["layer"] == [1, 0]
     assert d["device"][0]["sidewall_angle"] == 85
     assert isinstance(d["substrate"], list) and len(d["substrate"]) == 1

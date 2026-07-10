@@ -12,8 +12,8 @@ frozen through the 1.x series). Additions in this module are additive-only:
   database (see gds_fdtd.materials.rii).
 
 ``Technology.to_legacy_dict()`` reproduces exactly the dict shape the rest of
-the package consumes today; ``core.parse_yaml_tech`` routes through it, so the
-golden fixtures prove equivalence with the legacy parser.
+the package consumes today; the golden fixtures prove equivalence with the
+original parser.
 """
 
 from __future__ import annotations

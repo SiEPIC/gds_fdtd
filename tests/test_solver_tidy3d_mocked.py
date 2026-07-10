@@ -12,9 +12,9 @@ import pathlib
 
 import pytest
 
-from gds_fdtd.core import parse_yaml_tech
 from gds_fdtd.lyprocessor import load_cell
 from gds_fdtd.simprocessor import load_component_from_tech
+from gds_fdtd.technology import Technology
 
 from .mocks.tidy3d_fake import FakeNode, install
 
@@ -29,7 +29,7 @@ def fake_td(monkeypatch):
 @pytest.fixture()
 def escalator(fake_td):
     # load AFTER the fake is installed so materials resolve through it
-    tech = parse_yaml_tech(str(TESTS_DIR / "tech_unified.yaml"))
+    tech = Technology.from_yaml(str(TESTS_DIR / "tech_unified.yaml"))
     cell, layout = load_cell(
         str(TESTS_DIR.parent / "examples" / "devices.gds"),
         top_cell="si_sin_escalator_te1550",
