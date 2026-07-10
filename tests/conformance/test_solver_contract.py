@@ -111,13 +111,13 @@ def _make_job(cls):
         # AGNOSTIC setup (owner directive): the unified tech carries neutral
         # nk entries and from_gdsfactory attaches the source component, so
         # beamz needs NO solver-specific kwargs.
-        tech_dict = Technology.from_yaml(str(TESTS_DIR / "tech_unified.yaml")).to_legacy_dict()
+        tech_dict = Technology.from_yaml(str(TESTS_DIR / "tech_unified.yaml")).to_solver_dict()
         gf_c = gf.components.straight(length=5)
         comp = from_gdsfactory(gf_c, tech_dict)
         return comp, tech_dict, None, {}
 
     tech_file = "tech_tidy3d.yaml" if cls.name == "tidy3d" else "tech_lumerical.yaml"
-    tech_dict = Technology.from_yaml(str(TESTS_DIR / tech_file)).to_legacy_dict()
+    tech_dict = Technology.from_yaml(str(TESTS_DIR / tech_file)).to_solver_dict()
     cell, layout = load_cell(str(TESTS_DIR / "si_sin_escalator.gds"))
     comp = load_component_from_tech(cell=cell, tech=tech_dict)
     technology = tech_dict if cls.name != "fake" else None

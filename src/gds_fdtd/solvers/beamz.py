@@ -126,7 +126,7 @@ class BeamzSolver(Solver):
         t = self.technology
         if t is None:
             return None
-        return t.to_legacy_dict() if hasattr(t, "to_legacy_dict") else t
+        return t.to_solver_dict() if hasattr(t, "to_solver_dict") else t
 
     def _device_layer(self) -> dict | None:
         """The single device layer present in the component (v1 restriction)."""

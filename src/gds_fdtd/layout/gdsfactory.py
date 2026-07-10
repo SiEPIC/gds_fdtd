@@ -75,7 +75,7 @@ def from_gdsfactory(c, tech, z_span: float = 4.0) -> Component:
             "gdsfactory is not installed. Install with: pip install gds_fdtd[gdsfactory]"
         ) from e
 
-    tech_dict = tech.to_legacy_dict() if hasattr(tech, "to_legacy_dict") else tech
+    tech_dict = tech.to_solver_dict() if hasattr(tech, "to_solver_dict") else tech
     device_layers = {tuple(d["layer"]): d for d in tech_dict["device"]}
 
     # ---- structures: one per polygon per tech-declared device layer ----

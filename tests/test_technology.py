@@ -22,13 +22,13 @@ def test_all_shipped_tech_files_load(path):
     tech = Technology.from_yaml(path)
     assert tech.schema_version in (1, 2)  # examples/tech.yaml is the v2 reference
     assert tech.device and tech.pinrec and tech.devrec
-    legacy = tech.to_legacy_dict()
+    legacy = tech.to_solver_dict()
     assert set(legacy) == {"name", "substrate", "superstrate", "pinrec", "devrec", "device"}
 
 
 def test_legacy_dict_matches_old_parser_shape(tmp_path):
-    """Technology.to_legacy_dict() reproduces the old parser's shape exactly."""
-    d = Technology.from_yaml(str(TESTS_DIR / "tech_tidy3d.yaml")).to_legacy_dict()
+    """Technology.to_solver_dict() reproduces the old parser's shape exactly."""
+    d = Technology.from_yaml(str(TESTS_DIR / "tech_tidy3d.yaml")).to_solver_dict()
     assert d["device"][0]["layer"] == [1, 0]
     assert d["device"][0]["sidewall_angle"] == 85
     assert isinstance(d["substrate"], list) and len(d["substrate"]) == 1
@@ -106,7 +106,7 @@ def test_rii_material_loads_offline_and_matches_silicon(tmp_path):
     assert mat.k_at(1.55) == 0.0
     assert mat.nk_at(1.55) == pytest.approx(3.4757 + 0j, abs=0.05)
     # legacy dict carries the rii mapping through
-    legacy = tech.to_legacy_dict()
+    legacy = tech.to_solver_dict()
     assert legacy["device"][0]["material"]["rii"] == {
         "shelf": "main",
         "book": "Si",

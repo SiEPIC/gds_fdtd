@@ -229,7 +229,7 @@ def cmd_convert_tech(args) -> int:
         named[name] = mat
         return name
 
-    legacy = tech.to_legacy_dict()
+    legacy = tech.to_solver_dict()
     doc: dict = {
         "name": legacy["name"],
         "schema_version": 2,
@@ -261,7 +261,7 @@ def cmd_convert_tech(args) -> int:
     with open(out_path, "w") as f:
         yaml.safe_dump({"technology": doc}, f, sort_keys=False, default_flow_style=None)
     # round-trip guard: the emitted v2 must reproduce the v1 legacy dict
-    converted = Technology.from_yaml(out_path).to_legacy_dict()
+    converted = Technology.from_yaml(out_path).to_solver_dict()
     if converted != legacy:
         _emit({"error": f"round-trip mismatch writing {out_path}"}, args.json)
         return EXIT_INVALID

@@ -71,8 +71,8 @@ def resolve_index(material: Any, wavelength_um: float) -> complex:
     if isinstance(material, (int, float, complex)) and not isinstance(material, bool):
         return complex(material)
 
-    if hasattr(material, "to_legacy"):  # pydantic MaterialSpec
-        material = material.to_legacy()
+    if hasattr(material, "to_solver_dict"):  # pydantic MaterialSpec
+        material = material.to_solver_dict()
 
     if isinstance(material, dict):
         if "nk" in material:

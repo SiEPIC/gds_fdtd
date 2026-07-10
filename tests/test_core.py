@@ -816,14 +816,14 @@ def _common_assertions(parsed: dict[str, Any]) -> None:
 
 
 def test_parse_yaml_tidy3d(tidy3d_yaml: str) -> None:
-    parsed = Technology.from_yaml(tidy3d_yaml).to_legacy_dict()
+    parsed = Technology.from_yaml(tidy3d_yaml).to_solver_dict()
     _common_assertions(parsed)
     # material dict carries tidy3d_db key
     assert "tidy3d_db" in parsed["device"][0]["material"]
 
 
 def test_parse_yaml_lumerical(lumerical_yaml: str) -> None:
-    parsed = Technology.from_yaml(lumerical_yaml).to_legacy_dict()
+    parsed = Technology.from_yaml(lumerical_yaml).to_solver_dict()
     _common_assertions(parsed)
     # material dict carries lum_db key
     assert "lum_db" in parsed["device"][0]["material"]
