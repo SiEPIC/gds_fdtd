@@ -67,7 +67,7 @@ def _jsonable(obj: Any, _seen: set[int] | None = None) -> Any:
     return type(obj).__qualname__
 
 
-def component_fingerprint(component: Component) -> dict:
+def component_fingerprint(component: Component) -> dict[str, Any]:
     """Everything about the geometry that affects a simulation result."""
     return {
         "name": component.name,
@@ -97,7 +97,7 @@ def component_fingerprint(component: Component) -> dict:
     }
 
 
-def job_fingerprint(solver: Solver) -> dict:
+def job_fingerprint(solver: Solver) -> dict[str, Any]:
     """The full canonical description of one simulation job."""
     return {
         "component": component_fingerprint(solver.component),

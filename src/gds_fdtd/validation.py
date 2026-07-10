@@ -20,7 +20,7 @@ import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .convergence import max_delta_db
 from .smatrix import SMatrix
@@ -55,7 +55,9 @@ class CrossSolverReport:
         lines.append(f"  worst pair: {self.worst_db:.4f} dB")
         return "\n".join(lines)
 
-    def plot(self, out, in_, mode_out: int = 1, mode_in: int = 1, savefig: str | None = None):
+    def plot(
+        self, out: Any, in_: Any, mode_out: int = 1, mode_in: int = 1, savefig: str | None = None
+    ) -> tuple[Any, Any]:
         """Overlay one S-parameter magnitude from every engine."""
         import matplotlib.pyplot as plt
 

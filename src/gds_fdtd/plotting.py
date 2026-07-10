@@ -7,7 +7,14 @@ lazily so headless / minimal installs never pay for it.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
 import numpy as np
+
+if TYPE_CHECKING:
+    from .geometry import Component
+    from .smatrix import SMatrix
+    from .spec import SimulationSpec
 
 # Package-wide default color scheme (owner directive): the RdBu family.
 # Field images use the continuous map; categorical needs (S-parameter
@@ -15,7 +22,7 @@ import numpy as np
 DEFAULT_CMAP = "RdBu_r"
 
 
-def rdbu_colors(n: int) -> list:
+def rdbu_colors(n: int) -> list[Any]:
     """``n`` distinguishable colors sampled from RdBu, skipping the pale center.
 
     Alternates the deep-blue and deep-red ends and walks inward, so up to
@@ -32,7 +39,9 @@ def rdbu_colors(n: int) -> list:
     return [cmap(s) for s in stops]
 
 
-def plot_smatrix(sm, kind: str = "db", ax=None, paths=None):
+def plot_smatrix(
+    sm: SMatrix, kind: str = "db", ax: Any = None, paths: Any = None
+) -> tuple[Any, Any]:
     """Plot S-matrix paths versus wavelength.
 
     Args:
@@ -103,7 +112,12 @@ def plot_smatrix(sm, kind: str = "db", ax=None, paths=None):
     return fig, ax
 
 
-def plot_component(component, spec=None, ax=None, savefig=None):
+def plot_component(
+    component: Component,
+    spec: SimulationSpec | None = None,
+    ax: Any = None,
+    savefig: str | None = None,
+) -> tuple[Any, Any]:
     """Standard geometry view: device polygons, ports, bounds, simulation region.
 
     This is the first step of the standardized example flow — always offline,
@@ -130,7 +144,7 @@ def plot_component(component, spec=None, ax=None, savefig=None):
 
     # device polygons, colored per GDS layer
     palette = rdbu_colors(8)
-    layer_colors: dict[tuple, str] = {}
+    layer_colors: dict[tuple[int, ...], str] = {}
     seen_layers = set()
     for s in component.structures:
         if s.role != "device":
@@ -206,7 +220,9 @@ def plot_component(component, spec=None, ax=None, savefig=None):
     # ports: arrow along direction + name
     arrow = max(b.x_span, b.y_span) * 0.06
     for p in component.ports:
-        dx, dy = {0: (arrow, 0), 90: (0, arrow), 180: (-arrow, 0), 270: (0, -arrow)}[p.direction]
+        dx, dy = {0: (arrow, 0), 90: (0, arrow), 180: (-arrow, 0), 270: (0, -arrow)}[
+            int(p.direction)
+        ]
         ax.annotate(
             "",
             xy=(p.x + dx, p.y + dy),

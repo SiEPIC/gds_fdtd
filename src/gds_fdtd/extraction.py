@@ -32,12 +32,16 @@ logger = logging.getLogger(__name__)
 _TRANSVERSE = {"x": ("y", "z"), "y": ("z", "x"), "z": ("x", "y")}
 
 
-def _cross_flux(eu, ev, hu, hv, du: float, dv: float) -> complex:
+def _cross_flux(
+    eu: np.ndarray, ev: np.ndarray, hu: np.ndarray, hv: np.ndarray, du: float, dv: float
+) -> complex:
     """∫ (E × H)·n̂ dA on the cell-centered grid."""
     return complex(np.sum(eu * hv - ev * hu) * du * dv)
 
 
-def _transverse(fields: dict[str, np.ndarray], normal: str):
+def _transverse(
+    fields: dict[str, np.ndarray], normal: str
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     try:
         cu, cv = _TRANSVERSE[normal]
     except KeyError:

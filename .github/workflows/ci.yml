@@ -35,10 +35,14 @@ jobs:
           cache-dependency-glob: "uv.lock"
           python-version: "3.13"
       - run: uv sync --locked --extra dev
-      - name: mypy --strict on the typed public core (REQUIRED)
+      - name: mypy --strict on the typed core (REQUIRED)
         run: >
-          uv run mypy --strict src/gds_fdtd/geometry.py src/gds_fdtd/technology.py
-          src/gds_fdtd/smatrix.py src/gds_fdtd/spec.py src/gds_fdtd/execution/
+          uv run mypy --strict
+          src/gds_fdtd/geometry.py src/gds_fdtd/technology.py src/gds_fdtd/smatrix.py
+          src/gds_fdtd/spec.py src/gds_fdtd/execution/ src/gds_fdtd/caching.py
+          src/gds_fdtd/extraction.py src/gds_fdtd/modes.py src/gds_fdtd/validation.py
+          src/gds_fdtd/convergence.py src/gds_fdtd/grid.py src/gds_fdtd/plotting.py
+          src/gds_fdtd/solvers/base.py
       - name: mypy on the whole package (advisory while legacy errors burn down)
         run: uv run mypy src/gds_fdtd || true
 
