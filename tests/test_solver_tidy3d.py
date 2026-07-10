@@ -51,9 +51,7 @@ def test_unknown_boundary_raises():
     cell, layout = load_cell(str(TESTS_DIR / "si_sin_escalator.gds"))
     comp = load_component_from_tech(cell=cell, tech=tech)
     with pytest.raises(ValueError, match="Unsupported boundary"):
-        _TidyEngine(
-            component=comp, tech=tech, boundary=["PML", "PML", "Bogus"], working_dir="/tmp"
-        )
+        _TidyEngine(component=comp, tech=tech, boundary=["PML", "PML", "Bogus"], working_dir="/tmp")
     del layout
 
 
