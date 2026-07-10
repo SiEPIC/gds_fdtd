@@ -40,7 +40,7 @@ def escalator(fake_td):
 
 
 def _make(escalator, tmp_path, **kwargs):
-    from gds_fdtd.solver_tidy3d import fdtd_solver_tidy3d
+    from gds_fdtd.solvers._tidy3d_engine import _TidyEngine as fdtd_solver_tidy3d
 
     comp, tech = escalator
     defaults = {
@@ -122,3 +122,21 @@ def test_modern_adapter_plot_fields_requires_run(fake_td, escalator, tmp_path):
     solver = get_solver("tidy3d")(comp, tech, SimulationSpec(), workdir=tmp_path)
     with pytest.raises((SolverError, RuntimeError), match="run"):
         solver.plot_fields(axis="z")
+
+
+def test_public_alias_emits_deprecation_warning(fake_td, escalator, tmp_path):
+    """The deprecated fdtd_solver_tidy3d public alias warns; the internal
+    _TidyEngine (used by the adapter) does not."""
+    import gds_fdtd.solver_tidy3d as legacy_mod
+
+    comp, tech = escalator
+    with pytest.warns(DeprecationWarning, match="deprecated since gds_fdtd 0.5"):
+        legacy_mod.fdtd_solver_tidy3d(
+            component=comp,
+            tech=tech,
+            wavelength_points=5,
+            mesh=4,
+            z_min=-1.0,
+            z_max=1.11,
+            working_dir=str(tmp_path),
+        )

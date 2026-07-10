@@ -16,7 +16,7 @@ td = pytest.importorskip("tidy3d")
 from gds_fdtd.core import parse_yaml_tech  # noqa: E402
 from gds_fdtd.lyprocessor import load_cell  # noqa: E402
 from gds_fdtd.simprocessor import load_component_from_tech  # noqa: E402
-from gds_fdtd.solver_tidy3d import fdtd_solver_tidy3d  # noqa: E402
+from gds_fdtd.solvers._tidy3d_engine import _TidyEngine as fdtd_solver_tidy3d  # noqa: E402
 
 TESTS_DIR = pathlib.Path(__file__).parent
 
