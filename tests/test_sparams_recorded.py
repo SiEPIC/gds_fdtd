@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from gds_fdtd.sparams import process_dat
+from gds_fdtd._sparams import process_dat
 
 RECORDED = pathlib.Path(__file__).parent / "recorded"
 

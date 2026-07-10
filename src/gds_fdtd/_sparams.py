@@ -1,7 +1,10 @@
 """
 gds_fdtd simulation toolbox.
 
-S-parameter module.
+Internal S-parameter helper (private module): the legacy ``sparameters``
+container and the Lumerical INTERCONNECT ``.dat`` reader/writer that
+``SMatrix.to_dat``/``from_dat`` and the Lumerical adapter delegate to. Not part
+of the public API — use ``gds_fdtd.smatrix.SMatrix``.
 @author: Mustafa Hammood, 2025
 """
 

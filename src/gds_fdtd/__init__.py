@@ -13,7 +13,6 @@ from . import (
     lyprocessor,
     modes,
     simprocessor,
-    sparams,
     validation,
 )
 from .geometry import Component, LayoutSource, Port, Region, Structure
@@ -39,7 +38,6 @@ __all__ = [
     "lyprocessor",
     "modes",
     "simprocessor",
-    "sparams",
     "validation",
 ]
 

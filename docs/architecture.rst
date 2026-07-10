@@ -41,9 +41,9 @@ Core modules
     ``SimulationSpec`` — every numeric simulation setting, validated, in
     package-wide units (µm / degrees / Hz).
 
-``smatrix`` / ``sparams``
-    The canonical ``SMatrix`` container plus the Lumerical-format ``.dat``
-    reader/writer it interoperates with.
+``smatrix``
+    The canonical ``SMatrix`` container plus the internal Lumerical-format
+    ``.dat`` reader/writer (``_sparams``) it interoperates with.
 
 Solver layer
 ------------

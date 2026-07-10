@@ -7,5 +7,4 @@ API Reference
 
    gds_fdtd.lyprocessor
    gds_fdtd.simprocessor
-   gds_fdtd.sparams
    gds_fdtd.logging_config

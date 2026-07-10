@@ -1,11 +1,11 @@
-"""Tests for gds_fdtd.sparams (started in WP1.3; grows with WP1.6)."""
+"""Tests for gds_fdtd._sparams (started in WP1.3; grows with WP1.6)."""
 
 from __future__ import annotations
 
 import pytest
 
+from gds_fdtd._sparams import _number_of, s, sparameters
 from gds_fdtd.geometry import Port
-from gds_fdtd.sparams import _number_of, s, sparameters
 
 
 def _entry(in_port, out_port, in_mode=1, out_mode=1):
@@ -94,7 +94,7 @@ def _make_multimode_sparams() -> sparameters:
 
 
 def test_dat_round_trip(tmp_path):
-    from gds_fdtd.sparams import process_dat, write_dat
+    from gds_fdtd._sparams import process_dat, write_dat
 
     spar = _make_multimode_sparams()
     path = tmp_path / "dut.dat"
@@ -114,7 +114,7 @@ def test_dat_round_trip(tmp_path):
 
 
 def test_write_dat_rejects_inconsistent_lengths(tmp_path):
-    from gds_fdtd.sparams import write_dat
+    from gds_fdtd._sparams import write_dat
 
     spar = sparameters("bad")
     e = _entry(in_port="opt1", out_port="opt2")
