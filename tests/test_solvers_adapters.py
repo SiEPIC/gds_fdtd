@@ -112,12 +112,16 @@ def test_t3d_validate_flags_missing_tech():
 # ---------------- BeamzSolver: validation surface (WP5.3) ----------------
 
 
-def test_beamz_validate_requires_gf_component():
+def test_beamz_accepts_klayout_sourced_geometry():
+    """A KLayout/SiEPIC-sourced component (no gdsfactory object) must NOT be
+    rejected for its source: beamz consumes gds_fdtd's extruded polygons through
+    a component shim, like every other adapter. Other v1 limits may still fire."""
     pytest.importorskip("beamz")
     comp, tech, layout = _job("tech_tidy3d.yaml")
-    solver = get_solver("beamz")(comp, technology=tech)
+    solver = get_solver("beamz")(comp, technology=tech)  # no gf_component
     problems = solver.validate()
-    assert any("gdsfactory-sourced" in p for p in problems)
+    assert not any("gdsfactory-sourced" in p for p in problems)
+    assert not any("KLayout-sourced" in p for p in problems)
     del layout
 
 
