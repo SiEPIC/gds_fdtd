@@ -9,8 +9,10 @@ Design decisions (rule 8 — everything below verified against beamz 0.4.3 and
 its own compact-model reference example, which is the UBC SiEPIC crossing):
 - geometry rides beamz's ``gdsf.prepare_component`` pipeline (extrusion, port
   extension, padding) rather than re-deriving its delicate port-plane/PML
-  tuning; v1 therefore requires the source **gdsfactory component object**
-  (pass ``gf_component=``).
+  tuning. It is fed the source **gdsfactory component** when one is present, or
+  else a shim over the polygons gds_fdtd already extruded from ANY source
+  (KLayout/SiEPIC, raw GDS) — so beamz is solver-agnostic like the other
+  adapters, not limited to gdsfactory-object inputs.
 - refractive indices resolve from, in order: explicit ``n_core=``/``n_clad=``
   kwargs → the technology material's ``rii`` reference (refractiveindex.info,
   evaluated at the center wavelength) → ``tidy3d_db.nk``.
@@ -80,6 +82,46 @@ def _port_plane(port: dict, *, span: float, z_span: float, z_center: float, offs
     if str(port["direction"]).endswith("x"):
         return (cx, cy - 0.5 * float(span), z0), (cx, cy + 0.5 * float(span), z1)
     return (cx - 0.5 * float(span), cy, z0), (cx + 0.5 * float(span), cy, z1)
+
+
+class _ShimPort:
+    """Minimal port view that beamz's ``gdsf.load`` accepts (name/orientation/
+    center/width), sourced from a gds_fdtd :class:`~gds_fdtd.geometry.Port`."""
+
+    def __init__(self, port):
+        self.name = port.name
+        self.orientation = float(port.direction)
+        self.center = (float(port.center[0]), float(port.center[1]))
+        self.width = float(port.width)
+
+
+class _ComponentImportShim:
+    """Adapt a solver-agnostic gds_fdtd ``Component`` to the tiny surface beamz's
+    ``gdsf.prepare_component``/``load`` pipeline consumes from a gdsfactory
+    component: ``name``, ``get_polygons_points(by=...)`` and ``ports``.
+
+    This is the whole point of the toolbox — the polygons gds_fdtd already
+    extruded from *any* source (KLayout/SiEPIC, gdsfactory, raw GDS) feed beamz
+    through its own tuned extrusion/port pipeline, so beamz is no longer limited
+    to gdsfactory-object inputs. Coordinates are microns on both sides.
+    """
+
+    def __init__(self, component):
+        self._component = component
+        self.name = component.name
+
+    def get_polygons_points(self, by: str = "tuple", **_kw) -> dict:
+        polys: dict[tuple[int, int], list] = {}
+        for s in self._component.structures:
+            if s.role != "device":
+                continue
+            key = tuple(s.layer)
+            polys.setdefault(key, []).append([[float(x), float(y)] for x, y in s.polygon])
+        return polys
+
+    @property
+    def ports(self):
+        return [_ShimPort(p) for p in self._component.ports]
 
 
 @register_solver
@@ -175,11 +217,12 @@ class BeamzSolver(Solver):
                     "vertical straight). Orient the device along x, or use tidy3d/"
                     "lumerical for devices with y-facing ports."
                 )
-        if self.gf_component is None:
+        if self.gf_component is None and not any(
+            s.role == "device" for s in self.component.structures
+        ):
             problems.append(
-                "BeamzSolver v1 needs a gdsfactory-sourced component: convert with "
-                "layout.gdsfactory.from_gdsfactory (it is picked up automatically); "
-                "KLayout-sourced components are not supported by this adapter yet"
+                "BeamzSolver needs geometry: pass a gdsfactory component (gf_component=) "
+                "or a component carrying device-layer polygons (any GDS/KLayout/SiEPIC source)"
             )
         if self.technology is None:
             problems.append("BeamzSolver requires a technology")
@@ -224,8 +267,16 @@ class BeamzSolver(Solver):
             wl0, n_max=n_core, dims=3, safety_factor=0.999, points_per_wavelength=s.mesh
         )
 
+        # gdsfactory object when present, else a shim over the polygons gds_fdtd
+        # already extruded from any source (KLayout/SiEPIC, raw GDS). Both drive
+        # beamz's own tuned extrusion/port pipeline identically.
+        import_source = (
+            self.gf_component
+            if self.gf_component is not None
+            else _ComponentImportShim(self.component)
+        )
         prepared = gdsf.prepare_component(
-            self.gf_component,
+            import_source,
             layer=tuple(d["layer"]),
             n_core=n_core,
             n_clad=n_clad,

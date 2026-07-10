@@ -171,3 +171,6 @@ docs/_autosummary/
 crash-*
 .fuzz-corpus/
 fuzz/corpus/
+
+# solver result cache (env-specific job hashes; not an artifact)
+**/.gds_fdtd_cache/
