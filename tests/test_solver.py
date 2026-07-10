@@ -1,4 +1,4 @@
-"""Tests for gds_fdtd.solver base class (WP1.2: bugs B5/B17)."""
+"""Tests for the internal engine base (solvers._engine_base)."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import pytest
 from gds_fdtd.core import parse_yaml_tech
 from gds_fdtd.lyprocessor import load_cell
 from gds_fdtd.simprocessor import load_component_from_tech
-from gds_fdtd.solver import fdtd_port, fdtd_solver
+from gds_fdtd.solvers._engine_base import fdtd_port, fdtd_solver
 
 TESTS_DIR = pathlib.Path(__file__).parent
 

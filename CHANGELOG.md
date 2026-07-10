@@ -5,7 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased] — targeting 0.6.0 (breaking)
+
+### Removed (BREAKING)
+- The pre-0.5 solver classes and their modules were removed:
+  `gds_fdtd.solver_lumerical.fdtd_solver_lumerical`,
+  `gds_fdtd.solver_tidy3d.fdtd_solver_tidy3d`, and the `gds_fdtd.solver`
+  module (`fdtd_solver`/`fdtd_port`). They duplicated the modern adapters
+  and nothing internal used them. **Migration:**
+
+  ```python
+  # before (removed)
+  from gds_fdtd.solver_lumerical import fdtd_solver_lumerical
+  solver = fdtd_solver_lumerical(component=c, tech=t, wavelength_start=1.5, ...)
+
+  # after
+  from gds_fdtd.solvers import get_solver
+  from gds_fdtd.spec import SimulationSpec
+  solver = get_solver("lumerical")(c, t, SimulationSpec(...))
+  smatrix = solver.run()
+  ```
+
+  Per SemVer this is a pre-1.0 minor bump (0.5 → 0.6); 0.5 shipped the
+  modern `get_solver` API and moved all docs/examples to it.
+
 
 ### Added
 - Continuous fuzzing via ClusterFuzzLite + atheris (`fuzz/`), with fuzz

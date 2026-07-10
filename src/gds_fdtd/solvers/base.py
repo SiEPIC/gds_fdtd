@@ -11,9 +11,8 @@ The Phase-3 solver contract. Every engine adapter implements:
 
 Constructors MUST be cheap and pure: no disk writes, no network, no license
 checks — the remote-compute invariant: a JobSpec must be buildable anywhere.
-The legacy ``fdtd_solver`` hierarchy remains in gds_fdtd.solver until the
-adapters are ported; nothing imports this module yet besides the
-conformance tests and FakeSolver.
+The Tidy3D adapter's scene-building engine base lives in the internal
+``solvers._engine_base`` module.
 """
 
 from __future__ import annotations

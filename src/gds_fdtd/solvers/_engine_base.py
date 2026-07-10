@@ -1,6 +1,9 @@
 """
 gds_fdtd simulation toolbox.
 
+Internal engine base (``fdtd_solver`` + ``fdtd_port``): geometry/port/domain
+setup shared by the Tidy3D scene-building engine. Not a public module.
+
 FDTD solver module.
 @author: Mustafa Hammood, 2025
 """
