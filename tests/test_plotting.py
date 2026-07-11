@@ -16,7 +16,8 @@ import pytest
 matplotlib.use("Agg")
 
 from gds_fdtd.lyprocessor import load_cell
-from gds_fdtd.plotting import plot_permittivity, plot_tech_stack, smatrix_summary
+from gds_fdtd.modes import Mode
+from gds_fdtd.plotting import plot_mode, plot_permittivity, plot_tech_stack, smatrix_summary
 from gds_fdtd.simprocessor import load_component_from_tech
 from gds_fdtd.smatrix import SMatrix
 from gds_fdtd.technology import Technology
@@ -96,3 +97,33 @@ def test_smatrix_summary_metrics():
 def test_smatrix_summary_wavelength_selection():
     summary = smatrix_summary(_reciprocal_2port(), wavelength_um=1.5)
     assert summary["wavelength_um"] == pytest.approx(1.5, abs=0.02)
+
+
+def _synthetic_mode() -> Mode:
+    u = np.linspace(-1.0, 1.0, 24)
+    v = np.linspace(-0.8, 0.8, 18)
+    prof = np.exp(-(u[:, None] ** 2) - (v[None, :] ** 2)).astype(complex)
+    fields = {"Ex": prof, "Ey": 0.1 * prof, "Ez": 0.05 * prof, "Hx": prof, "Hy": prof, "Hz": prof}
+    return Mode(n_eff=2.44 + 0j, fields=fields, u=u, v=v, wavelength_um=1.55)
+
+
+def test_plot_mode_total_and_component():
+    fig, ax = plot_mode(_synthetic_mode())  # |E|
+    assert len(ax.images) == 1
+    assert "n_eff = 2.44" in ax.get_title()
+    _, ax2 = plot_mode(_synthetic_mode(), field="Ey")
+    assert len(ax2.images) == 1
+
+
+def test_plot_mode_rejects_unknown_field():
+    with pytest.raises(ValueError, match="unknown field"):
+        plot_mode(_synthetic_mode(), field="Q")
+
+
+def test_waveguide_mode_canonical_soi_strip():
+    pytest.importorskip("tidy3d")
+    from gds_fdtd.modes import waveguide_mode
+
+    modes = waveguide_mode(0.5, 0.22, 3.48, 1.44, 1.55, n_modes=1)
+    # the canonical 500x220 nm SOI strip TE0 sits near n_eff ~ 2.44
+    assert 2.30 < modes[0].n_eff.real < 2.60

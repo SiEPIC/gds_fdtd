@@ -142,3 +142,40 @@ class Tidy3DModeSolver:
             [round(m.n_eff.real, 4) for m in modes],
         )
         return modes
+
+
+def waveguide_mode(
+    width_um: float,
+    height_um: float,
+    n_core: float,
+    n_clad: float,
+    wavelength_um: float,
+    *,
+    n_modes: int = 1,
+    resolution: float = 0.02,
+    margin: float = 1.0,
+    solver: ModeSolver | None = None,
+) -> list[Mode]:
+    """Guided modes of a rectangular strip waveguide, offline.
+
+    Builds an ``n_core`` core of ``width_um`` × ``height_um`` centred in an
+    ``n_clad`` cladding window (the core plus ``margin`` µm on every side),
+    then solves with ``solver`` (default :class:`Tidy3DModeSolver`, a free
+    local solve — needs tidy3d installed). Returns the ``n_modes`` lowest
+    modes, fundamental first.
+
+    Example: ``waveguide_mode(0.5, 0.22, 3.48, 1.44, 1.55)`` — the canonical
+    SOI strip, whose TE0 has n_eff ≈ 2.45 at 1.55 µm.
+    """
+    if min(width_um, height_um, resolution, margin) <= 0:
+        raise ValueError("width_um/height_um/resolution/margin must be positive")
+    du = dv = resolution
+    nu = max(int(round((width_um + 2 * margin) / du)), 1)
+    nv = max(int(round((height_um + 2 * margin) / dv)), 1)
+    u = (np.arange(nu) + 0.5) * du - nu * du / 2
+    v = (np.arange(nv) + 0.5) * dv - nv * dv / 2
+    eps = np.full((nu, nv), float(n_clad) ** 2)
+    core = (np.abs(u)[:, None] <= width_um / 2) & (np.abs(v)[None, :] <= height_um / 2)
+    eps[core] = float(n_core) ** 2
+    active = solver if solver is not None else Tidy3DModeSolver()
+    return active.solve(eps, du, dv, wavelength_um, n_modes=n_modes)
