@@ -297,7 +297,12 @@ class BeamzSolver(Solver):
         n_core, n_clad = self._indices()
         wl0 = s.wavelength_center_um * UM
         core_t = abs(d["z_span"]) * UM
-        extension = _PML_XY + _MONITOR_CLEARANCE + 1.0 * UM
+        # xy guard band = PML + monitor clearance + a safety margin. beamz needs
+        # at least this much for correct PML/monitor placement, so it is a hard
+        # floor; but honor a LARGER spec.buffer if the user asked for one (the
+        # documented meaning of SimulationSpec.buffer). buffer <= the floor
+        # (incl. the default 1.0) leaves the domain exactly as before.
+        extension = max(_PML_XY + _MONITOR_CLEARANCE + 1.0 * UM, s.buffer * UM)
 
         dx, dt = beamz.dxdt(
             wl0, n_max=n_core, dims=3, safety_factor=0.999, points_per_wavelength=s.mesh
