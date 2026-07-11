@@ -139,15 +139,15 @@ Notes:
 Working offline with recorded results
 --------------------------------------
 
-You do not need an engine to exercise the S-matrix API — ``examples/09_smatrix``
-loads a recorded real result and demonstrates the I/O, physics checks, and
-plotting entirely offline:
+You do not need an engine to exercise the S-matrix API — ``examples/04_reading_results``
+loads a recorded real result and gives the full offline tour of the I/O, physics
+checks, and plotting. For the Lumerical INTERCONNECT ``.dat`` format specifically:
 
 .. code-block:: python
 
     from gds_fdtd.smatrix import SMatrix
 
-    sm = SMatrix.from_dat("examples/09_smatrix/si_sin_escalator.dat")
+    sm = SMatrix.from_dat("examples/10_cookbook/recorded/si_sin_escalator.dat")
     print(sm.is_reciprocal(), sm.is_passive())
     plot_smatrix(sm, kind="db")
 

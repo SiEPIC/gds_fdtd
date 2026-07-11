@@ -11,11 +11,12 @@ asserted every PR by `test_three_engine_agreement`).
 
 | engine | last verified | version | evidence |
 |---|---|---|---|
-| tidy3d (cloud) | 2026-07-08 | 2.11.2 | crossing 4-port×2-mode matrix on the UNIFIED tech (example 03a as committed, 0.292 FC); live mesh-convergence sweep (04b); budget-gated cloud smoke; recorded artifact in `tests/recorded/` replayed every PR |
+| tidy3d (cloud) | 2026-07-08 | 2.11.2 | crossing 4-port×2-mode matrix on the UNIFIED tech (0.292 FC); live mesh-convergence sweep; budget-gated cloud smoke; recorded artifact in `tests/recorded/` replayed every PR |
 | Lumerical FDTD | 2026-07-07 | 2025 R2 (v252) | escalator full matrix on local license; agrees with tidy3d within **0.081 dB** (worst pair, `compare_smatrices`); recorded artifact replayed every PR |
-| beamz | 2026-07-08 | 0.4.3 | example 06a as committed, fully agnostic setup (indices auto-resolved from the unified tech): thru ≈0 dB, S11 −31…−41 dB; F9 (reference-monitor mis-normalization) found and fixed earlier |
+| beamz | 2026-07-08 | 0.4.3 | gdsfactory straight, fully agnostic setup (indices auto-resolved from the unified tech): thru ≈0 dB, S11 −31…−41 dB; F9 (reference-monitor mis-normalization) found and fixed earlier |
 
 Refresh procedure: `cloud-smoke` workflow (tidy3d, budget-gated, human
 approval), `lumerical-nightly` workflow (self-hosted lane, see
-`docs/self_hosted_runner.md`), `examples/06_beamz` locally. Update this
-table in the same PR that lands refreshed `tests/recorded/` artifacts.
+`docs/self_hosted_runner.md`), the beamz examples (`00_quickstart`,
+`06_convergence_and_caching`, `10_cookbook`) locally. Update this table in
+the same PR that lands refreshed `tests/recorded/` artifacts.

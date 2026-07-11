@@ -20,11 +20,11 @@ smatrix = solver.run()
 | | |
 |:---:|:---:|
 | ![crossing field profile](docs/images/crossing_fields_tidy3d.png) | ![crossing S-parameters](docs/images/crossing_sparams.png) |
-| waveguide crossing on **tidy3d**, mesh 10 (`examples/03_tidy3d`) | thru / crosstalk / reflection per polarization, same run |
+| waveguide crossing on **tidy3d**, mesh 10 | thru / crosstalk / reflection per polarization, same run |
 | ![geometry with ports and simulation region](docs/images/crossing_geometry.png) | ![three-engine agreement](docs/images/three_engine_agreement.png) |
 | every example starts with geometry + ports + FDTD region + port extensions | the IDENTICAL job on all three engines: tidy3d ↔ Lumerical within **0.003 dB**, free beamz within 0.05 dB |
 
-*All images are real solver output produced by the examples as committed.*
+*All images are real solver output.*
 
 ## Features
 
@@ -48,17 +48,23 @@ smatrix = solver.run()
 
 ## Examples
 
-| example | shows |
-|---|---|
-| `01_basics/` | first contact: load & inspect any GDS, no engine needed (01b); the free offline setup flow on tidy3d (01a) |
-| `02_lumerical/`, `03_tidy3d/` | the SAME flow on Lumerical / tidy3d — 02b and 03b are identical code except the engine string (+ mesh convergence via `convergence.sweep`) |
-| `04_solvers/` | the engine-agnostic registry (04a); convergence sweeps + job caching (04b); cross-solver validation on recorded real results, runs offline (04c) |
-| `05_gdsfactory/` | gdsfactory >= 9 conversion -> any solver |
-| `06_beamz/` | the open-source zero-cost engine — straight (06a), bend with real radiation physics (06b), and a FREE mesh-convergence study (06c); identical setup, no license, no credits |
-| `07_prefab/` | lithography-predicted geometry ([PreFab](https://github.com/PreFab-Photonics/PreFab)) |
-| `08_siepic/` | SiEPIC EBeam PDK cells on tidy3d / Lumerical |
-| `09_smatrix/` | SMatrix I/O: .dat/Touchstone/HDF5, physics checks, plotting (runs offline on recorded real data) |
-| `10_materials/` | validated technology YAML + refractiveindex.info materials |
+A guided path from *"load a layout"* to *"run it on any engine and read the
+S-parameters"* — paired `.py` (jupytext) + executed `.ipynb`. See
+[examples/README.md](examples/README.md) for the full tour.
+
+| # | example | shows | engine |
+|---|---|---|---|
+| 00 | `00_quickstart/` | layout → S-matrix in ten lines | beamz (free) |
+| 01 | `01_layout_to_component/` | load a GDS / gdsfactory cell, auto-detect ports, read the geometry | none |
+| 02 | `02_technology/` | materials, `refractiveindex.info`, the vertical layer stack | none |
+| 03 | `03_first_simulation/` | the full flow end-to-end: geometry → permittivity → build → run → S-params → fields | beamz (free) |
+| 04 | `04_reading_results/` | `SMatrix`: insertion loss, crosstalk, phase, reciprocity/passivity, Touchstone/HDF5/npz I/O | none |
+| 05 | `05_fields_and_modes/` | waveguide mode profiles, effective indices, permittivity cross-sections | tidy3d-local (free) |
+| 06 | `06_convergence_and_caching/` | mesh-convergence sweeps and `run_cached` (repeat runs are free) | beamz (free) |
+| 07 | `07_choosing_an_engine/` | the identical job on beamz / tidy3d / Lumerical, and how they agree | all three |
+| 08 | `08_frontends/` | gdsfactory, SiEPIC/KLayout, and PreFab (litho-prediction) front ends | mixed |
+| 09 | `09_cli_and_jobs/` | the `gds-fdtd` CLI and serializable `JobSpec` for remote/batch compute | none |
+| 10 | `10_cookbook/` | reference devices with known-good S-params — the **Si→SiN escalator** on the free engine, cross-checked against recorded tidy3d/Lumerical | beamz + recorded |
 
 ## Installation
 
