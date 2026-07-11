@@ -29,6 +29,7 @@ its ``eda`` slot is always empty (it uses ``rii`` or ``nk``).
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Any
 
 from ..errors import MaterialSourceError
@@ -73,7 +74,7 @@ def select_source(material: dict[str, Any], engine: str, *, name: str = "materia
     Raises:
         MaterialSourceError: explicit ``source`` unusable, or nothing available.
     """
-    available = available_sources(material, engine)
+    available: list[str] = available_sources(material, engine)
     explicit = material.get("source")
     if explicit is not None:
         if explicit not in SOURCES:
@@ -84,7 +85,7 @@ def select_source(material: dict[str, Any], engine: str, *, name: str = "materia
                 f"{engine!r} engine (defined here: {available or 'none'}). "
                 f"{_hint(engine)}"
             )
-        return explicit
+        return str(explicit)
     if available:
         return available[0]
     raise MaterialSourceError(
@@ -101,7 +102,7 @@ def _hint(engine: str) -> str:
     return "Give the material " + ", ".join(opts[:-1]) + f", or {opts[-1]}."
 
 
-def iter_materials(tech_dict: dict[str, Any]):
+def iter_materials(tech_dict: dict[str, Any]) -> Iterator[tuple[str, dict[str, Any]]]:
     """Yield ``(label, material_dict)`` for every material in a solver-dict
     technology (substrate, superstrate, each device layer)."""
     for slab in tech_dict.get("substrate", []) or []:

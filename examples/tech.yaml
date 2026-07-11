@@ -1,15 +1,25 @@
 # ONE technology file for EVERY solver — schema v2: materials are defined
 # ONCE by name and referenced by layers (owner directive, 2026-07-08).
 #
-# Each named material carries every hint an engine might want:
-#   nk        - neutral constant index: beamz, the grid/mode pipeline, and
-#               quick estimates use this; engine-independent.
-#   tidy3d    - tidy3d database entry: a dispersive model list, or a plain
-#               nk number.
-#   lumerical - the Lumerical material database name.
-# A neutral dispersive source can be added per material via
-#   rii: {shelf: main, book: Si, page: Li-293}   (refractiveindex.info,
-# resolved offline from a local database copy - GDS_FDTD_RII_DB).
+# A material may carry up to THREE sources of optical constants; each engine
+# picks one at run time (see docs/technology.rst -> "Material sources"):
+#   tidy3d    - tidy3d's own database model  \  the "eda" source: the engine's
+#   lumerical - the Lumerical database name   /  own dispersive vendor model.
+#   rii       - a refractiveindex.info page (shelf/book/page): engine-independent,
+#               dispersive, read offline from a local DB copy (GDS_FDTD_RII_DB).
+#   nk        - a single neutral constant index.
+#
+# Selection per material, per engine:
+#   * explicit `source: eda|rii|nk` wins (error if that source isn't defined), else
+#   * default precedence  eda -> rii -> nk  (first one defined wins), else
+#   * a clear error (e.g. a lumerical-only material run on tidy3d).
+# beamz has no vendor DB, so it uses rii or nk. You need not specify all three.
+#
+# Example forcing refractiveindex.info everywhere (needs GDS_FDTD_RII_DB set):
+#   Si:
+#     nk: 3.476
+#     rii: {shelf: main, book: Si, page: Salzberg}
+#     source: rii
 #
 # Pick the engine at run time - the technology never changes:
 #   solver = get_solver("tidy3d" | "lumerical" | "beamz")(component, tech, spec)

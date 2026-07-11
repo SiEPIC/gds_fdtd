@@ -155,6 +155,25 @@ plt.show()
 # structure = td.Structure(geometry=..., medium=medium)   # dispersive Si, from rii
 # ```
 #
+# ## Doing this from the technology file
+#
+# You rarely call these by hand. In the tech file, give a material an `rii:`
+# reference and (optionally) `source: rii`, and **every** engine builds its
+# material from that model automatically — tidy3d a dispersive medium, Lumerical
+# a sampled material, beamz a constant:
+#
+# ```yaml
+# materials:
+#   Si:
+#     nk: 3.476
+#     rii: {shelf: main, book: Si, page: Salzberg}
+#     source: rii        # force the rii model on every engine (omit for eda→rii→nk)
+# ```
+#
+# The selection rule (per material, per engine) is **eda → rii → nk**, with
+# `source:` as an explicit override and a clear error if nothing applies — see
+# `docs/technology.rst` → *Material sources*.
+#
 # ## Recap
 #
 # A refractiveindex.info page is a portable, engine-independent source of truth:
