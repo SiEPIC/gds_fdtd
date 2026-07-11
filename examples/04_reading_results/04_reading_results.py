@@ -108,7 +108,7 @@ print(f"power balance (loss fraction) over the band: {pb.min():.3f} … {pb.max(
 # Touchstone `.sNp` (for scikit-rf / ADS), HDF5, and npz. Each round-trips.
 
 # %%
-import tempfile
+import tempfile  # noqa: E402
 
 tmp = Path(tempfile.mkdtemp())
 sm.to_dat(str(tmp / "ybranch.dat"))
