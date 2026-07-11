@@ -39,6 +39,82 @@ Migrate a v1 file (per-layer inline materials) with::
 The two schemas are equivalent by construction — v2 expands into v1 before
 validation. ``examples/tech.yaml`` is the reference v2 file.
 
+.. _material-sources:
+
+Material sources: ``nk`` vs the engine model vs refractiveindex.info
+--------------------------------------------------------------------
+
+A material may name up to **three** sources of optical constants. Each engine
+picks exactly one when you run it — so the *same* material serves every solver.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 12 40 24
+
+   * - source
+     - what it is (tech-file key)
+     - engines
+   * - ``eda``
+     - the engine's *own* database model — ``tidy3d`` / ``lumerical`` in the
+       tech file (dispersive, vendor-maintained)
+     - tidy3d, Lumerical
+   * - ``rii``
+     - a `refractiveindex.info <https://refractiveindex.info>`_ page (``rii:``)
+       — dispersive, engine-independent, measured
+     - all three
+   * - ``nk``
+     - a single neutral constant index (``nk:``)
+     - all three
+
+You do **not** have to specify all three. A material with only ``tidy3d`` and
+``lumerical`` gets each vendor's dispersive model; add ``rii`` for one
+engine-independent measured model across all engines, or just ``nk`` for a quick
+constant.
+
+Selection rule (per material, per engine)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1. If the material sets ``source:`` explicitly (``eda`` / ``rii`` / ``nk``),
+   that source is used — and it is an **error** if that source is not defined
+   for the engine you are running.
+2. Otherwise the default precedence is **eda → rii → nk**: the first one that is
+   defined (and applies to the engine) wins.
+3. If *none* applies, a clear :class:`~gds_fdtd.errors.MaterialSourceError` is
+   raised — for example a Lumerical-only technology run on tidy3d.
+
+``beamz`` has no vendor material database, so its ``eda`` slot is always empty;
+it uses ``rii`` (if present) or ``nk``.
+
+.. code-block:: yaml
+
+    materials:
+      Si:
+        nk: 3.476                           # constant fallback (and beamz)
+        tidy3d: [cSi, Li1993_293K]          # tidy3d's own dispersive model
+        lumerical: Si (Silicon) - Palik     # Lumerical's own dispersive model
+        rii: {shelf: main, book: Si, page: Salzberg}   # refractiveindex.info
+        source: rii     # OPTIONAL: force every engine to use the rii model
+                        # (omit -> tidy3d/Lumerical use their model, beamz uses rii)
+
+How each engine uses the chosen source
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- **tidy3d** — ``eda`` and ``rii`` both become *dispersive* media (``rii`` is
+  fitted to a pole-residue medium via
+  :meth:`gds_fdtd.materials.rii.RiiMaterial.to_tidy3d_medium`); ``nk`` becomes a
+  constant ``td.Medium``.
+- **Lumerical** — ``eda`` is the vendor database name (its own dispersion);
+  ``rii`` / ``nk`` are emitted as a constant ``(n,k)`` material in the ``.lsf``
+  (sampled at the band center — use the ``lumerical`` model when you want
+  Lumerical's own dispersion).
+- **beamz** — a single constant index from ``rii`` (sampled at band center) or
+  ``nk``.
+
+``rii`` pages are read **offline** from a local copy of the refractiveindex.info
+database; point ``GDS_FDTD_RII_DB`` at its ``data`` directory (or pass
+``db_dir=``). See :doc:`examples` notebook ``02b`` for feeding one rii model —
+its full complex ``n(λ)+ik(λ)`` — into all three engines.
+
 Technology File Structure (schema v1)
 -------------------------------------
 

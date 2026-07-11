@@ -62,6 +62,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   license token).
 
 ### Added
+- Per-engine **material-source selection**. A technology material can name up to
+  three optical-constant sources — the engine's own database model (`tidy3d` /
+  `lumerical`), a `refractiveindex.info` page (`rii`), and a neutral constant
+  (`nk`) — and each engine picks one: an explicit `MaterialSpec.source`
+  (`eda`/`rii`/`nk`) wins, else the precedence `eda → rii → nk`, else a clear
+  `MaterialSourceError`. tidy3d builds a dispersive medium from `rii`
+  (`RiiMaterial.to_tidy3d_medium`); Lumerical emits an `(n,k)` material; beamz a
+  constant. New module `gds_fdtd.materials.select`; documented in
+  `docs/technology.rst` and example `02b`.
 - Seeded atheris fuzzing of the technology-YAML and INTERCONNECT `.dat`
   parsers (`fuzz/`), run directly on PRs that touch the library.
 - Release artifacts are now Sigstore-signed (keyless, GitHub OIDC); the
