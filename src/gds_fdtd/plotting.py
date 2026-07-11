@@ -481,7 +481,10 @@ def plot_permittivity(
     if axis not in ("x", "y", "z"):
         raise ValueError(f"axis must be 'x', 'y', or 'z'; got {axis!r}")
 
-    grid = rasterize(component, dx, wavelength=wavelength_um, buffer=buffer)
+    # extend_ports + full-domain cladding => the slice matches what the solvers
+    # actually build (guide extended through the domain edge, clad everywhere),
+    # not just the bare device footprint in vacuum.
+    grid = rasterize(component, dx, wavelength=wavelength_um, buffer=buffer, extend_ports=True)
     n = np.sqrt(grid.eps.real)  # refractive index at each cell center
     x, y, z = grid.x, grid.y, grid.z
 

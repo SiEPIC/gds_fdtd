@@ -42,7 +42,7 @@ format) under ``examples/``; see ``examples/README.md`` for how to run them.
      - Waveguide mode profiles, effective indices, and permittivity cross-sections.
    * - 06
      - :doc:`_notebooks/06_convergence_and_caching`
-     - Mesh-convergence sweeps and ``run_cached`` — repeat runs are free.
+     - Mesh-convergence sweeps, ``run_cached`` (repeat runs free), and cross-engine validation where *converged ≠ correct*.
    * - 07
      - :doc:`_notebooks/07_choosing_an_engine`
      - The identical job on beamz / tidy3d / Lumerical, and how they agree.
