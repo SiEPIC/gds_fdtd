@@ -84,6 +84,31 @@ class RiiMaterial:
         k = self.k_at(wavelength_um)
         return n + 1j * k
 
+    def to_tidy3d_medium(self, wavelength_um=None, max_num_poles: int = 5):
+        """Fit these optical constants to a dispersive tidy3d medium.
+
+        Returns a ``tidy3d`` pole-residue medium that carries the full complex,
+        wavelength-dependent ``n + ik`` — plug it straight into a tidy3d
+        simulation to run with the refractiveindex.info model itself, not a
+        constant. Needs tidy3d (``pip install gds_fdtd[tidy3d]``).
+
+        Args:
+            wavelength_um: wavelengths to fit over (defaults to the material's
+                whole tabulated range).
+            max_num_poles: fit complexity ceiling.
+        """
+        try:
+            from tidy3d.plugins.dispersion import FastDispersionFitter
+        except ImportError as e:  # pragma: no cover - optional engine
+            raise ImportError("to_tidy3d_medium needs tidy3d: pip install gds_fdtd[tidy3d]") from e
+        wl = self.wavelength_um if wavelength_um is None else np.asarray(wavelength_um, dtype=float)
+        n = np.asarray(self.n_at(wl), dtype=float)
+        k = np.asarray(self.k_at(wl), dtype=float)
+        medium, _rms = FastDispersionFitter(
+            wvl_um=np.asarray(wl, dtype=float), n_data=n, k_data=k
+        ).fit(max_num_poles=max_num_poles)
+        return medium
+
 
 def _parse_tabulated(block: dict, columns: int) -> tuple[np.ndarray, ...]:
     rows = [
