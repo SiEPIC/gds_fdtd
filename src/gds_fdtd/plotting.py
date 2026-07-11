@@ -473,7 +473,9 @@ def plot_permittivity(
     return fig, ax
 
 
-def smatrix_summary(sm: SMatrix, wavelength_um: float | None = None) -> dict[str, Any]:
+def smatrix_summary(
+    sm: SMatrix, wavelength_um: float | None = None, atol: float = 1e-2
+) -> dict[str, Any]:
     """Human-readable figures of merit for an SMatrix at one wavelength.
 
     Returns insertion/return loss per driven port plus the physical sanity
@@ -483,6 +485,9 @@ def smatrix_summary(sm: SMatrix, wavelength_um: float | None = None) -> dict[str
     Args:
         sm: an SMatrix.
         wavelength_um: wavelength to evaluate at; defaults to the band center.
+        atol: absolute tolerance for the reciprocity/passivity checks. The
+            default 1e-2 suits real FDTD output (which carries ~1e-3 numerical
+            asymmetry); tighten it for analytic/reference matrices.
 
     Returns:
         dict with keys ``wavelength_um``, ``reciprocal``, ``passive``,
@@ -516,8 +521,8 @@ def smatrix_summary(sm: SMatrix, wavelength_um: float | None = None) -> dict[str
     pb = sm.power_balance()
     return {
         "wavelength_um": round(float(wl[idx]), 4),
-        "reciprocal": bool(sm.is_reciprocal()),
-        "passive": bool(sm.is_passive()),
+        "reciprocal": bool(sm.is_reciprocal(atol=atol)),
+        "passive": bool(sm.is_passive(atol=atol)),
         "max_power_imbalance": round(float(np.nanmax(np.abs(pb))), 4),
         "paths": sorted(paths, key=lambda p: (p["in"], -p["db"])),
     }
