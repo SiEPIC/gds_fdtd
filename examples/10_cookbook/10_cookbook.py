@@ -78,6 +78,10 @@ plt.show()
 # We load `si_sin_escalator.gds` (KLayout/SiEPIC) and pair it with the technology
 # to build a `Component`. Ports are auto-detected from the pin layer: **opt1** on
 # the Si layer (west, z≈0.11 µm) and **opt2** on the SiN layer (east, z≈0.5 µm).
+# Passing a `SimulationSpec` also sketches the **FDTD region** (device bounds + a
+# buffer) and the **port-extension stubs** that carry each port out through the
+# PML. It's a schematic of the setup — the exact margins are engine-specific
+# (beamz uses its own fixed guard band); the full run spec is defined in §3.
 
 # %%
 cell, _layout = load_cell(str(HERE / "si_sin_escalator.gds"))
@@ -87,7 +91,7 @@ print("ports:")
 for p in component.ports:
     print(f"  {p.name}: center={[round(float(c), 3) for c in p.center]} µm, dir={p.direction}°")
 
-plot_component(component)
+plot_component(component, spec=SimulationSpec())
 plt.show()
 
 # %% [markdown]
