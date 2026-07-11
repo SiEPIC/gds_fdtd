@@ -19,7 +19,7 @@ original parser.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -47,9 +47,18 @@ class RiiRef(BaseModel):
 class MaterialSpec(BaseModel):
     """Material description for one layer.
 
-    Solver-specific hints (``tidy3d_db``, ``lum_db``) are carried verbatim —
-    resolving them into solver objects is the solver adapter's job. ``rii``
-    is the solver-neutral refractiveindex.info source (shelf/book/page).
+    A material may name up to three sources of optical constants, and each
+    engine picks one at build time (see :mod:`gds_fdtd.materials.select`):
+
+    - the engine's own database model — ``tidy3d`` / ``lumerical`` in the tech
+      file (stored here as ``tidy3d_db`` / ``lum_db``); this is the ``"eda"``
+      source. beamz has no vendor database.
+    - ``rii`` — a refractiveindex.info page (engine-independent, dispersive).
+    - ``nk`` — a single neutral constant index (carried as an extra field).
+
+    ``source`` optionally forces which one to use; otherwise the precedence is
+    **eda → rii → nk** (first defined wins). It is an error if the chosen /
+    only source does not apply to the engine being run.
     """
 
     model_config = ConfigDict(extra="allow")  # forward-compatible: unknown hints pass through
@@ -57,6 +66,7 @@ class MaterialSpec(BaseModel):
     tidy3d_db: dict[str, Any] | None = None
     lum_db: dict[str, Any] | None = None
     rii: RiiRef | None = None
+    source: Literal["eda", "rii", "nk"] | None = None
 
     @field_validator("lum_db")
     @classmethod
@@ -81,6 +91,8 @@ class MaterialSpec(BaseModel):
             out["lum_db"] = self.lum_db
         if self.rii is not None:
             out["rii"] = self.rii.model_dump()
+        if self.source is not None:
+            out["source"] = self.source
         if self.model_extra:
             out.update(self.model_extra)
         return out

@@ -96,15 +96,9 @@ class LumericalSolver(Solver):
         if self.technology is None:
             problems.append("LumericalSolver requires a technology (materials)")
             return problems
-        tech = self._tech_dict()
-        for i, d in enumerate(tech.get("device", [])):
-            mat = d.get("material", {})
-            if "lum_db" not in mat:
-                problems.append(f"device layer {i} has no 'lum_db' material entry")
-        for key in ("substrate", "superstrate"):
-            mat = tech.get(key, [{}])[0].get("material", {})
-            if "lum_db" not in mat:
-                problems.append(f"{key} has no 'lum_db' material entry")
+        from ..materials.select import check_materials
+
+        problems += check_materials(self._tech_dict(), "lumerical")
         return problems
 
     def _tech_dict(self) -> dict:
@@ -144,6 +138,31 @@ class LumericalSolver(Solver):
         )
         return self._artifacts
 
+    def _lum_material(self, material: dict, hint: str) -> tuple[list[str], str]:
+        """(.lsf lines defining the material, its name) for this material's
+        selected source (see gds_fdtd.materials.select).
+
+        ``eda`` returns a Lumerical database name (dispersive, the engine's own
+        model). ``rii`` / ``nk`` emit a constant ``(n,k)`` material sampled at
+        the band center — the layer-builder ``.lsf`` flow is single-wavelength,
+        so use the ``lumerical`` database model when you want Lumerical's own
+        dispersion (it agrees with refractiveindex.info; see example 02b).
+        """
+        from ..materials.select import select_source, source_index
+
+        src = select_source(material, "lumerical", name=hint)
+        if src == "eda":
+            return [], material["lum_db"]["model"]
+        idx = source_index(material, src, self.spec.wavelength_center_um)
+        name = f"gdsfdtd_{hint}"
+        lines = [
+            'gdsfdtd_m = addmaterial("(n,k) Material");',
+            f'setmaterial(gdsfdtd_m, "name", {_q(name)});',
+            f'setmaterial({_q(name)}, "Refractive Index", {idx.real});',
+            f'setmaterial({_q(name)}, "Imaginary Refractive Index", {abs(idx.imag)});',
+        ]
+        return lines, name
+
     def _generate_script(self, gds_name: str) -> str:
         """The complete FDTD setup as .lsf text (legacy-solver semantics)."""
         s = self.spec
@@ -167,19 +186,23 @@ class LumericalSolver(Solver):
         ]
 
         substrate = tech["substrate"][0]
+        sub_defn, sub_mat = self._lum_material(substrate["material"], "substrate")
+        L += sub_defn
         L += [
             'addlayer("substrate");',
             f'setlayer("substrate", "start position", {substrate["z_base"] * um});',
             f'setlayer("substrate", "thickness", {-abs(substrate["z_span"]) * um});',
-            f'setlayer("substrate", "background material", {_q(substrate["material"]["lum_db"]["model"])});',
+            f'setlayer("substrate", "background material", {_q(sub_mat)});',
             'setlayer("substrate", "layer number", "");',
         ]
         superstrate = tech["superstrate"][0]
+        sup_defn, sup_mat = self._lum_material(superstrate["material"], "superstrate")
+        L += sup_defn
         L += [
             'addlayer("superstrate");',
             f'setlayer("superstrate", "start position", {superstrate["z_base"] * um});',
             f'setlayer("superstrate", "thickness", {abs(superstrate["z_span"]) * um});',
-            f'setlayer("superstrate", "background material", {_q(superstrate["material"]["lum_db"]["model"])});',
+            f'setlayer("superstrate", "background material", {_q(sup_mat)});',
             'setlayer("superstrate", "layer number", "");',
         ]
 
@@ -190,13 +213,15 @@ class LumericalSolver(Solver):
                 continue
             lname = f"device_{idx}"
             spec_str = f"{d['layer'][0]}:{d['layer'][1]}"
+            dev_defn, dev_mat = self._lum_material(d["material"], lname)
+            L += dev_defn
             L += [
                 f"addlayer({_q(lname)});",
                 f'setlayer({_q(lname)}, "start position", {d["z_base"] * um});',
                 f'setlayer({_q(lname)}, "thickness", {abs(d["z_span"]) * um});',
                 f'setlayer({_q(lname)}, "layer number", {_q(spec_str)});',
                 f'setlayer({_q(lname)}, "sidewall angle", {d["sidewall_angle"]});',
-                f'setlayer({_q(lname)}, "pattern material", {_q(d["material"]["lum_db"]["model"])});',
+                f'setlayer({_q(lname)}, "pattern material", {_q(dev_mat)});',
             ]
 
         # ---- FDTD region ----

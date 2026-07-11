@@ -184,11 +184,14 @@ class BeamzSolver(Solver):
         rii @ center wavelength, tidy3d nk/medium — via grid.resolve_index)."""
         if kwarg is not None:
             return float(kwarg)
-        from ..grid import resolve_index
+        from ..errors import MaterialSourceError
+        from ..materials.select import select_source, source_index
 
         try:
-            return float(resolve_index(material, self.spec.wavelength_center_um).real)
-        except (ValueError, FileNotFoundError, KeyError):
+            # beamz has no vendor database, so its source precedence is rii -> nk
+            src = select_source(material, "beamz", name=label)
+            return float(source_index(material, src, self.spec.wavelength_center_um).real)
+        except (MaterialSourceError, ValueError, FileNotFoundError, KeyError):
             return None
 
     def _indices(self) -> tuple[float | None, float | None]:
@@ -236,13 +239,13 @@ class BeamzSolver(Solver):
         n_core, n_clad = self._indices()
         if n_core is None:
             problems.append(
-                "cannot resolve core refractive index: pass n_core= or give the device "
-                "material an 'rii' or 'tidy3d_db: {nk: ...}' entry"
+                "cannot resolve core refractive index: pass n_core=, or give the device "
+                "material an 'rii' reference or an 'nk' constant (beamz has no vendor DB)"
             )
         if n_clad is None:
             problems.append(
-                "cannot resolve cladding refractive index: pass n_clad= or give the "
-                "superstrate material an 'rii' or 'tidy3d_db: {nk: ...}' entry"
+                "cannot resolve cladding refractive index: pass n_clad=, or give the "
+                "superstrate material an 'rii' reference or an 'nk' constant"
             )
         return problems
 
