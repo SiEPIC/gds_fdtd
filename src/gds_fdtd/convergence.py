@@ -89,9 +89,13 @@ def max_delta_db(a: SMatrix, b: SMatrix, floor_db: float = -30.0) -> float:
                     ok = np.isfinite(sa) & np.isfinite(sb) & (np.maximum(sa, sb) > floor_lin)
                     if not np.any(ok):
                         continue
-                    with np.errstate(divide="ignore"):
-                        d = np.abs(20 * np.log10(sa[ok] / np.maximum(sb[ok], 1e-300)))
-                    worst = max(worst, float(np.max(d)))
+                    # compare in dB with each value clamped to the floor, so a
+                    # dead/zero entry (e.g. an engine that failed to inject on a
+                    # port) reads as a bounded disagreement (|signal − floor|),
+                    # never +inf as a raw |20·log10(sa/sb)| ratio would.
+                    sa_db = 20 * np.log10(np.maximum(sa[ok], floor_lin))
+                    sb_db = 20 * np.log10(np.maximum(sb[ok], floor_lin))
+                    worst = max(worst, float(np.max(np.abs(sa_db - sb_db))))
     return worst
 
 
