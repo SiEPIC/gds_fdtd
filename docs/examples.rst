@@ -1,49 +1,75 @@
 Examples
 ========
 
-The ``examples/`` directory covers every feature; each script runs directly
-with Python. Scripts follow one standardized flow: geometry plot (ports +
-FDTD region + port extensions) → offline setup (free) → S-parameters →
-field profile.
+A guided path from *"load a layout"* to *"run it on any FDTD engine and read the
+S-parameters."* Each entry below is a real Jupyter notebook, executed and
+committed **with its outputs** — the plots and numbers you see are genuine solver
+output, not illustrations.
+
+Every notebook reproduces **for free**: the live runs use
+`beamz <https://github.com/beamzorg/beamz>`_ (Apache-2.0 JAX FDTD, on CPU) or
+tidy3d's free *local* mode solver, and the cross-engine comparisons load recorded
+tidy3d/Lumerical artifacts. No cloud account, license, or GPU is required to run
+any of them.
+
+The source of truth for each notebook is a paired ``.py`` (jupytext *percent*
+format) under ``examples/``; see ``examples/README.md`` for how to run them.
 
 .. list-table::
    :header-rows: 1
+   :widths: 8 30 62
 
-   * - Directory
-     - Shows
-   * - ``01_basics``
-     - First contact: load & inspect any GDS with no engine installed
-       (``01b``); the free offline setup flow on tidy3d (``01a``).
-   * - ``02_lumerical``
-     - The standard flow on Lumerical FDTD; ``02b`` is a mesh-convergence
-       study — identical code to ``03b`` except the engine string.
-   * - ``03_tidy3d``
-     - The same flow on the tidy3d cloud (``03a`` with curated
-       thru/crosstalk/reflection plots); ``03b`` mesh convergence.
-   * - ``04_solvers``
-     - The engine-agnostic registry (``04a``); convergence sweeps + job
-       caching (``04b``); three-engine cross-validation on recorded real
-       results — runs offline (``04c``).
-   * - ``05_gdsfactory``
-     - gdsfactory (>= 9) components into any solver.
-   * - ``06_beamz``
-     - The free, open-source engine: straight (``06a``), S-bend
-       (``06b``), and a zero-cost mesh-convergence study (``06c``).
-   * - ``07_prefab``
-     - Lithography-predicted geometry via PreFab.
-   * - ``08_siepic``
-     - SiEPIC EBeam PDK cells on tidy3d / Lumerical.
-   * - ``09_smatrix``
-     - SMatrix I/O on recorded real data: .dat, Touchstone, npz/HDF5,
-       physics checks, plotting — fully offline.
-   * - ``10_materials``
-     - Validated technology YAML (schema v2, named materials) +
-       refractiveindex.info sources.
+   * - #
+     - Notebook
+     - You'll learn
+   * - 00
+     - :doc:`_notebooks/00_quickstart`
+     - Layout → S-matrix in ten lines, on the free engine.
+   * - 01
+     - :doc:`_notebooks/01_layout_to_component`
+     - Load a GDS / gdsfactory cell, auto-detect ports, read the geometry view.
+   * - 02
+     - :doc:`_notebooks/02_technology`
+     - Materials, the vertical layer stack, and (in ``02b``) ``refractiveindex.info`` sources across engines.
+   * - 03
+     - :doc:`_notebooks/03_first_simulation`
+     - The full flow end-to-end: geometry → permittivity → build → run → S-params → fields.
+   * - 04
+     - :doc:`_notebooks/04_reading_results`
+     - ``SMatrix``: insertion loss, crosstalk, phase, reciprocity/passivity, Touchstone/HDF5/npz I/O.
+   * - 05
+     - :doc:`_notebooks/05_fields_and_modes`
+     - Waveguide mode profiles, effective indices, and permittivity cross-sections.
+   * - 06
+     - :doc:`_notebooks/06_convergence_and_caching`
+     - Mesh-convergence sweeps and ``run_cached`` — repeat runs are free.
+   * - 07
+     - :doc:`_notebooks/07_choosing_an_engine`
+     - The identical job on beamz / tidy3d / Lumerical, and how they agree.
+   * - 08
+     - :doc:`_notebooks/08_frontends`
+     - gdsfactory, SiEPIC/KLayout, and PreFab (litho-prediction) front ends.
+   * - 09
+     - :doc:`_notebooks/09_cli_and_jobs`
+     - The ``gds-fdtd`` CLI and serializable ``JobSpec`` for remote/batch compute.
+   * - 10
+     - :doc:`_notebooks/10_cookbook`
+     - Reference devices with known-good S-params — the **Si→SiN escalator** on the free engine.
 
-Run any of them like::
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Example notebooks
 
-    python examples/04_solvers/04c_cross_solver_validation.py
-
-Examples that call ``solver.run()`` on tidy3d spend FlexCredits and say so
-in their docstrings; Lumerical examples need a local license; every beamz
-example is free.
+   _notebooks/00_quickstart
+   _notebooks/01_layout_to_component
+   _notebooks/02_technology
+   _notebooks/02b_rii_to_engines
+   _notebooks/03_first_simulation
+   _notebooks/04_reading_results
+   _notebooks/05_fields_and_modes
+   _notebooks/06_convergence_and_caching
+   _notebooks/07_choosing_an_engine
+   _notebooks/08_frontends
+   _notebooks/09_cli_and_jobs
+   _notebooks/10_cookbook
