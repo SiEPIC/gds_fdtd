@@ -214,6 +214,24 @@ def test_max_delta_db_aligns_ports_by_digit():
     assert max_delta_db(a, b) == pytest.approx(0.0, abs=1e-12)
 
 
+def test_max_delta_db_dead_column_is_finite():
+    """A path that is signal in one engine but zero in the other (a failed mode
+    injection) must give a BOUNDED disagreement, never +inf."""
+    f = np.linspace(1.8e14, 2.0e14, 5)
+    thru = np.full(5, 0.9 + 0j)
+    dead = np.zeros(5, dtype=complex)  # engine b under-injected this path
+    a = SMatrix.from_entries(
+        [("1", "2", 1, 1, f, thru), ("2", "1", 1, 1, f, thru)], port_names=["1", "2"]
+    )
+    b = SMatrix.from_entries(
+        [("1", "2", 1, 1, f, thru), ("2", "1", 1, 1, f, dead)], port_names=["1", "2"]
+    )
+    d = max_delta_db(a, b, floor_db=-30.0)
+    assert np.isfinite(d)
+    # |20log10(0.9) - (-30)| ~= 29.1 dB, bounded by |signal - floor|
+    assert 25.0 < d < 31.0
+
+
 def test_recorded_cross_solver_via_api():
     """The tidy3d-vs-Lumerical escalator agreement, through the WP5.5 API."""
     pytest.importorskip("h5py")
