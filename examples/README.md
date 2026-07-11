@@ -27,7 +27,7 @@ preview the whole simulation before `run()` ever touches an engine.
 | **03** | `03_first_simulation` | The full flow end-to-end: geometry → permittivity → build → run → S-params → fields | beamz · free |
 | **04** | `04_reading_results` | `SMatrix`: insertion loss, crosstalk, phase, reciprocity/passivity, Touchstone/HDF5/npz I/O | recorded · free, offline |
 | **05** | `05_fields_and_modes` | Waveguide mode profiles, effective indices, permittivity cross-sections | local mode solver · free |
-| **06** | `06_convergence_and_caching` | Mesh convergence sweeps and `run_cached` (repeat runs are free) | beamz · free |
+| **06** | `06_convergence_and_caching` | Mesh convergence, `run_cached` (repeat runs free), and cross-engine validation on a device where *converged ≠ correct* | beamz + recorded · free |
 | **07** | `07_choosing_an_engine` | The identical job on beamz / tidy3d / Lumerical, and how they agree | recorded (3 engines) · free, offline |
 | **08** | `08_frontends` | gdsfactory, SiEPIC/KLayout, and PreFab (litho-prediction) front ends | beamz + offline · free |
 | **09** | `09_cli_and_jobs` | The `gds-fdtd` CLI and serializable `JobSpec` for remote/batch compute | offline · free |

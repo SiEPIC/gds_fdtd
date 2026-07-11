@@ -143,6 +143,8 @@ examples/**/*.h5
 examples/**/*.png
 examples/**/*.fsp
 examples/**/*_setup.lsf
+# ...except committed recorded artifacts (e.g. a recorded tidy3d field image)
+!examples/**/recorded/*.png
 
 # beamz raster cache
 .beamz_cache/

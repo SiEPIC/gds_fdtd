@@ -60,7 +60,7 @@ S-parameters"* — paired `.py` (jupytext) + executed `.ipynb`. See
 | 03 | `03_first_simulation/` | the full flow end-to-end: geometry → permittivity → build → run → S-params → fields | beamz (free) |
 | 04 | `04_reading_results/` | `SMatrix`: insertion loss, crosstalk, phase, reciprocity/passivity, Touchstone/HDF5/npz I/O | none |
 | 05 | `05_fields_and_modes/` | waveguide mode profiles, effective indices, permittivity cross-sections | tidy3d-local (free) |
-| 06 | `06_convergence_and_caching/` | mesh-convergence sweeps and `run_cached` (repeat runs are free) | beamz (free) |
+| 06 | `06_convergence_and_caching/` | mesh-convergence sweeps, `run_cached` (repeat runs free), and cross-engine validation where *converged ≠ correct* | beamz + recorded |
 | 07 | `07_choosing_an_engine/` | the identical job on beamz / tidy3d / Lumerical, and how they agree | all three |
 | 08 | `08_frontends/` | gdsfactory, SiEPIC/KLayout, and PreFab (litho-prediction) front ends | mixed |
 | 09 | `09_cli_and_jobs/` | the `gds-fdtd` CLI and serializable `JobSpec` for remote/batch compute | none |

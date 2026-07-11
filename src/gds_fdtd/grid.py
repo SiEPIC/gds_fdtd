@@ -139,6 +139,7 @@ def rasterize(
     buffer: float = 1.0,
     background_index: float = 1.0,
     supersample: int = 4,
+    extend_ports: bool = False,
 ) -> PermittivityGrid:
     """Rasterize a Component into a permittivity grid at cell centers.
 
@@ -147,6 +148,15 @@ def rasterize(
     ones where they overlap, blended by sub-pixel area fraction at material
     boundaries. The xy domain is the component bounds plus ``buffer``; the
     z domain defaults to the structure stack's full extent.
+
+    Background roles (substrate/superstrate) fill the **entire** xy domain at
+    their z-range, not just their footprint — like the cladding an FDTD engine
+    surrounds the device with (``background_index`` shows only where no layer is
+    defined, e.g. above the superstrate). With ``extend_ports=True`` each port's
+    waveguide is extruded outward through the domain edge, matching the port
+    stubs the engines add so a mode plane sits on uniform waveguide. Together
+    these make the grid a faithful preview of what a solver actually simulates
+    (used by :func:`gds_fdtd.plotting.plot_permittivity`).
     """
     dy = dx if dy is None else dy
     dz = dx if dz is None else dz
@@ -182,6 +192,30 @@ def rasterize(
     ]
     indices = {id(s): resolve_index(s.material, wavelength) for s in ordered}
 
+    # Background roles are painted across this whole box (cladding is not
+    # confined to the device footprint). Port extensions, when requested, run
+    # each guide out to (and past) the domain edge; excess beyond the sample
+    # grid is simply not sampled.
+    domain_poly = shapely.box(x0, y0, x1, y1)
+    port_exts: dict[int, list[shapely.Polygon]] = {}
+    if extend_ports and component.ports:
+        from .geometry import calculate_polygon_extension
+
+        ext_len = max(b.x_span, b.y_span) + 2 * buffer
+        device_structs = [s for s in ordered if s.role == "device"]
+        for p in component.ports:
+            pz = p.center[2] if len(p.center) > 2 else None
+            for s in device_structs:
+                lo, hi = sorted((s.z_base, s.z_base + s.z_span))
+                if pz is None or lo - 1e-9 <= float(pz) <= hi + 1e-9:
+                    verts = calculate_polygon_extension(
+                        [float(p.center[0]), float(p.center[1])],
+                        p.width,
+                        p.direction,
+                        buffer=ext_len,
+                    )
+                    port_exts.setdefault(id(s), []).append(shapely.Polygon(verts))
+
     eps = np.full((nx, ny, nz), complex(background_index) ** 2, dtype=complex)
     frac_cache: dict[tuple[int, bytes], np.ndarray] = {}
     for k in range(nz):
@@ -190,6 +224,10 @@ def rasterize(
             poly = _slice_polygon(s, zc)
             if poly is None:
                 continue
+            if s.role != "device":
+                poly = domain_poly  # cladding fills the full domain at this z
+            elif id(s) in port_exts:
+                poly = shapely.union_all([poly, *port_exts[id(s)]])  # extend guide through the edge
             key = (id(s), shapely.to_wkb(poly))
             frac = frac_cache.get(key)
             if frac is None:
