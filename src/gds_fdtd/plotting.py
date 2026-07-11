@@ -13,6 +13,7 @@ import numpy as np
 
 if TYPE_CHECKING:
     from .geometry import Component
+    from .modes import Mode
     from .smatrix import SMatrix
     from .spec import SimulationSpec
     from .technology import Technology
@@ -520,3 +521,49 @@ def smatrix_summary(sm: SMatrix, wavelength_um: float | None = None) -> dict[str
         "max_power_imbalance": round(float(np.nanmax(np.abs(pb))), 4),
         "paths": sorted(paths, key=lambda p: (p["in"], -p["db"])),
     }
+
+
+def plot_mode(
+    mode: Mode, field: str = "E", ax: Any = None, savefig: str | None = None
+) -> tuple[Any, Any]:
+    """Plot a waveguide mode's transverse field on its cross-section.
+
+    ``field="E"`` shows the total field magnitude ``|E| = √(|Ex|²+|Ey|²+|Ez|²)``;
+    pass a single component (``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Hx"`` …) for one.
+    The mode's effective index is annotated — the number that tells you how the
+    mode propagates. Pairs with :class:`gds_fdtd.modes.Tidy3DModeSolver` (a free,
+    offline solve).
+
+    Args:
+        mode: a :class:`gds_fdtd.modes.Mode`.
+        field: "E" (default, total |E|) or a single field-component key.
+        ax: existing matplotlib axes (optional).
+        savefig: path to write the figure to (optional).
+
+    Returns:
+        (fig, ax)
+    """
+    import matplotlib.pyplot as plt
+
+    if field == "E":
+        data = np.sqrt(sum(np.abs(mode.fields[k]) ** 2 for k in ("Ex", "Ey", "Ez")))
+        label = "|E|"
+    else:
+        if field not in mode.fields:
+            raise ValueError(f"unknown field {field!r}; have {sorted(mode.fields)}")
+        data = np.abs(mode.fields[field])
+        label = f"|{field}|"
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(5.5, 4))
+    else:
+        fig = ax.figure
+    extent = (mode.u[0], mode.u[-1], mode.v[0], mode.v[-1])
+    im = ax.imshow(data.T, origin="lower", extent=extent, aspect="equal", cmap=DEFAULT_CMAP)
+    fig.colorbar(im, ax=ax, label=label)
+    ax.set_xlabel("u [µm]")
+    ax.set_ylabel("v [µm]")
+    ax.set_title(f"mode {label} @ {mode.wavelength_um} µm  (n_eff = {mode.n_eff.real:.4f})")
+    if savefig:
+        fig.savefig(savefig, dpi=150, bbox_inches="tight")
+    return fig, ax
