@@ -91,10 +91,11 @@ def test_lum_validate_flags_missing_materials():
     comp, tech, layout = _job("tech_lumerical.yaml")
     bad = copy.deepcopy(tech.to_solver_dict())
     for d in bad["device"]:
-        d["material"].pop("lum_db", None)
+        d["material"].pop("lum_db", None)  # leaves no source at all (v1 lum tech)
     solver = get_solver("lumerical")(comp, technology=bad)
     problems = solver.validate()
-    assert any("lum_db" in p for p in problems)
+    # with no eda / rii / nk source, lumerical reports it clearly
+    assert any("no optical-constant source" in p and "lumerical" in p for p in problems)
     del layout
 
 

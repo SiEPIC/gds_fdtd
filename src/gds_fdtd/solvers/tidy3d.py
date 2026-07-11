@@ -66,18 +66,14 @@ class Tidy3DSolver(Solver):
         if self.technology is None:
             problems.append("Tidy3DSolver requires a technology (materials)")
         else:
+            from ..materials.select import check_materials
+
             tech_dict = (
                 self.technology.to_solver_dict()
                 if hasattr(self.technology, "to_solver_dict")
                 else self.technology
             )
-            for i, d in enumerate(tech_dict.get("device", [])):
-                mat = d.get("material", {})
-                if "tidy3d_db" not in mat:
-                    problems.append(
-                        f"device layer {i} has no 'tidy3d_db' material entry "
-                        "(rii/other neutral sources are not wired to tidy3d yet)"
-                    )
+            problems += check_materials(tech_dict, "tidy3d")
         return problems
 
     def build(self) -> SetupArtifacts:

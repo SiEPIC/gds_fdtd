@@ -23,6 +23,12 @@ class TechnologyError(GdsFdtdError, ValueError):
     """A technology file/model is invalid (bad layer stack, material, ...)."""
 
 
+class MaterialSourceError(TechnologyError):
+    """A material has no usable optical-constant source for the target engine
+    (or an explicit ``source:`` was requested that the material does not
+    define). See gds_fdtd.materials.select."""
+
+
 class LayoutError(GdsFdtdError, ValueError):
     """A layout could not be loaded or interpreted (missing cell, ports, ...)."""
 

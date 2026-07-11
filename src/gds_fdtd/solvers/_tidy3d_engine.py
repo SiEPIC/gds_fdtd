@@ -201,6 +201,35 @@ class _TidyEngine(_TidyEngineBase):
         # "Subtrate" typo present in components built by older versions
         return "substrate" in n or "superstrate" in n or "subtrate" in n
 
+    def _medium(self, material, name: str = "material"):
+        """Build the tidy3d medium for one material, honoring its source
+        selection (see gds_fdtd.materials.select): the engine's own database
+        model (``eda``), a dispersive refractiveindex.info fit (``rii``), or a
+        constant ``nk``. A pre-built medium object passes straight through.
+        """
+        if not isinstance(material, dict):
+            return material
+        from gds_fdtd.materials.select import select_source
+
+        src = select_source(material, "tidy3d", name=name)
+        if src == "eda":
+            from gds_fdtd.simprocessor import _load_tidy3d_material
+
+            return _load_tidy3d_material(material["tidy3d_db"])
+        if src == "rii":
+            from gds_fdtd.materials.rii import load_rii_material
+
+            ref = material["rii"]
+            ref = ref.model_dump() if hasattr(ref, "model_dump") else ref
+            wl = np.linspace(
+                self.wavelength_start, self.wavelength_end, max(self.wavelength_points, 2)
+            )
+            mat = load_rii_material(ref["shelf"], ref["book"], ref["page"])
+            return mat.to_tidy3d_medium(wavelength_um=wl)
+        nk = material["nk"]
+        n, k = (nk[0], nk[1]) if isinstance(nk, (list, tuple)) else (nk, 0.0)
+        return td.Medium(permittivity=(n + 1j * k) ** 2)
+
     def _to_td_structure(self, s):
         """Convert one geometry.Structure into a td.Structure."""
         if s.z_span < 0:
@@ -217,7 +246,7 @@ class _TidyEngine(_TidyEngineBase):
                 axis=2,
                 sidewall_angle=(90 - s.sidewall_angle) * (np.pi / 180),
             ),
-            medium=s.material["tidy3d"] if isinstance(s.material, dict) else s.material,
+            medium=self._medium(s.material, name=s.name),
             name=s.name,
         )
 
@@ -240,7 +269,7 @@ class _TidyEngine(_TidyEngineBase):
                         axis=2,
                         sidewall_angle=(90 - device.structures[0].sidewall_angle) * (np.pi / 180),
                     ),
-                    medium=p.material["tidy3d"] if isinstance(p.material, dict) else p.material,
+                    medium=self._medium(p.material, name=f"port_{p.name}"),
                     name=f"port_{p.name}",
                 )
             )
