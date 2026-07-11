@@ -50,29 +50,33 @@ Five workstreams. They are independent; parallelize freely.
 
 ### WS1 — Examples become executed, verified notebooks
 
-The 18 example scripts are the front door. Turn them into notebooks with
+The example scripts are the front door. Turn them into notebooks with
 real, committed outputs (plots inline), executable end-to-end, and kept
-honest by CI.
+honest by CI. **Mostly done** (see remaining CI item below).
 
-- **Author format:** keep the `.py` scripts as source of truth and pair them
+- **Author format:** ✅ DONE. The `.py` scripts are the source of truth, paired
   to notebooks with [jupytext](https://jupytext.readthedocs.io/) (percent
-  format), so notebooks are diff-friendly and never drift from the scripts.
-- **Execution tiers:**
-  - *offline* (01b, 04c, 09, 10): execute in CI on every PR with
-    `jupyter execute` / nbmake; outputs must match (nbval-style tolerance for
-    floats/plots).
-  - *engine* (tidy3d/Lumerical/beamz runs): execute **locally** with the
-    real engine, commit the executed notebook with outputs as an artifact of
-    record; CI runs them only up to `build()` (offline) and validates the
-    notebook *structure*/imports.
-- **Gallery:** render executed notebooks into the Sphinx docs
-  (`nbsphinx` or `myst-nb`) so the website shows real field profiles and
-  S-parameters, not just code.
+  format), so notebooks are diff-friendly and never drift from the scripts. The
+  gallery is a clean numbered path `00_quickstart` … `10_cookbook` (11 notebooks);
+  the legacy flat `0X_name/` scripts were retired.
+- **Execution tiers:** ✅ DONE (locally). Every notebook is committed as its
+  executed `.ipynb` with real outputs. The whole gallery reproduces **for free**:
+  live runs use beamz (JAX/CPU) or tidy3d's free *local* mode solver; the
+  cross-engine comparisons (07, 10) load **recorded** tidy3d/Lumerical artifacts.
+  No notebook spends credits or a license.
+- **Gallery:** ✅ DONE. Executed notebooks render into the Sphinx docs via
+  [myst-nb](https://myst-nb.readthedocs.io/) (`nb_execution_mode = "off"` — the
+  committed outputs are shown as-is), so the website shows real field profiles
+  and S-parameters, not just code.
 - **Cleanup:** ✅ DONE. The stray `examples/notebooks/faid/` notebook (pre-0.5,
   unreferenced, once carried a base64 license token in its logs) was removed;
-  the standardized `examples/0X_*` set is the single source of truth.
-- *Done when:* every example has a committed executed notebook; the offline
-  set runs green in a dedicated CI job; the docs gallery shows real outputs.
+  the numbered `examples/NN_*` set is the single source of truth.
+- **Remaining:** a *dedicated CI job* that re-executes the offline notebooks on
+  every PR (beamz + local + recorded, all free) and diffs outputs — today CI
+  guards them only via `tests/test_examples_importable.py` (imports resolve).
+- *Done when:* every example has a committed executed notebook ✅; the docs
+  gallery shows real outputs ✅; the offline set re-executes green in a dedicated
+  CI job (remaining).
 
 ### WS2 — Real >90% coverage
 

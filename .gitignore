@@ -154,6 +154,7 @@ directional_coupler_te1550/
 mode_solver.hdf5
 *_with_extensions.gds
 docs/_autosummary/
+docs/_notebooks/
 
 # generated solver outputs must never be committed (1.1 GB of .fsp once was)
 /*.fsp

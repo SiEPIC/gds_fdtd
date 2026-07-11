@@ -118,7 +118,9 @@ components["raw GDS\ncrossing"] = load_component_from_tech(cell=cell, tech=tech)
 # )
 # ```
 #
-# See `07_prefab` for the full lithography-to-simulation example.
+# PreFab needs a trained litho model (network access), so it's shown here as a
+# recipe rather than executed; the predicted GDS then flows through the same
+# `load_device` → `get_solver` path as every other frontend above.
 
 # %% [markdown]
 # ## The payoff — one `Component`, one API
