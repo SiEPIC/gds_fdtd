@@ -127,8 +127,10 @@ def plot_component(
 
     Args:
         component: a gds_fdtd Component.
-        spec: optional SimulationSpec; when given, the FDTD region
-            (bounds + buffer) is drawn as well.
+        spec: optional SimulationSpec; when given, the nominal FDTD domain
+            (bounds + buffer), the outer stub/background extent
+            (bounds + 2*buffer, outside the domain), and the port-extension
+            stubs are drawn as well.
         ax: existing matplotlib axes (optional).
         savefig: path to write the figure to (optional).
 
@@ -182,7 +184,15 @@ def plot_component(
         )
     )
 
-    # simulation region = bounds + buffer (matches Solver.domain())
+    # Nominal FDTD domain + the larger geometry extent, drawn only with a spec.
+    # INNER box = bounds + buffer/side = the nominal simulation domain. This is
+    # engine-AGNOSTIC (tidy3d/Lumerical build bounds + buffer/side; beamz uses
+    # its own guard band), so it is a representative preview, not one solver's
+    # exact box — hence "nominal". OUTER box = bounds + 2*buffer/side = how far
+    # the port-extension stubs and background medium reach; that geometry
+    # overhangs the domain and is clipped/absorbed at the domain edge (it is NOT
+    # simulated out there). Drawing it gives the 2*buffer stubs a labeled
+    # boundary to end on instead of poking into blank space.
     if spec is not None:
         buf = spec.buffer
         ax.add_patch(
@@ -194,12 +204,28 @@ def plot_component(
                 edgecolor=plt.get_cmap("RdBu")(0.02),
                 linestyle=":",
                 linewidth=1.4,
-                label=f"FDTD region (buffer {buf} µm)",
+                label=f"FDTD region (nominal, +{buf:g} µm)",
+            )
+        )
+        ax.add_patch(
+            Rectangle(
+                (b.x_min - 2 * buf, b.y_min - 2 * buf),
+                b.x_span + 4 * buf,
+                b.y_span + 4 * buf,
+                fill=False,
+                edgecolor="tab:gray",
+                linestyle=(0, (1, 3)),
+                linewidth=1.0,
+                alpha=0.7,
+                label="stub / background extent (outside domain)",
             )
         )
 
-    # port extension stubs (the buffer waveguides the solvers add so that
-    # every port terminates through the PML instead of on a reflecting facet)
+    # Port-extension stubs: synthetic waveguide the solver bolts onto each port
+    # so it runs out through the domain edge (into the absorbing boundary)
+    # rather than ending on a reflecting facet. Engine-added, not part of the
+    # device; the extent is 2*buffer, ending on the outer "stub / background
+    # extent" box above. Dashed + hatched + low-alpha so it stays subordinate.
     if spec is not None:
         stub_labeled = False
         for p in component.ports:
@@ -214,7 +240,7 @@ def plot_component(
                     linestyle="--",
                     hatch="///",
                     alpha=0.5,
-                    label=None if stub_labeled else "port extension (2×buffer, through PML)",
+                    label=None if stub_labeled else "port extension (out through domain edge)",
                 )
             )
             stub_labeled = True
@@ -256,9 +282,27 @@ def plot_component(
             fontweight="bold",
         )
 
-    pad = max(b.x_span, b.y_span) * 0.15 + (spec.buffer if spec else 0)
-    ax.set_xlim(b.x_min - pad, b.x_max + pad)
-    ax.set_ylim(b.y_min - pad, b.y_max + pad)
+    # Frame the union of everything actually drawn so nothing clips regardless
+    # of the buffer/device-size ratio: devrec bounds, device polygons, the
+    # stub/background-extent box (bounds + 2*buffer, the outermost artist when a
+    # spec is given), and the port arrows/width ticks (reusing `arrow` above).
+    xs: list[float] = [b.x_min, b.x_max]
+    ys: list[float] = [b.y_min, b.y_max]
+    for s in component.structures:
+        if s.role == "device":
+            for vx, vy in s.polygon:
+                xs.append(float(vx))
+                ys.append(float(vy))
+    if spec is not None:
+        xs += [b.x_min - 2 * spec.buffer, b.x_max + 2 * spec.buffer]
+        ys += [b.y_min - 2 * spec.buffer, b.y_max + 2 * spec.buffer]
+    for p in component.ports:
+        xs += [p.x - arrow, p.x + arrow, p.x - p.width / 2, p.x + p.width / 2]
+        ys += [p.y - arrow, p.y + arrow, p.y - p.width / 2, p.y + p.width / 2]
+    mx = (max(xs) - min(xs)) * 0.05 or 1e-9
+    my = (max(ys) - min(ys)) * 0.05 or 1e-9
+    ax.set_xlim(min(xs) - mx, max(xs) + mx)
+    ax.set_ylim(min(ys) - my, max(ys) + my)
     ax.set_aspect("equal")
     ax.set_xlabel("x [µm]")
     ax.set_ylabel("y [µm]")

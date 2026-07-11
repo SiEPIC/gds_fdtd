@@ -182,6 +182,38 @@ def test_beamz_multilayer_escalator_builds():
     del layout
 
 
+def test_beamz_honors_large_buffer():
+    """beamz honors a spec.buffer LARGER than its physical guard-band floor
+    (SimulationSpec.buffer is documented as the domain padding; beamz used to
+    ignore it entirely). buffer <= the floor (incl. the default) is unchanged;
+    a larger buffer grows the in-plane domain, hence the rasterized grid."""
+    pytest.importorskip("beamz")
+    import copy
+
+    import numpy as np
+
+    comp, tech, layout = _job("tech_tidy3d.yaml")
+    two = copy.deepcopy(tech.to_solver_dict())
+    two["device"][0]["material"] = {"nk": 3.476}
+    two["device"][1]["material"] = {"nk": 1.997}
+    two["superstrate"][0]["material"] = {"nk": 1.444}
+
+    def cells(buf: float) -> int:
+        solver = get_solver("beamz")(
+            comp,
+            technology=two,
+            spec=SimulationSpec(wavelength_points=3, mesh=5, z_min=-1.0, z_max=1.11, buffer=buf),
+        )
+        return int(np.asarray(solver.build().native["grid"].permittivity).size)
+
+    default = cells(1.0)  # below the ~3 um floor
+    at_floor = cells(3.0)  # still at the floor
+    larger = cells(6.0)  # above the floor -> bigger domain
+    assert default == at_floor  # buffer <= floor is a no-op (no regression)
+    assert larger > default  # a larger buffer is now honored
+    del layout
+
+
 def test_beamz_field_plane_orientation():
     """beamz grids are (z, y, x)-ordered: a synthetic along-x stripe injected
     through the run() reshape convention must render along x (caught a real
