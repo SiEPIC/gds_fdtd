@@ -133,6 +133,39 @@ def test_background_roles_paint_first():
     assert g.eps[i, jj, 0].real == pytest.approx(1.44**2, rel=1e-12)  # substrate elsewhere
 
 
+def test_full_domain_cladding_and_port_extensions():
+    """A faithful preview of what a solver builds: background roles (clad) fill
+    the whole domain, and extend_ports runs each guide out to the domain edge —
+    not a bare device footprint in vacuum."""
+    substrate = Structure(
+        name="sub",
+        polygon=[[0, 0], [2, 0], [2, 1], [0, 1]],  # only the devrec footprint
+        z_base=0.0,
+        z_span=0.22,
+        material={"nk": 1.44},
+        sidewall_angle=90,
+        role="substrate",
+    )
+    comp = _component([_rect(n=3.47), substrate])
+    k_mid = None
+
+    # cladding fills the whole domain even though its polygon is just the footprint
+    g = rasterize(comp, dx=0.05, buffer=1.0, extend_ports=True)
+    n = np.sqrt(g.eps.real)
+    k_mid = g.eps.shape[2] // 2
+    assert n[0, 0, k_mid] == pytest.approx(1.44, rel=1e-6)  # corner is clad, not vacuum
+
+    # ports (opt1 @ x=0 facing -x, opt2 @ x=2 facing +x) extend the guide to both
+    # x domain edges along the guide's y-row
+    jy = int((0.5 - g.origin[1]) / g.spacing[1])
+    assert n[0, jy, k_mid] == pytest.approx(3.47, rel=1e-6)  # left edge = extended Si guide
+    assert n[-1, jy, k_mid] == pytest.approx(3.47, rel=1e-6)  # right edge = extended Si guide
+
+    # without extend_ports the guide stops at the device; the edge is bare clad
+    n0 = np.sqrt(rasterize(comp, dx=0.05, buffer=1.0).eps.real)
+    assert n0[0, jy, k_mid] == pytest.approx(1.44, rel=1e-6)
+
+
 def test_rasterize_input_validation():
     comp = _component([_rect()])
     with pytest.raises(ValueError, match="positive"):
