@@ -146,12 +146,39 @@ def test_beamz_resolves_index_from_rii(tmp_path, monkeypatch):
     monkeypatch.setenv("GDS_FDTD_RII_DB", str(_pl.Path(__file__).parent / "rii_db"))
     comp, tech, layout = _job("tech_tidy3d.yaml")
     rii_tech = copy.deepcopy(tech.to_solver_dict())
-    # v1 needs exactly ONE device layer present: keep [1,0] only, rii material
+    # isolate the rii source on a single device layer ([1,0])
     rii_tech["device"] = [rii_tech["device"][0]]
     rii_tech["device"][0]["material"] = {"rii": {"shelf": "main", "book": "Si", "page": "Li-293"}}
     solver = get_solver("beamz")(comp, technology=rii_tech, gf_component=object())
     n_core, _ = solver._indices()
     assert n_core == pytest.approx(3.4757, abs=0.01)
+    del layout
+
+
+def test_beamz_multilayer_escalator_builds():
+    """Multi-layer stacks build on beamz: the Si→SiN escalator (two device
+    layers, ports at different z) validates and rasterizes BOTH cores, not one."""
+    pytest.importorskip("beamz")
+    import copy
+
+    import numpy as np
+
+    comp, tech, layout = _job("tech_tidy3d.yaml")  # escalator: Si [1,0] + SiN [1,5]
+    two = copy.deepcopy(tech.to_solver_dict())
+    # give both device layers a neutral nk so the free engine resolves them
+    two["device"][0]["material"] = {"nk": 3.476}  # Si core
+    two["device"][1]["material"] = {"nk": 1.997}  # SiN core
+    two["superstrate"][0]["material"] = {"nk": 1.444}  # SiO2 cladding
+    solver = get_solver("beamz")(
+        comp,
+        technology=two,
+        spec=SimulationSpec(wavelength_points=3, mesh=5, z_min=-1.0, z_max=1.11),
+    )
+    assert len(solver._device_layers()) == 2  # multi-layer accepted (v1 rejected this)
+    assert solver.validate() == []
+    n = np.sqrt(np.asarray(solver.build().native["grid"].permittivity))
+    assert float(n.max()) > 3.4  # Si core present
+    assert bool(np.any((n > 1.9) & (n < 2.1)))  # SiN core present, distinct from Si/clad
     del layout
 
 
