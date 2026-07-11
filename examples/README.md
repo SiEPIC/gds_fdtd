@@ -31,7 +31,7 @@ preview the whole simulation before `run()` ever touches an engine.
 | **07** | `07_choosing_an_engine` | The identical job on beamz / tidy3d / Lumerical, and how they agree | all three | build-only |
 | **08** | `08_frontends` | gdsfactory, SiEPIC/KLayout, and PreFab (litho-prediction) front ends | mixed | ✅ offline |
 | **09** | `09_cli_and_jobs` | The `gds-fdtd` CLI and serializable `JobSpec` for remote/batch compute | none | ✅ offline |
-| **10** | `10_cookbook` | Reference devices — crossing, directional coupler, ring — with known-good S-params | all three | build-only |
+| **10** | `10_cookbook` | Reference devices with known-good S-params — starting with the **Si→SiN escalator** (a multi-layer device the free engine handles, cross-checked against recorded tidy3d/Lumerical) | beamz + recorded | build-only |
 
 ## How the notebooks are built
 

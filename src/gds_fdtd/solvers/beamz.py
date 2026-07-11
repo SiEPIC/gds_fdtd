@@ -16,8 +16,12 @@ its own compact-model reference example, which is the UBC SiEPIC crossing):
 - refractive indices resolve from, in order: explicit ``n_core=``/``n_clad=``
   kwargs → the technology material's ``rii`` reference (refractiveindex.info,
   evaluated at the center wavelength) → ``tidy3d_db.nk``.
-- v1 scope (validated, not aspirational): ONE device layer, TE, mode 1.
-  Multi-layer stacks / TM / higher modes are future work.
+- multi-layer stacks supported: every tech device layer present in the
+  component becomes an extruded core at its own z (e.g. the Si→SiN escalator —
+  a Si core at z 0–0.22 and a SiN core at z 0.3–0.7 — cross-validated against
+  recorded tidy3d/Lumerical within ~0.1 dB on the through path). Each port's
+  mode plane sits on its own core. Still TE / mode 1 per port; TM and higher
+  modes are future work.
 - units: beamz is SI (meters, seconds); gds_fdtd is um — converted here.
 - run() executes one FDTD run per excited port (full S-matrix = N runs), with
   adaptive decay stopping; extraction via ``get_S_matrix_modal_dft``.
@@ -106,9 +110,12 @@ class _ComponentImportShim:
     to gdsfactory-object inputs. Coordinates are microns on both sides.
     """
 
-    def __init__(self, component):
+    def __init__(self, component, only_ports=None):
         self._component = component
         self.name = component.name
+        # optional whitelist of port names to expose — used so beamz's port
+        # extension only runs on the ports that live on the layer being prepared
+        self._only_ports = only_ports
 
     def get_polygons_points(self, by: str = "tuple", **_kw) -> dict:
         polys: dict[tuple[int, int], list] = {}
@@ -121,7 +128,11 @@ class _ComponentImportShim:
 
     @property
     def ports(self):
-        return [_ShimPort(p) for p in self._component.ports]
+        return [
+            _ShimPort(p)
+            for p in self._component.ports
+            if self._only_ports is None or p.name in self._only_ports
+        ]
 
 
 @register_solver
@@ -170,14 +181,26 @@ class BeamzSolver(Solver):
             return None
         return t.to_solver_dict() if hasattr(t, "to_solver_dict") else t
 
-    def _device_layer(self) -> dict | None:
-        """The single device layer present in the component (v1 restriction)."""
+    def _device_layers(self) -> list[dict]:
+        """Every tech device layer actually present in the component, ordered by
+        the tech's ``device`` list.
+
+        v1 handled exactly one layer; multi-layer stacks are now supported — the
+        Si→SiN escalator, for instance, presents two device layers (a Si core at
+        z 0–0.22 and a SiN core at z 0.3–0.7). ``build()`` extrudes the first as
+        the primary core (beamz's tuned port/PML pipeline) and adds the rest as
+        additional cores at their own z.
+        """
         tech = self._tech_dict()
         if tech is None:
-            return None
+            return []
         present = {tuple(s.layer) for s in self.component.structures if s.role == "device"}
-        matches = [d for d in tech["device"] if tuple(d["layer"]) in present]
-        return matches[0] if len(matches) == 1 else None
+        return [d for d in tech["device"] if tuple(d["layer"]) in present]
+
+    def _device_layer(self) -> dict | None:
+        """The primary (first-present) device layer; see :meth:`_device_layers`."""
+        layers = self._device_layers()
+        return layers[0] if layers else None
 
     def _resolve_index(self, material: dict, kwarg: float | None, label: str):
         """kwarg override > any offline-resolvable material shape (neutral nk,
@@ -230,18 +253,28 @@ class BeamzSolver(Solver):
         if self.technology is None:
             problems.append("BeamzSolver requires a technology")
             return problems
-        if self._device_layer() is None:
+        layers = self._device_layers()
+        if not layers:
             problems.append(
-                "BeamzSolver v1 supports exactly one device layer present in the component"
+                "BeamzSolver needs at least one technology device layer present in the component"
             )
         if tuple(self.spec.modes) != (1,):
             problems.append(f"BeamzSolver v1 supports modes=(1,) (TE); got {self.spec.modes}")
-        n_core, n_clad = self._indices()
-        if n_core is None:
-            problems.append(
-                "cannot resolve core refractive index: pass n_core=, or give the device "
-                "material an 'rii' reference or an 'nk' constant (beamz has no vendor DB)"
-            )
+        # Resolve a refractive index for EVERY device layer — multi-layer stacks
+        # (e.g. the Si→SiN escalator) are supported. An n_core= override only
+        # makes sense for a single-layer device.
+        n_core_kwarg = self._n_core_kwarg if len(layers) == 1 else None
+        for d in layers:
+            if (
+                self._resolve_index(d["material"], n_core_kwarg, f"core {tuple(d['layer'])}")
+                is None
+            ):
+                problems.append(
+                    f"cannot resolve refractive index for device layer {tuple(d['layer'])}: "
+                    "pass n_core= (single-layer only), or give its material an 'rii' reference "
+                    "or an 'nk' constant (beamz has no vendor DB)"
+                )
+        _, n_clad = self._indices()
         if n_clad is None:
             problems.append(
                 "cannot resolve cladding refractive index: pass n_clad=, or give the "
@@ -270,13 +303,23 @@ class BeamzSolver(Solver):
             wl0, n_max=n_core, dims=3, safety_factor=0.999, points_per_wavelength=s.mesh
         )
 
+        # Expose only the PRIMARY-layer ports to beamz's port-extension pipeline.
+        # Otherwise it stubs the primary material out at ports that belong to
+        # another layer (a Si stub at the SiN output of an escalator); each other
+        # layer's ports are extended on their own layer in the multi-layer block.
+        _pz = sorted((float(d["z_base"]), float(d["z_base"]) + float(d["z_span"])))
+        _primary_ports = {
+            p.name
+            for p in self.component.ports
+            if p.center[2] is None or _pz[0] - 1e-9 <= float(p.center[2]) <= _pz[1] + 1e-9
+        }
         # gdsfactory object when present, else a shim over the polygons gds_fdtd
         # already extruded from any source (KLayout/SiEPIC, raw GDS). Both drive
         # beamz's own tuned extrusion/port pipeline identically.
         import_source = (
             self.gf_component
             if self.gf_component is not None
-            else _ComponentImportShim(self.component)
+            else _ComponentImportShim(self.component, only_ports=_primary_ports)
         )
         prepared = gdsf.prepare_component(
             import_source,
@@ -293,6 +336,81 @@ class BeamzSolver(Solver):
             use_pdk_layer_stack=False,
         )
         design, ports = prepared["design"], prepared["ports"]
+
+        # ---- multi-layer stacks: add the remaining device layers as extra
+        # extruded cores at their own z. v1 handled one core; the primary layer
+        # above rode beamz's tuned port/PML pipeline, so here we only place each
+        # ADDITIONAL layer's real polygons (e.g. the SiN taper of a Si→SiN
+        # escalator, at z 0.3–0.7 above the Si core) and stub the ports that live
+        # on that layer out to the domain edge, so their mode planes sit on
+        # uniform waveguide. Frame offsets are recovered from beamz's own
+        # world↔design bookkeeping on a port (single source of truth).
+        layers = self._device_layers()
+        # gds_fdtd(µm, 0-based) → beamz design(m) frame shift. z: beamz's
+        # world_z_center already equals the gds z, so (z_center − world_z_center)
+        # is the design offset. xy: beamz RECENTERS the device to its own world
+        # origin, so derive the xy shift from a port matched by name to its
+        # gds_fdtd Port (NOT beamz's centered world_center).
+        _bname, _bp = next(iter(ports.items()))
+        _gp0 = {p.name: p for p in self.component.ports}.get(_bname)
+        z_off = float(_bp["z_center"]) - float(_bp["world_z_center"])
+        xy_off = (
+            float(_bp["center"][0]) - float(_gp0.center[0]) * UM,
+            float(_bp["center"][1]) - float(_gp0.center[1]) * UM,
+        )
+
+        def _verts(poly, z_base):
+            # beamz extrudes a polygon from 3-tuple (x, y, z_base) vertices by its
+            # .depth (NOT from 2-tuple xy + a z kwarg); xy shifted to the design
+            # frame. This matches how gdsf.prepare_component builds the primary core.
+            return [(float(x) * UM + xy_off[0], float(y) * UM + xy_off[1], z_base) for x, y in poly]
+
+        if len(layers) > 1:
+            from beamz import Material, Polygon
+
+            for extra in layers[1:]:
+                n_extra = self._resolve_index(
+                    extra["material"], None, f"core {tuple(extra['layer'])}"
+                )
+                z_base_d = float(extra["z_base"]) * UM + z_off
+                depth = abs(float(extra["z_span"])) * UM
+                z_lo = min(float(extra["z_base"]), float(extra["z_base"]) + float(extra["z_span"]))
+                z_hi = max(float(extra["z_base"]), float(extra["z_base"]) + float(extra["z_span"]))
+                mat = Material(permittivity=float(n_extra) ** 2)
+                footprints = [
+                    st.polygon
+                    for st in self.component.structures
+                    if st.role == "device" and tuple(st.layer) == tuple(extra["layer"])
+                ]
+                # stub the ports living on this layer out through the PML so their
+                # mode planes sit on uniform waveguide
+                for p in self.component.ports:
+                    pz = p.center[2]
+                    if pz is not None and z_lo <= float(pz) <= z_hi:
+                        footprints.append(p.polygon_extension(buffer=extension / UM))
+                for poly in footprints:
+                    design += Polygon(
+                        vertices=_verts(poly, z_base_d), material=mat, z=z_base_d, depth=depth
+                    )
+                # register this layer's ports so run() drives them (prepare_component
+                # only returned the primary layer's ports). direction: gds_fdtd port
+                # facing → beamz inward propagation axis.
+                _dirmap = {0: "-x", 180: "+x", 90: "-y", 270: "+y"}
+                for p in self.component.ports:
+                    pz = p.center[2]
+                    if p.name in ports or pz is None or not (z_lo <= float(pz) <= z_hi):
+                        continue
+                    ports[p.name] = {
+                        "center": (
+                            float(p.center[0]) * UM + xy_off[0],
+                            float(p.center[1]) * UM + xy_off[1],
+                        ),
+                        "direction": _dirmap[int(p.direction)],
+                        "width": float(p.width) * UM,
+                        "z_center": float(pz) * UM + z_off,
+                        "world_z_center": float(pz) * UM,
+                    }
+
         grid = design.rasterize(resolution=dx)
 
         freqs = np.linspace(
@@ -302,13 +420,24 @@ class BeamzSolver(Solver):
             dtype=np.float32,
         )
 
-        # port mode-plane geometry (mirrors the beamz reference example)
+        # port mode-plane geometry (mirrors the beamz reference example). For a
+        # multi-layer stack each port sits on its own core at its own z (Si input
+        # at z≈0.11, SiN output at z≈0.5 in the escalator), so the mode plane's
+        # z-center and height come from that port's gds_fdtd Port; single-layer
+        # keeps beamz's own port z_center unchanged.
+        gds_ports = {p.name: p for p in self.component.ports}
         planes = {}
         for name, port in ports.items():
             width = float(port.get("width", 0.5 * UM))
             span = _MODE_PLANE_SCALE * (width + 2 * _PORT_MARGIN)
-            z_span = _MODE_PLANE_SCALE * (core_t + 2 * _PORT_MARGIN)
+            core_h = core_t
             z_center = float(port.get("z_center", design.depth / 2))
+            gp = gds_ports.get(name)
+            if len(layers) > 1 and gp is not None and gp.center[2] is not None:
+                z_center = float(gp.center[2]) * UM + z_off
+                if gp.height is not None:
+                    core_h = float(gp.height) * UM
+            z_span = _MODE_PLANE_SCALE * (core_h + 2 * _PORT_MARGIN)
             planes[name] = {
                 "span": span,
                 "z_span": z_span,
