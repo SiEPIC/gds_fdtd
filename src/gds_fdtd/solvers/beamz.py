@@ -304,6 +304,23 @@ class BeamzSolver(Solver):
         # (incl. the default 1.0) leaves the domain exactly as before.
         extension = max(_PML_XY + _MONITOR_CLEARANCE + 1.0 * UM, s.buffer * UM)
 
+        # z extents: same honor-if-larger rule for spec.z_min/z_max (which the
+        # other engines build their domain from — engine parity). beamz's own
+        # cladding floor stays the minimum; prepare_component measures
+        # clad_below/above from the PRIMARY core, so convert the wanted absolute
+        # z window (covering EVERY device layer present, e.g. the SiN of an
+        # escalator above the primary Si) into primary-relative pads.
+        _zfloor_um = (_PORT_MARGIN + _Z_PADDING) / UM  # 1.0 um of cladding
+        _all = self._device_layers()
+        z_lo_all = min(min(dd["z_base"], dd["z_base"] + dd["z_span"]) for dd in _all)
+        z_hi_all = max(max(dd["z_base"], dd["z_base"] + dd["z_span"]) for dd in _all)
+        z_lo_prim = min(d["z_base"], d["z_base"] + d["z_span"])
+        z_hi_prim = max(d["z_base"], d["z_base"] + d["z_span"])
+        want_lo = min(z_lo_all - _zfloor_um, s.z_min)
+        want_hi = max(z_hi_all + _zfloor_um, s.z_max)
+        clad_below = (z_lo_prim - want_lo) * UM
+        clad_above = (want_hi - z_hi_prim) * UM
+
         dx, dt = beamz.dxdt(
             wl0, n_max=n_core, dims=3, safety_factor=0.999, points_per_wavelength=s.mesh
         )
@@ -332,8 +349,8 @@ class BeamzSolver(Solver):
             n_core=n_core,
             n_clad=n_clad,
             core_thickness=core_t,
-            clad_below=_PORT_MARGIN + _Z_PADDING,
-            clad_above=_PORT_MARGIN + _Z_PADDING,
+            clad_below=clad_below,
+            clad_above=clad_above,
             xy_padding=extension,
             z_padding=_Z_PADDING + _PML_Z,
             extension=extension,

@@ -214,6 +214,36 @@ def test_beamz_honors_large_buffer():
     del layout
 
 
+def test_beamz_honors_z_window():
+    """Engine parity (the 06 audit): beamz honors spec.z_min/z_max when the
+    requested z-window exceeds its own cladding floor (~1 um beyond the stack),
+    exactly like the buffer rule. The default window is within the floor for
+    the escalator, so it stays a no-op; a deeper window grows the grid in z."""
+    pytest.importorskip("beamz")
+    import copy
+
+    comp, tech, layout = _job("tech_tidy3d.yaml")
+    two = copy.deepcopy(tech.to_solver_dict())
+    two["device"][0]["material"] = {"nk": 3.476}
+    two["device"][1]["material"] = {"nk": 1.997}
+    two["superstrate"][0]["material"] = {"nk": 1.444}
+
+    def depth(z_min: float, z_max: float) -> float:
+        solver = get_solver("beamz")(
+            comp,
+            technology=two,
+            spec=SimulationSpec(wavelength_points=3, mesh=5, z_min=z_min, z_max=z_max),
+        )
+        return float(solver.build().native["design"].depth)
+
+    default = depth(-1.0, 1.11)  # within the floor -> unchanged geometry
+    same = depth(-0.5, 0.9)  # smaller window: floor still wins (no shrink)
+    deeper = depth(-3.0, 3.0)  # beyond the floor -> honored
+    assert default == pytest.approx(same)
+    assert deeper > default + 3.0e-6  # ~2 + ~1.9 um more cladding requested
+    del layout
+
+
 def test_beamz_field_plane_orientation():
     """beamz grids are (z, y, x)-ordered: a synthetic along-x stripe injected
     through the run() reshape convention must render along x (caught a real

@@ -191,10 +191,11 @@ plt.show()
 fld = np.load(HERE / "recorded" / "ybranch_tidy3d_field.npz")
 mag2 = fld["mag2"]  # (nx, ny) |E|² at band center, opt1 excitation
 fig, ax = plt.subplots(figsize=(9, 4))
-im = ax.imshow(
-    mag2.T, origin="lower", cmap="RdBu_r", aspect="equal",
-    extent=(float(fld["x0"]), float(fld["x1"]), float(fld["y0"]), float(fld["y1"])),
-)
+# tidy3d's adaptive mesh is NON-uniform, so draw the field on its true grid
+# coordinates (pcolormesh) — an imshow with a uniform extent would stretch the
+# finely-meshed waveguide core and misrepresent its width.
+im = ax.pcolormesh(fld["x"], fld["y"], mag2.T, shading="nearest", cmap="RdBu_r")
+ax.set_aspect("equal")
 fig.colorbar(im, ax=ax, label="|E|²")
 ax.set_xlabel("x [µm]")
 ax.set_ylabel("y [µm]")
