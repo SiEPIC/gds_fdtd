@@ -11,6 +11,7 @@ tidy3d key or FlexCredits and no multi-hour beamz run are needed to re-render it
 | `sbend_tidy3d_convergence.json` | same, vs mesh (6→25) | tidy3d `run()` per mesh via `ModalComponentModeler` |
 | `sbend_beamz_field.npz` | z-plane \|E\|² at mesh 12 (+ frame size) | beamz `run()` field monitor |
 | `sbend_tidy3d_field.npz` | z-plane \|E\|² at mesh 12 (+ x/y coords) | tidy3d `z_field` monitor at 1.55 µm |
+| `sbend_injected_modes.npz` | launched TE0 lateral profile + n_eff, each engine | each engine's mode solver on the 0.5×0.22 µm Si guide (0.02 µm grid) |
 
 - **Engines:** beamz 0.4.3 (CPU, JAX); tidy3d 2.11.2 (cloud). Both: single
   mode/port, 1.5–1.6 µm (3 pts), `z_min=-1.0`, `z_max=1.11`, `mesh` =
