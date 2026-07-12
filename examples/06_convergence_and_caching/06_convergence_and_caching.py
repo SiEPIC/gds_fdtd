@@ -177,46 +177,78 @@ plt.show()
 # the **model**, not the resolution — no mesh will fix it.
 
 # %% [markdown]
-# ### Why they disagree — the field
+# ### First rule out the obvious — is it the same launched mode?
 #
-# Same geometry, same mode launched at `opt1` — the difference is what happens at
-# the bend. Both z-plane |E|² fields below are normalized to their own peak and
-# shown on a log (dB) scale so the radiation is visible.
+# A wider field could just mean a different injected mode. It doesn't: both mode
+# solvers find the **fundamental TE0** of the 0.5 µm guide at nearly identical
+# effective index, and their lateral profiles sit almost on top of each other.
+# So the waveguide and the launched mode are the same — whatever differs
+# downstream is *not* a wider guide.
+
+# %%
+md = np.load(REC / "sbend_injected_modes.npz")
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.plot(md["y_tidy3d"], md["e2_tidy3d"], color="tab:red",
+        label=f"tidy3d TE0  (n_eff {float(md['neff_tidy3d']):.3f})")
+ax.plot(md["y_beamz"], md["e2_beamz"], "--", color="tab:blue",
+        label=f"beamz TE0  (n_eff {float(md['neff_beamz']):.3f})")
+ax.axvspan(-0.25, 0.25, alpha=0.12, color="gray", label="0.5 µm Si core")
+ax.set_xlim(-1.2, 1.2)
+ax.set_xlabel("y [µm]")
+ax.set_ylabel("|E|² (norm)")
+ax.set_title("Injected fundamental (TE0) mode — identical across engines")
+ax.grid(alpha=0.3)
+ax.legend(fontsize=8)
+plt.show()
+
+# %% [markdown]
+# ### Now the field through the bend — linear *and* log
+#
+# Same launched mode, so watch how the field **evolves**. Top row is a **linear**
+# scale (only the strong, guided field shows — faint radiation can't inflate it);
+# bottom is **log (dB)** (the radiation becomes visible). Each panel is normalized
+# to its own peak; cyan rings mark the two ports.
 
 # %%
 bz = np.load(REC / "sbend_beamz_field.npz")
 t3 = np.load(REC / "sbend_tidy3d_field.npz")
-b_e2 = bz["E2"]  # (ny, nx), z-plane |E|² at the core
 bw, bh = float(bz["width_um"]), float(bz["height_um"])
-cx, cy = sbend.bounds.x_center, sbend.bounds.y_center  # map beamz's 0-based frame to device coords
-FLOOR = -40.0
+cx, cy = sbend.bounds.x_center, sbend.bounds.y_center  # beamz's 0-based frame -> device coords
+b_ext = [cx - bw / 2, cx + bw / 2, cy - bh / 2, cy + bh / 2]
+t_ext = [t3["x"].min(), t3["x"].max(), t3["y"].min(), t3["y"].max()]
+panels = [("beamz", bz["E2"], b_ext, float(bz["s21"])),
+          ("tidy3d", t3["E2"].T, t_ext, float(t3["s21"]))]
 
-
-def _db(e2):
-    return 10 * np.log10(np.clip(e2 / e2.max(), 10 ** (FLOOR / 10), 1.0))
-
-
-fig, ax = plt.subplots(1, 2, figsize=(13, 5.5), constrained_layout=True)
-im = ax[0].imshow(_db(b_e2), extent=[cx - bw / 2, cx + bw / 2, cy - bh / 2, cy + bh / 2],
-                  origin="lower", aspect="equal", cmap="magma", vmin=FLOOR, vmax=0)
-ax[0].set_title(f"beamz  |E|²   (S21 = {float(bz['s21']):+.2f} dB)")
-ax[1].imshow(_db(t3["E2"].T), extent=[t3["x"].min(), t3["x"].max(), t3["y"].min(), t3["y"].max()],
-             origin="lower", aspect="equal", cmap="magma", vmin=FLOOR, vmax=0)
-ax[1].set_title(f"tidy3d  |E|²   (S21 = {float(t3['s21']):+.2f} dB)")
-for a in ax:
-    a.set_xlim(cx - 1.9, cx + 1.9)
-    a.set_ylim(cy - 2.3, cy + 2.3)
-    a.set_xlabel("x [µm]")
-    a.set_ylabel("y [µm]")
-fig.colorbar(im, ax=ax, label="|E|²  normalized  [dB]", shrink=0.85)
-fig.suptitle("z-plane |E|² — beamz keeps the mode guided; tidy3d radiates at the bend")
+fig, ax = plt.subplots(2, 2, figsize=(12, 9.5), constrained_layout=True)
+for col, (name, e2, ext, s21) in enumerate(panels):
+    en = e2 / e2.max()
+    im_lin = ax[0, col].imshow(en, extent=ext, origin="lower", aspect="equal",
+                               cmap="magma", vmin=0, vmax=1)
+    ax[0, col].set_title(f"{name}  linear   (S21 = {s21:+.2f} dB)")
+    im_log = ax[1, col].imshow(10 * np.log10(np.clip(en, 1e-4, 1)), extent=ext, origin="lower",
+                               aspect="equal", cmap="magma", vmin=-40, vmax=0)
+    ax[1, col].set_title(f"{name}  log [dB]")
+    for r in (0, 1):
+        ax[r, col].scatter([0, 1], [0, 0.5], s=36, edgecolor="cyan", facecolor="none", lw=1.5)
+        ax[r, col].set_xlim(cx - 1.9, cx + 1.9)
+        ax[r, col].set_ylim(cy - 2, cy + 2)
+        ax[r, col].set_xlabel("x [µm]")
+        ax[r, col].set_ylabel("y [µm]")
+fig.colorbar(im_lin, ax=ax[0, :], label="|E|² (norm)", shrink=0.7)
+fig.colorbar(im_log, ax=ax[1, :], label="|E|² [dB]", shrink=0.7)
+fig.suptitle("z-plane |E|² — same guide + same mode, but tidy3d radiates far more at the bend")
 plt.show()
 
 # %% [markdown]
-# beamz keeps a **bright, clean output guide** — most power stays in the
-# fundamental mode, so it reports little loss. tidy3d shows the mode **breaking
-# up and radiating** at the bend, with a weaker, structured output — the
-# mode-conversion loss beamz misses.
+# Even on the **linear** scale — where faint radiation can't bloom — tidy3d's
+# field visibly **fans out** at the bend (up to y ≈ 1.3), while beamz's hugs the
+# guide. The guided *core* is the same width in both (~0.5 µm, matching the mode
+# above); the extra width in tidy3d is the higher-order-mode + radiation the sharp
+# bend throws off — power that leaves the fundamental. **beamz keeps the field
+# artificially confined** (its v1 single-mode normalization under-produces that
+# conversion), which is exactly why it reports ~3 dB less loss. Same waveguide,
+# same launched mode — the difference is how much bend radiation each engine
+# captures.
 #
 # ### The verdict — converged ≠ correct
 #
