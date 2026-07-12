@@ -26,8 +26,8 @@
 #    value. The only way to know is to **cross-check a second engine**.
 #
 # §1–2 run on free **beamz** (a straight waveguide). §3 tackles question 3 on a
-# hard device using **recorded** beamz + tidy3d results, so the whole notebook
-# reproduces for free — no cloud account or license needed.
+# hard device using **recorded** beamz + tidy3d + Lumerical results, so the
+# whole notebook reproduces for free — no cloud account or license needed.
 
 # %%
 import json
@@ -138,30 +138,36 @@ plot_permittivity(sbend, axis="z", position=0.11, wavelength_um=1.55)  # top-dow
 plt.show()
 
 # %% [markdown]
-# ### The convergence curves — beamz vs tidy3d
+# ### The convergence curves — beamz vs tidy3d vs Lumerical
 #
-# Single wavelength (1.55 µm), swept from low to high mesh on **both** engines
-# (recorded in `recorded/`; beamz on CPU, tidy3d on the cloud, which reaches high
-# mesh cheaply). S21 on the left axis, S11 on the right.
+# Single wavelength (1.55 µm), swept from low to high mesh on **all three**
+# engines (recorded in `recorded/`; beamz on CPU, tidy3d on the cloud, Lumerical
+# on a licensed workstation — its `mesh` maps to the nearest of Lumerical's
+# discrete *mesh accuracy* settings 1–5). S21 on the left axis, S11 on the right.
 
 # %%
 beamz_c = json.loads((REC / "sbend_beamz_convergence.json").read_text())["mesh"]
 tidy3d_c = json.loads((REC / "sbend_tidy3d_convergence.json").read_text())["mesh"]
+lum_c = json.loads((REC / "sbend_lumerical_convergence.json").read_text())["mesh"]
 
 fig, axL = plt.subplots(figsize=(8, 5))
 axR = axL.twinx()
 bm = sorted(int(m) for m in beamz_c)
 tm = sorted(int(m) for m in tidy3d_c)
+lm = sorted(int(m) for m in lum_c)
 axL.plot(bm, [beamz_c[str(m)]["s21_db"] for m in bm], "o-", color="tab:blue", label="beamz S21")
 axL.plot(tm, [tidy3d_c[str(m)]["s21_db"] for m in tm], "s--", color="tab:red", label="tidy3d S21")
+axL.plot(lm, [lum_c[str(m)]["s21_db"] for m in lm], "^:", color="tab:green", label="Lumerical S21")
 axR.plot(bm, [beamz_c[str(m)]["s11_db"] for m in bm], "o-", color="tab:blue", alpha=0.4,
          markerfacecolor="none", label="beamz S11")
 axR.plot(tm, [tidy3d_c[str(m)]["s11_db"] for m in tm], "s--", color="tab:red", alpha=0.4,
          markerfacecolor="none", label="tidy3d S11")
+axR.plot(lm, [lum_c[str(m)]["s11_db"] for m in lm], "^:", color="tab:green", alpha=0.4,
+         markerfacecolor="none", label="Lumerical S11")
 axL.set_xlabel("mesh (points per wavelength)")
 axL.set_ylabel("S21  |through|  [dB]")
 axR.set_ylabel("S11  |reflection|  [dB]")
-axL.set_title("sbend_dontfabme convergence at 1.55 µm — beamz vs tidy3d")
+axL.set_title("sbend_dontfabme convergence at 1.55 µm — beamz vs tidy3d vs Lumerical")
 axL.grid(True, alpha=0.3)
 _ln = axL.get_lines() + axR.get_lines()
 axL.legend(_ln, [ln.get_label() for ln in _ln], loc="center right", fontsize=8)
@@ -169,12 +175,14 @@ fig.tight_layout()
 plt.show()
 
 # %% [markdown]
-# **tidy3d converges cleanly and monotonically** to S21 ≈ −5.6 dB and holds it.
+# **tidy3d and Lumerical — two completely independent implementations — converge
+# to the same answer**: S21 ≈ −5.6 dB (they agree within ~0.03 dB from Lumerical's
+# second-coarsest setting onward) and S11 ≈ −27.7 dB (within ~0.1 dB).
 # **beamz never converges** — its S21 *wanders* between about −4.7 and −2.0 dB
-# and shows no trend toward tidy3d; its finest point here (mesh 20) is −1.99 dB,
-# its *farthest* from the reference. When refining the mesh moves the answer
-# around the *wrong* value instead of settling on the right one, the error is in
-# the **model**, not the resolution — no mesh will fix it.
+# and shows no trend toward the references; its finest point here (mesh 20) is
+# −1.99 dB, its *farthest*. When refining the mesh moves the answer around the
+# *wrong* value instead of settling on the right one, the error is in the
+# **model**, not the resolution — no mesh will fix it.
 
 # %% [markdown]
 # ### First rule out the obvious — is it the same launched mode?
@@ -220,16 +228,18 @@ plt.show()
 # %%
 bz = np.load(REC / "sbend_beamz_field.npz")
 t3 = np.load(REC / "sbend_tidy3d_field.npz")
+lu = np.load(REC / "sbend_lumerical_field.npz")
 bw, bh = float(bz["width_um"]), float(bz["height_um"])
 cx, cy = sbend.bounds.x_center, sbend.bounds.y_center  # beamz's 0-based frame -> device coords
 # beamz: uniform grid -> cell-center coordinate vectors in device µm
 b_x = np.linspace(cx - bw / 2, cx + bw / 2, bz["E2"].shape[1])
 b_y = np.linspace(cy - bh / 2, cy + bh / 2, bz["E2"].shape[0])
-# tidy3d: NON-uniform adaptive grid -> use its real cell coordinates
+# tidy3d + Lumerical: their own (possibly non-uniform) grid coordinates
 panels = [("beamz", b_x, b_y, bz["E2"], float(bz["s21"])),
-          ("tidy3d", t3["x"], t3["y"], t3["E2"].T, float(t3["s21"]))]
+          ("tidy3d", t3["x"], t3["y"], t3["E2"].T, float(t3["s21"])),
+          ("Lumerical", lu["x"], lu["y"], lu["E2"].T, float(lu["s21"]))]
 
-fig, ax = plt.subplots(2, 2, figsize=(12, 9.5), constrained_layout=True)
+fig, ax = plt.subplots(2, 3, figsize=(16.5, 9.5), constrained_layout=True)
 for col, (name, gx, gy, e2, s21) in enumerate(panels):
     en = e2 / e2.max()
     im_lin = ax[0, col].pcolormesh(gx, gy, en, shading="nearest", cmap="magma", vmin=0, vmax=1)
@@ -246,31 +256,36 @@ for col, (name, gx, gy, e2, s21) in enumerate(panels):
         ax[r, col].set_ylabel("y [µm]")
 fig.colorbar(im_lin, ax=ax[0, :], label="|E|² (norm)", shrink=0.7)
 fig.colorbar(im_log, ax=ax[1, :], label="|E|² [dB]", shrink=0.7)
-fig.suptitle("z-plane |E|² in true grid coordinates — comparable guided fields; the gap is in the S-parameters")
+fig.suptitle("z-plane |E|² in true grid coordinates — three engines, one problem; the gap is in beamz's S-parameters")
 plt.show()
 
 # %% [markdown]
-# In **true coordinates the two field maps are comparable**: the guided lobe has
-# the same ~0.4–0.7 µm lateral FWHM in both engines at matched stations along
-# the bend, and both peak at the same spot on the output guide. We audited the
-# *setup* end-to-end for this device: the identical polygons reach both engines
-# (beamz's rasterized core measures 0.48 µm vs the 0.50 µm drawn — grid
-# quantization), the launched TE0 is the same (previous figure), and the
+# In **true coordinates the three field maps are comparable**: the guided lobe
+# has the same ~0.4–0.7 µm lateral FWHM in every engine at matched stations
+# along the bend, and all three peak at the same spot on the output guide. We
+# audited the *setup* end-to-end for this device: the identical polygons reach
+# every engine (beamz's rasterized core measures 0.48 µm vs the 0.50 µm drawn —
+# grid quantization), the launched TE0 is the same (previous figure), and the
 # materials agree at 1.55 µm to <0.001. What remains different are documented
-# engine floors: beamz's uniform grid + own guard band vs tidy3d's adaptive
-# mesh, constant vs dispersive materials, vertical vs 85° sidewalls.
+# engine floors: beamz's uniform grid + own guard band vs the references'
+# adaptive/graded meshes, constant vs dispersive materials, vertical vs 85°
+# sidewalls. (Note how tidy3d and Lumerical even share the exact same domain,
+# x −1…2 µm × y −2.5…3 µm — both are built from `bounds + buffer`.)
 #
 # So the disagreement is **not** a different simulated structure, and it is not
 # obvious in the field picture — it lives in the **energy accounting**: tidy3d
-# reports S21 ≈ −5.6 dB where beamz's finest mesh says −2.0 dB, and the
-# convergence curves above show beamz never trending toward the reference.
+# and Lumerical *both* report S21 ≈ −5.6 dB where beamz's finest mesh says
+# −2.0 dB, and the convergence curves above show beamz never trending toward
+# the references.
 #
 # ### The verdict — converged ≠ correct
 #
-# As an energy budget at 1.55 µm: tidy3d (S21 −5.6, S11 −27.6 dB) puts a stable
-# ~**72 %** of the input into radiation/mode-conversion; beamz's estimate swings
-# with mesh (roughly 35–55 % lost) and never reaches it. The gap is a **model**
-# limit: tidy3d does a proper multi-mode modal decomposition at the ports, while
+# As an energy budget at 1.55 µm: tidy3d (S21 −5.6, S11 −27.6 dB) and Lumerical
+# (S21 −5.63, S11 −27.7 dB) — two fully independent implementations, agreeing
+# within 0.03 dB — put a stable ~**72 %** of the input into
+# radiation/mode-conversion; beamz's estimate swings with mesh (roughly
+# 35–55 % lost) and never reaches it. The gap is a **model** limit: the
+# references do a proper multi-mode modal decomposition at the ports, while
 # beamz's v1 adapter uses single-mode, per-direction normalization that
 # under-counts mode conversion. beamz is excellent for straights and *adiabatic*
 # transitions (it matches the `10_cookbook` Si→SiN escalator within ~0.1 dB) —
@@ -278,7 +293,8 @@ plt.show()
 #
 # **Lesson:** a convergence sweep is *necessary but not sufficient*. For anything
 # strongly multi-mode or radiative, cross-validate against a second engine before
-# you trust the number.
+# you trust the number — with two references agreeing, the verdict here is
+# unambiguous.
 #
 # ## Recap & next
 #
