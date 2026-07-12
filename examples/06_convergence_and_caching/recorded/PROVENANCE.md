@@ -32,3 +32,30 @@ tidy3d key or FlexCredits and no multi-hour beamz run are needed to re-render it
 To regenerate on a licensed machine: set `TIDY3D_API_KEY`, sweep both engines
 over `sbend_dontfabme` at the spec above, and rewrite these files (see the
 scratch scripts, or the recipe in the notebook).
+
+## Setup-parity audit (2026-07-12)
+
+Prompted by "tidy3d looks like a wider waveguide than beamz" in the field
+figure, the full per-engine setup was audited:
+
+- **Geometry parity confirmed.** The identical polygons reach both engines;
+  beamz's rasterized core measures 0.483 µm vs the 0.500 µm drawn (dx=37 nm
+  quantization). Launched TE0 and materials (@1.55 µm, <0.001) also match.
+- **The "wider waveguide" was a rendering bug**, not a setup difference:
+  tidy3d's z-plane grid is non-uniform (35.7–89.2 nm cells), and drawing it
+  with `imshow(extent=…)` (uniform pixels) stretched the finely-meshed core —
+  measured: true mode FWHM 0.396 µm rendered as 0.793 µm. The figure now uses
+  `pcolormesh` on the true grid coordinates; in true coordinates the two
+  engines' guided fields have matching FWHM (0.32–0.72 µm at the same
+  stations) and matching output peak positions.
+- **Documented engine floors that legitimately differ** (PML-absorbed, no
+  material effect on this job): beamz in-plane guard band 3.0 µm/side vs the
+  1.0 µm buffer; beamz mode planes 2.7×2.2 µm vs `width_ports×depth_ports`
+  2.0×1.5 µm; uniform vs adaptive grid; constant-nk vs dispersive materials;
+  vertical vs 85° sidewalls. beamz now honors `spec.z_min/z_max` (and
+  `spec.buffer`) whenever they exceed its floor — for THIS job the resulting
+  geometry is bit-identical to what was recorded, so these artifacts remain
+  valid.
+- The S-parameter verdict is unchanged by the audit: tidy3d converges to
+  S21 ≈ −5.6 dB; beamz wanders and never converges (its v1 single-mode
+  normalization under-counts the bend's mode conversion).

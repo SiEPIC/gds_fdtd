@@ -83,7 +83,7 @@ report = sweep(get_solver("beamz"), straight, tech, spec,
                field="mesh", values=mesh_values, cache_dir=cache, floor_db=-10.0)
 cold = time.perf_counter() - t0
 
-for lo, hi, d in zip(mesh_values, mesh_values[1:], report.deltas_db):
+for lo, hi, d in zip(mesh_values, mesh_values[1:], report.deltas_db, strict=False):
     print(f"mesh {lo} → {hi}:  max |ΔS| = {d:.3f} dB")
 rec = report.recommend(tol_db=TOL_DB)
 print(f"\nrecommended mesh (tol {TOL_DB} dB): {rec}   ·   sweep wall time: {cold:.1f} s")
@@ -208,55 +208,68 @@ plt.show()
 # scale (only the strong, guided field shows — faint radiation can't inflate it);
 # bottom is **log (dB)** (the radiation becomes visible). Each panel is normalized
 # to its own peak; cyan rings mark the two ports.
+#
+# > **Rendering matters.** tidy3d's adaptive mesh is *non-uniform* (35–90 nm
+# > cells here), so its field must be drawn on its **true grid coordinates**
+# > (`pcolormesh`) — `imshow` with a uniform extent stretches the finely-meshed
+# > core ~2× and makes the waveguide *look* wider than it is. An earlier
+# > revision of this figure had exactly that bug and read as "tidy3d simulates
+# > a wider guide"; it doesn't. beamz's grid is uniform, so either rendering is
+# > faithful for it.
 
 # %%
 bz = np.load(REC / "sbend_beamz_field.npz")
 t3 = np.load(REC / "sbend_tidy3d_field.npz")
 bw, bh = float(bz["width_um"]), float(bz["height_um"])
 cx, cy = sbend.bounds.x_center, sbend.bounds.y_center  # beamz's 0-based frame -> device coords
-b_ext = [cx - bw / 2, cx + bw / 2, cy - bh / 2, cy + bh / 2]
-t_ext = [t3["x"].min(), t3["x"].max(), t3["y"].min(), t3["y"].max()]
-panels = [("beamz", bz["E2"], b_ext, float(bz["s21"])),
-          ("tidy3d", t3["E2"].T, t_ext, float(t3["s21"]))]
+# beamz: uniform grid -> cell-center coordinate vectors in device µm
+b_x = np.linspace(cx - bw / 2, cx + bw / 2, bz["E2"].shape[1])
+b_y = np.linspace(cy - bh / 2, cy + bh / 2, bz["E2"].shape[0])
+# tidy3d: NON-uniform adaptive grid -> use its real cell coordinates
+panels = [("beamz", b_x, b_y, bz["E2"], float(bz["s21"])),
+          ("tidy3d", t3["x"], t3["y"], t3["E2"].T, float(t3["s21"]))]
 
 fig, ax = plt.subplots(2, 2, figsize=(12, 9.5), constrained_layout=True)
-for col, (name, e2, ext, s21) in enumerate(panels):
+for col, (name, gx, gy, e2, s21) in enumerate(panels):
     en = e2 / e2.max()
-    im_lin = ax[0, col].imshow(en, extent=ext, origin="lower", aspect="equal",
-                               cmap="magma", vmin=0, vmax=1)
+    im_lin = ax[0, col].pcolormesh(gx, gy, en, shading="nearest", cmap="magma", vmin=0, vmax=1)
     ax[0, col].set_title(f"{name}  linear   (S21 = {s21:+.2f} dB)")
-    im_log = ax[1, col].imshow(10 * np.log10(np.clip(en, 1e-4, 1)), extent=ext, origin="lower",
-                               aspect="equal", cmap="magma", vmin=-40, vmax=0)
+    im_log = ax[1, col].pcolormesh(gx, gy, 10 * np.log10(np.clip(en, 1e-4, 1)),
+                                   shading="nearest", cmap="magma", vmin=-40, vmax=0)
     ax[1, col].set_title(f"{name}  log [dB]")
     for r in (0, 1):
         ax[r, col].scatter([0, 1], [0, 0.5], s=36, edgecolor="cyan", facecolor="none", lw=1.5)
         ax[r, col].set_xlim(cx - 1.9, cx + 1.9)
         ax[r, col].set_ylim(cy - 2, cy + 2)
+        ax[r, col].set_aspect("equal")
         ax[r, col].set_xlabel("x [µm]")
         ax[r, col].set_ylabel("y [µm]")
 fig.colorbar(im_lin, ax=ax[0, :], label="|E|² (norm)", shrink=0.7)
 fig.colorbar(im_log, ax=ax[1, :], label="|E|² [dB]", shrink=0.7)
-fig.suptitle("z-plane |E|² — same guide + same mode, but tidy3d radiates far more at the bend")
+fig.suptitle("z-plane |E|² in true grid coordinates — comparable guided fields; the gap is in the S-parameters")
 plt.show()
 
 # %% [markdown]
-# Even on the **linear** scale — where faint radiation can't bloom — tidy3d's
-# field visibly **fans out** at the bend (up to y ≈ 1.3), while beamz's hugs the
-# guide. The guided *core* is the same width in both (~0.5 µm, matching the mode
-# above); the extra width in tidy3d is the higher-order-mode + radiation the sharp
-# bend throws off — power that leaves the fundamental. **beamz keeps the field
-# artificially confined** (its v1 single-mode normalization under-produces that
-# conversion), which is exactly why it reports ~3 dB less loss. Same waveguide,
-# same launched mode — the difference is how much bend radiation each engine
-# captures.
+# In **true coordinates the two field maps are comparable**: the guided lobe has
+# the same ~0.4–0.7 µm lateral FWHM in both engines at matched stations along
+# the bend, and both peak at the same spot on the output guide. We audited the
+# *setup* end-to-end for this device: the identical polygons reach both engines
+# (beamz's rasterized core measures 0.48 µm vs the 0.50 µm drawn — grid
+# quantization), the launched TE0 is the same (previous figure), and the
+# materials agree at 1.55 µm to <0.001. What remains different are documented
+# engine floors: beamz's uniform grid + own guard band vs tidy3d's adaptive
+# mesh, constant vs dispersive materials, vertical vs 85° sidewalls.
+#
+# So the disagreement is **not** a different simulated structure, and it is not
+# obvious in the field picture — it lives in the **energy accounting**: tidy3d
+# reports S21 ≈ −5.6 dB where beamz's finest mesh says −2.0 dB, and the
+# convergence curves above show beamz never trending toward the reference.
 #
 # ### The verdict — converged ≠ correct
 #
 # As an energy budget at 1.55 µm: tidy3d (S21 −5.6, S11 −27.6 dB) puts a stable
 # ~**72 %** of the input into radiation/mode-conversion; beamz's estimate swings
-# with mesh (roughly 35–55 % lost) and never reaches it. The setup is correct on
-# **both** — identical geometry and launched mode (verify by re-running §1's
-# engine on `sbend` yourself). The gap is a **model**
+# with mesh (roughly 35–55 % lost) and never reaches it. The gap is a **model**
 # limit: tidy3d does a proper multi-mode modal decomposition at the ports, while
 # beamz's v1 adapter uses single-mode, per-direction normalization that
 # under-counts mode conversion. beamz is excellent for straights and *adiabatic*
