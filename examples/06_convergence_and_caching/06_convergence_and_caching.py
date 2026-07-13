@@ -187,11 +187,13 @@ plt.show()
 # %% [markdown]
 # ### First rule out the obvious — is it the same launched mode?
 #
-# A wider field could just mean a different injected mode. It doesn't: both mode
-# solvers find the **fundamental TE0** of the 0.5 µm guide at nearly identical
-# effective index, and their lateral profiles sit almost on top of each other.
-# So the waveguide and the launched mode are the same — whatever differs
-# downstream is *not* a wider guide.
+# A wider field could just mean a different injected mode. It doesn't: **all
+# three** mode solvers — tidy3d's local plugin, beamz's, and Lumerical's port
+# FDE (extracted from the very port that feeds its FDTD run) — find the
+# **fundamental TE0** of the 0.5 µm guide at nearly identical effective index,
+# and their lateral profiles sit on top of each other. So the waveguide and the
+# launched mode are the same everywhere — whatever differs downstream is *not*
+# a wider guide.
 
 # %%
 md = np.load(REC / "sbend_injected_modes.npz")
@@ -200,11 +202,13 @@ ax.plot(md["y_tidy3d"], md["e2_tidy3d"], color="tab:red",
         label=f"tidy3d TE0  (n_eff {float(md['neff_tidy3d']):.3f})")
 ax.plot(md["y_beamz"], md["e2_beamz"], "--", color="tab:blue",
         label=f"beamz TE0  (n_eff {float(md['neff_beamz']):.3f})")
+ax.plot(md["y_lumerical"], md["e2_lumerical"], ":", color="tab:green", lw=2,
+        label=f"Lumerical TE0  (n_eff {float(md['neff_lumerical']):.3f})")
 ax.axvspan(-0.25, 0.25, alpha=0.12, color="gray", label="0.5 µm Si core")
 ax.set_xlim(-1.2, 1.2)
 ax.set_xlabel("y [µm]")
 ax.set_ylabel("|E|² (norm)")
-ax.set_title("Injected fundamental (TE0) mode — identical across engines")
+ax.set_title("Injected fundamental (TE0) mode — identical across all three engines")
 ax.grid(alpha=0.3)
 ax.legend(fontsize=8)
 plt.show()
