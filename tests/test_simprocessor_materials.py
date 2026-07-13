@@ -14,7 +14,15 @@ import pytest
 
 class _FakeMedium:
     def __init__(self, permittivity=None):
+        if isinstance(permittivity, complex):  # mirror tidy3d: permittivity must be REAL
+            raise ValueError("permittivity must be a real number")
         self.permittivity = permittivity
+
+    @classmethod
+    def from_nk(cls, n, k, freq):
+        m = cls(permittivity=float(n) ** 2)
+        m.nk = (n, k, freq)
+        return m
 
     def __eq__(self, other):
         return isinstance(other, _FakeMedium) and self.permittivity == other.permittivity
@@ -24,6 +32,7 @@ class _FakeMedium:
 def fake_tidy3d(monkeypatch):
     td = types.ModuleType("tidy3d")
     td.Medium = _FakeMedium
+    td.C_0 = 299792458000000.0  # um * Hz, as in tidy3d
     td.material_library = {
         "cSi": {"Li1993_293K": "CSI_MEDIUM"},
         "Si3N4": {"Luke2015PMLStable": "SIN_MEDIUM", "Philipp1973": "SIN_ALT"},
@@ -44,8 +53,18 @@ def test_nk_float_becomes_medium(fake_tidy3d):
 
 
 def test_nk_complex_pair(fake_tidy3d):
+    # a lossy [n, k] constant must go through the n/k constructor — tidy3d's
+    # Medium.permittivity is strictly REAL (complex raised ValidationError;
+    # found live by the air-clad PSR run)
     m = _load({"nk": [3.0, 0.1]}, fake_tidy3d)
-    assert m.permittivity == (3.0 + 0.1j) ** 2
+    assert m.permittivity == 3.0**2
+    assert m.nk[0] == 3.0 and m.nk[1] == 0.1
+
+
+def test_nk_pair_lossless_stays_plain_medium(fake_tidy3d):
+    m = _load({"nk": [1.0, 0.0]}, fake_tidy3d)  # e.g. an air superstrate
+    assert m.permittivity == 1.0
+    assert not hasattr(m, "nk")
 
 
 def test_model_pair_lookup(fake_tidy3d):
