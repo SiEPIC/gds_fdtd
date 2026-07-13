@@ -291,6 +291,39 @@ print("gf_bend_s S21 @1.55: " + "  ".join(f"{e} {v:+.2f} dB" for e, v in s21s.it
 print(f"three-engine spread: {worst:.2f} dB on a gdsfactory-authored device")
 
 # %% [markdown]
+# …and the same run as **fields**: |E|² through the bend from each engine, every
+# panel on its own true grid coordinates (beamz uniform; tidy3d adaptive;
+# Lumerical graded). One gdsfactory device, three engines, one guided field.
+
+# %%
+b = np.load(REC / "gf_bend_s_field_beamz.npz")
+t = np.load(REC / "gf_bend_s_field_tidy3d.npz")
+lu = np.load(REC / "gf_bend_s_field_lumerical.npz")
+cx, cy = gf_bend.bounds.x_center, gf_bend.bounds.y_center
+bw, bh = float(b["width_um"]), float(b["height_um"])
+field_panels = [
+    (
+        "beamz",
+        np.linspace(cx - bw / 2, cx + bw / 2, b["E2"].shape[1]),
+        np.linspace(cy - bh / 2, cy + bh / 2, b["E2"].shape[0]),
+        b["E2"],
+    ),
+    ("tidy3d", t["x"], t["y"], t["E2"].T),
+    ("Lumerical", lu["x"], lu["y"], lu["E2"].T),
+]
+fig, axes = plt.subplots(1, 3, figsize=(16, 4.2), constrained_layout=True)
+for ax, (name, gx, gy, e2) in zip(axes, field_panels, strict=True):
+    im = ax.pcolormesh(gx, gy, e2 / e2.max(), shading="nearest", cmap="magma", vmin=0, vmax=1)
+    ax.set_xlim(cx - 3.6, cx + 3.6)
+    ax.set_ylim(cy - 2.2, cy + 2.2)
+    ax.set_aspect("equal")
+    ax.set_title(f"{name}  |E|² (norm)")
+    ax.set_xlabel("x [µm]")
+    ax.set_ylabel("y [µm]")
+fig.colorbar(im, ax=axes, label="|E|² (norm)", shrink=0.8)
+plt.show()
+
+# %% [markdown]
 # ## 7 · And any of them builds anywhere — offline
 #
 # The build path is identical no matter the source; nothing below touches an

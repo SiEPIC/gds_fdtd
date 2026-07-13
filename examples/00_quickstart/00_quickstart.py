@@ -80,6 +80,14 @@ plot_smatrix(smatrix, kind="db")
 plt.show()
 
 # %% [markdown]
+# …and the run's **field profile** — |E|² in the device plane, the guided mode
+# carrying power left to right (every simulation example ends with this view):
+
+# %%
+solver.plot_fields(axis="z")
+plt.show()
+
+# %% [markdown]
 # ## Recap & next
 #
 # That's the entire contract: `Component` + `Technology` + `SimulationSpec` →
