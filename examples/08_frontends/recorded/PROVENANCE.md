@@ -33,3 +33,11 @@ A gentle (adiabatic) bend is beamz-friendly physics: all three engines agree
 on S21 across the band (see the executed notebook for the exact spread),
 in contrast to the deliberately sharp `sbend_dontfabme` where beamz never
 converges (that story is `06_convergence_and_caching` §3).
+
+## Field artifacts (added with the fields/modes gap-fill)
+
+`gf_bend_s_field_{beamz,tidy3d,lumerical}.npz` — z-plane |E|² at 1.55 µm for
+the `o1` excitation of the same job. tidy3d/Lumerical were extracted from the
+original run artifacts (no re-run, no cost; coords are each engine's true
+grid); beamz from one identical re-run. Rendered in 08 §6 as the three-engine
+field row.

@@ -106,6 +106,43 @@ plot_permittivity(component, axis="y", position=0.0, wavelength_um=1.55)
 plt.show()
 
 # %% [markdown]
+# ### The two modes the escalator connects
+#
+# What actually transfers is a **guided mode**: the light enters as the Si
+# strip's TE0 and must leave as the SiN strip's TE0. Both are solved offline
+# below (tidy3d's free local mode solver). Note the physics of why this works —
+# the SiN mode is *larger and less confined* (lower index contrast), and the
+# taper adiabatically morphs one into the other.
+
+# %%
+from gds_fdtd.grid import resolve_index  # noqa: E402
+from gds_fdtd.modes import waveguide_mode  # noqa: E402
+from gds_fdtd.plotting import plot_mode  # noqa: E402
+
+n_clad = resolve_index(tech.superstrate.material, 1.55).real
+ports_by_z = sorted(component.ports, key=lambda p: p.center[2])
+si_port, sin_port = ports_by_z[0], ports_by_z[-1]  # Si core low, SiN core high
+si_layer = min(tech.device, key=lambda d: d.z_base)
+sin_layer = max(tech.device, key=lambda d: d.z_base)
+si_mode = waveguide_mode(
+    si_port.width, abs(si_layer.z_span), resolve_index(si_layer.material, 1.55).real, n_clad, 1.55
+)[0]
+sin_mode = waveguide_mode(
+    sin_port.width,
+    abs(sin_layer.z_span),
+    resolve_index(sin_layer.material, 1.55).real,
+    n_clad,
+    1.55,
+)[0]
+fig, ax = plt.subplots(1, 2, figsize=(11, 4))
+plot_mode(si_mode, ax=ax[0])
+ax[0].set_title(f"in: Si strip TE0 (n_eff {si_mode.n_eff.real:.3f})")
+plot_mode(sin_mode, ax=ax[1])
+ax[1].set_title(f"out: SiN strip TE0 (n_eff {sin_mode.n_eff.real:.3f})")
+fig.tight_layout()
+plt.show()
+
+# %% [markdown]
 # ## 3 · Set up and run — on the free engine
 #
 # `validate()` / `build()` / `estimate()` are **offline and free** — preview the
@@ -151,7 +188,9 @@ def refl(sm: SMatrix) -> np.ndarray:
 
 back = smatrix.magnitude_db(out=smatrix.port_names[0], in_=smatrix.port_names[1])
 print(f"beamz through opt1→opt2: {float(np.nanmax(thru(smatrix))):+.2f} dB peak")
-print(f"beamz through opt2→opt1: {float(np.nanmax(back)):+.2f} dB peak  (≈ opt1→opt2: near-reciprocal)")
+print(
+    f"beamz through opt2→opt1: {float(np.nanmax(back)):+.2f} dB peak  (≈ opt1→opt2: near-reciprocal)"
+)
 print(f"beamz reflection opt1:   {float(np.nanmax(refl(smatrix))):+.2f} dB peak")
 print("passive:", smatrix.is_passive(atol=0.05))
 
@@ -204,7 +243,9 @@ print(f"{'wavelength':>10} | {'beamz':>8} {'tidy3d':>8} {'lumerical':>10}   (thr
 grid = ref_tidy3d.wavelength_um
 for i, wl in enumerate(grid):
     b = float(np.interp(wl, smatrix.wavelength_um[::-1], thru(smatrix)[::-1]))
-    print(f"{wl:>10.3f} | {b:>8.2f} {float(thru(ref_tidy3d)[i]):>8.2f} {float(thru(ref_lumerical)[i]):>10.2f}")
+    print(
+        f"{wl:>10.3f} | {b:>8.2f} {float(thru(ref_tidy3d)[i]):>8.2f} {float(thru(ref_lumerical)[i]):>10.2f}"
+    )
 
 # %% [markdown]
 # ## Recap & next

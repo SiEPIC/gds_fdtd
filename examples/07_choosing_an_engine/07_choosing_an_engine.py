@@ -175,7 +175,37 @@ plt.gca().set_title(f"opt2 ← opt1 — three engines agree to {worst:.3f} dB")
 plt.show()
 
 # %% [markdown]
-# ## 5 · An honest caveat (beamz v1)
+# ## 5 · The physics behind the numbers — mode and field
+#
+# The S-parameters compress a lot of physics into a few numbers. Two views to
+# keep them honest: the **mode** every engine launches into the 0.5 µm input
+# guide (solved offline, free), and the recorded tidy3d **field** through the
+# device — the −3 dB split as an actual picture.
+
+# %%
+from gds_fdtd.grid import resolve_index  # noqa: E402
+from gds_fdtd.modes import waveguide_mode  # noqa: E402
+from gds_fdtd.plotting import plot_mode  # noqa: E402
+
+if component is not None:
+    n_core = resolve_index(tech.device[0].material, 1.55).real
+    n_clad = resolve_index(tech.superstrate.material, 1.55).real
+    mode = waveguide_mode(component.ports[0].width, tech.device[0].z_span, n_core, n_clad, 1.55)[0]
+    plot_mode(mode)
+    plt.show()
+
+fld = np.load(_find("examples/03_first_simulation/recorded/ybranch_tidy3d_field.npz"))
+fig, ax = plt.subplots(figsize=(9, 4))
+im = ax.pcolormesh(fld["x"], fld["y"], fld["mag2"].T, shading="nearest", cmap="RdBu_r")
+ax.set_aspect("equal")
+fig.colorbar(im, ax=ax, label="|E|²")
+ax.set_xlabel("x [µm]")
+ax.set_ylabel("y [µm]")
+ax.set_title("y-branch |E|² — the −3 dB split as a field (tidy3d, recorded)")
+plt.show()
+
+# %% [markdown]
+# ## 6 · An honest caveat (beamz v1)
 #
 # Cross-engine benchmarks are only useful if you report what you *can't* trust.
 # At this coarse mesh the reflections (`S11` ≈ −25 dB) sit near each engine's

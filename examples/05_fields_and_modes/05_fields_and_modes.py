@@ -25,6 +25,8 @@
 # the same rasterizer the kernel engines use. This whole notebook runs offline.
 
 # %%
+from pathlib import Path
+
 import gdsfactory as gf
 import matplotlib.pyplot as plt
 
@@ -32,7 +34,6 @@ from gds_fdtd.layout.gdsfactory import from_gdsfactory
 from gds_fdtd.modes import waveguide_mode
 from gds_fdtd.plotting import plot_mode, plot_permittivity
 from gds_fdtd.technology import Technology
-from pathlib import Path
 
 
 def _find(rel: str) -> Path:
@@ -101,9 +102,32 @@ plot_permittivity(component, axis="x", wavelength_um=1.55)
 plt.show()
 
 # %% [markdown]
+# ## 4 · From mode to field — the propagating picture
+#
+# Everything so far was a *cross-section*: the transverse mode and the index it
+# rides in. A run stitches those together into the **propagating field**. Here
+# is the recorded tidy3d |E|² through the SiEPIC y-branch (the device of `03`
+# and `07`): the TE0 mode from §1, launched at `opt1`, splitting into two —
+# drawn on the solver's true (non-uniform) grid coordinates.
+
+# %%
+import numpy as np  # noqa: E402
+
+fld = np.load(_find("examples/03_first_simulation/recorded/ybranch_tidy3d_field.npz"))
+fig, ax = plt.subplots(figsize=(9, 4))
+im = ax.pcolormesh(fld["x"], fld["y"], fld["mag2"].T, shading="nearest", cmap="RdBu_r")
+ax.set_aspect("equal")
+fig.colorbar(im, ax=ax, label="|E|²")
+ax.set_xlabel("x [µm]")
+ax.set_ylabel("y [µm]")
+ax.set_title("the mode in flight — y-branch |E|² (tidy3d, recorded)")
+plt.show()
+
+# %% [markdown]
 # ## Recap & next
 #
 # `waveguide_mode` + `plot_mode` give you modes and effective indices offline for
-# free; `plot_permittivity` shows the discretized index the solver integrates.
-# Next: **`06_convergence_and_caching`** — how fine a mesh you actually need, and
+# free; `plot_permittivity` shows the discretized index the solver integrates;
+# and a run's field profile shows the mode actually propagating. Next:
+# **`06_convergence_and_caching`** — how fine a mesh you actually need, and
 # how to never pay for the same run twice.
