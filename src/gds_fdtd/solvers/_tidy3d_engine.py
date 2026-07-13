@@ -228,7 +228,9 @@ class _TidyEngine(_TidyEngineBase):
             return mat.to_tidy3d_medium(wavelength_um=wl)
         nk = material["nk"]
         n, k = (nk[0], nk[1]) if isinstance(nk, (list, tuple)) else (nk, 0.0)
-        return td.Medium(permittivity=(n + 1j * k) ** 2)
+        if k:  # lossy constant: td.Medium takes REAL permittivity + conductivity
+            return td.Medium.from_nk(n=float(n), k=float(k), freq=td.C_0 / self.lda0)
+        return td.Medium(permittivity=float(n) ** 2)
 
     def _to_td_structure(self, s):
         """Convert one geometry.Structure into a td.Structure."""

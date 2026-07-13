@@ -102,9 +102,12 @@ def _load_tidy3d_material(material_spec: dict):
             # Simple real refractive index
             return td.Medium(permittivity=n_value**2)
         elif isinstance(n_value, list) and len(n_value) == 2:
-            # Complex refractive index [n, k]
+            # Complex refractive index [n, k]: td.Medium's permittivity must be
+            # REAL — a lossy constant needs the n/k constructor (telecom band)
             n, k = n_value
-            return td.Medium(permittivity=(n + 1j * k) ** 2)
+            if k:
+                return td.Medium.from_nk(n=float(n), k=float(k), freq=td.C_0 / 1.55)
+            return td.Medium(permittivity=float(n) ** 2)
 
     # Handle material database model specification
     if "model" in material_spec:
