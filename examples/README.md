@@ -32,6 +32,7 @@ preview the whole simulation before `run()` ever touches an engine.
 | **08** | `08_frontends` | Any EDA in, any engine out: gdsfactory / SiEPIC / raw-GDS frontends, then the full **frontend × engine matrix** (3 devices × beamz/tidy3d/Lumerical) | offline + recorded · free |
 | **09** | `09_cli_and_jobs` | The `gds-fdtd` CLI and serializable `JobSpec` for remote/batch compute | offline · free |
 | **10** | `10_cookbook` | Reference devices with known-good S-params — the **Si→SiN escalator**, a multi-layer device the free engine handles, cross-checked against recorded tidy3d/Lumerical | beamz + recorded · free |
+| **10b** | `10b_polarization` | Polarization devices from gdsfactory: TE0/TM0 modes, a directional-coupler **PBS**, and the **polarization splitter-rotator** (incl. why it needs air cladding) — multi-mode S-params + per-polarization fields | recorded (Lumerical) · free |
 
 **Everything here reproduces for free.** No cloud account, license, or GPU is
 required to run any notebook — the live runs use [beamz](https://github.com/beamzorg/beamz)
