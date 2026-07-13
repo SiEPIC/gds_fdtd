@@ -13,7 +13,7 @@ tidy3d key or FlexCredits and no multi-hour beamz run are needed to re-render it
 | `sbend_beamz_field.npz` | z-plane \|E\|² at mesh 12 (+ frame size) | beamz `run()` field monitor |
 | `sbend_tidy3d_field.npz` | z-plane \|E\|² at mesh 12 (+ x/y coords) | tidy3d `z_field` monitor at 1.55 µm |
 | `sbend_lumerical_field.npz` | z-plane \|E\|² at ppw 14 / accuracy 3 (+ x/y coords) | Lumerical `profile_z` monitor at 1.55 µm, opt1 excitation |
-| `sbend_injected_modes.npz` | launched TE0 lateral profile + n_eff, each engine | each engine's mode solver on the 0.5×0.22 µm Si guide (0.02 µm grid) |
+| `sbend_injected_modes.npz` | launched TE0 lateral profile + n_eff, each engine | tidy3d/beamz: each engine's mode solver on the 0.5×0.22 µm Si guide (0.02 µm grid); Lumerical: the input **port's own FDE mode** (`FDTD::ports::opt1` → mode profiles/neff, ppw 14), i.e. exactly what its FDTD run injects |
 
 - **Engines:** beamz 0.4.3 (CPU, JAX); tidy3d 2.11.2 (cloud). Both: single
   mode/port, 1.5–1.6 µm (3 pts), `z_min=-1.0`, `z_max=1.11`, `mesh` =
