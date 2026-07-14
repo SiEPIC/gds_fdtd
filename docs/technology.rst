@@ -246,7 +246,7 @@ Common issues
 
 .. seealso::
 
-   - :doc:`_notebooks/02_technology` and :doc:`_notebooks/02b_rii_to_engines` , 
+   - :doc:`_notebooks/02_technology` and :doc:`_notebooks/02b_rii_to_engines` ,
      the executed materials notebooks.
    - :mod:`gds_fdtd.technology`, :mod:`gds_fdtd.materials.rii`,
      :mod:`gds_fdtd.materials.select`, the API.
