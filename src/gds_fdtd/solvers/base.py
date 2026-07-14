@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-The Phase-3 solver contract. Every engine adapter implements:
+The Phase-3 solver contract. Every engine adapter implements::
 
     validate() -> list[str]        # human-readable problems; [] = ok
     build()    -> SetupArtifacts   # native scene, OFFLINE, serializable

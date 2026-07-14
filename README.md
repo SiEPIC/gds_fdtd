@@ -10,7 +10,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/SiEPIC/gds_fdtd/badge)](https://scorecard.dev/viewer/?uri=github.com/SiEPIC/gds_fdtd)
 
-**gds_fdtd** turns a photonic chip layout (GDS) into ready-to-run 3D FDTD simulations on the engine of your choice, and returns standardized S-parameters. EDA-agnostic on the front (KLayout/SiEPIC, gdsfactory), solver-agnostic on the back — one component, one technology file, any engine:
+**EDA- and solver-agnostic 3D FDTD simulation framework for photonic layouts: GDS in, S-parameters, fields, and compact models out - tidy3d, Lumerical, or beamz behind one API.**
+
+One component, one technology file, one `SimulationSpec`, any engine: EDA-agnostic on the front (KLayout/SiEPIC, gdsfactory, raw GDS), solver-agnostic on the back. Beyond the S-matrix you also get field and mode visualizations, physics checks (reciprocity/passivity), mesh-convergence and cross-engine validation, and one-call export to compact-model formats (Touchstone `.sNp`, Lumerical INTERCONNECT `.dat`, HDF5) for circuit simulation.
 
 ```python
 solver = get_solver("tidy3d" | "lumerical" | "beamz")(component, tech, spec)
@@ -56,15 +58,17 @@ S-parameters"* — paired `.py` (jupytext) + executed `.ipynb`. See
 |---|---|---|---|
 | 00 | `00_quickstart/` | layout → S-matrix in ten lines | beamz (free) |
 | 01 | `01_layout_to_component/` | load a GDS / gdsfactory cell, auto-detect ports, read the geometry | none |
-| 02 | `02_technology/` | materials, `refractiveindex.info`, the vertical layer stack | none |
+| 02 | `02_technology/` | materials, `refractiveindex.info` vs shipped models, the vertical layer stack | none |
+| 02b | `02_technology/` | feed one `refractiveindex.info` model (full complex `n+ik`) into every engine | tidy3d-local + recorded |
 | 03 | `03_first_simulation/` | the full flow end-to-end: geometry → permittivity → build → run → S-params → fields | beamz (free) |
 | 04 | `04_reading_results/` | `SMatrix`: insertion loss, crosstalk, phase, reciprocity/passivity, Touchstone/HDF5/npz I/O | none |
 | 05 | `05_fields_and_modes/` | waveguide mode profiles, effective indices, permittivity cross-sections | tidy3d-local (free) |
 | 06 | `06_convergence_and_caching/` | mesh-convergence sweeps, `run_cached` (repeat runs free), and cross-engine validation where *converged ≠ correct* | beamz + recorded |
 | 07 | `07_choosing_an_engine/` | the identical job on beamz / tidy3d / Lumerical, and how they agree | all three |
-| 08 | `08_frontends/` | gdsfactory, SiEPIC/KLayout, and PreFab (litho-prediction) front ends | mixed |
+| 08 | `08_frontends/` | any EDA in, any engine out: gdsfactory / SiEPIC / raw-GDS frontends, then the frontend × engine matrix | mixed |
 | 09 | `09_cli_and_jobs/` | the `gds-fdtd` CLI and serializable `JobSpec` for remote/batch compute | none |
 | 10 | `10_cookbook/` | reference devices with known-good S-params — the **Si→SiN escalator** on the free engine, cross-checked against recorded tidy3d/Lumerical | beamz + recorded |
+| 10b | `10_cookbook/` | polarization splitter and splitter-rotator from gdsfactory: TE/TM modes, multi-mode S-params, per-polarization fields | recorded (2 engines) |
 
 ## Installation
 

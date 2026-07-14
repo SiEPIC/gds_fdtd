@@ -2,7 +2,7 @@
 gds_fdtd simulation toolbox.
 
 Cross-solver validation: run the SAME component/technology/spec through several
-engines and quantify how well their S-matrices agree.
+engines and quantify how well their S-matrices agree::
 
     report = validate_across([Tidy3DSolver, LumericalSolver], comp, tech, spec,
                              cache_dir=".cache")

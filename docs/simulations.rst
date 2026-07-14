@@ -27,11 +27,18 @@ gdsfactory (>= 9) components convert directly:
     gf.gpdk.PDK.activate()
     component = from_gdsfactory(gf.components.straight(length=5), tech)
 
+``plot_component(component, spec=spec)`` shows what you loaded, device polygons,
+the auto-detected ports, the DevRec bounds, and the FDTD region:
+
+.. figure:: images/ybranch_geometry.png
+   :width: 80%
+   :align: center
+
 2. Configure with SimulationSpec
 --------------------------------
 
 Every numeric setting lives in one validated model (lengths in µm, angles
-in degrees, frequencies in Hz — package-wide):
+in degrees, frequencies in Hz, package-wide):
 
 .. code-block:: python
 
@@ -52,7 +59,7 @@ in degrees, frequencies in Hz — package-wide):
 
 Bad values fail loudly at construction with the offending field named.
 
-3. Validate, build, estimate — all free
+3. Validate, build, estimate, all free
 ---------------------------------------
 
 .. code-block:: python
@@ -81,11 +88,25 @@ Nothing so far cost anything: no cloud tasks, no license checkout.
     plot_smatrix(smatrix, kind="db")
     solver.plot_fields(axis="z")
 
+.. figure:: images/ybranch_sparams.png
+   :width: 80%
+   :align: center
+
+   ``plot_smatrix``, every measured path in dB. This y-branch splits its input
+   near −3 dB into each arm.
+
+.. figure:: images/ybranch_field.png
+   :width: 85%
+   :align: center
+
+   ``solver.plot_fields(axis="z")``, the ``|E|²`` field in the device plane,
+   the mode splitting one input into two.
+
 Choosing the mesh
 -----------------
 
-Don't guess — sweep and let the S-matrix convergence decide. With a cache
-directory, repeating a sweep never re-spends:
+Sweep the mesh and let the S-matrix convergence decide. With a cache directory,
+repeating a sweep never re-spends:
 
 .. code-block:: python
 

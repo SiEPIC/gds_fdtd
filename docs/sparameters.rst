@@ -3,7 +3,7 @@ Working with S-Parameters
 
 S-parameters (scattering parameters) characterize how a photonic component
 routes optical power between its ports. In ``gds_fdtd`` every solver returns
-one canonical container — :class:`gds_fdtd.smatrix.SMatrix` — regardless of the
+one canonical container (:class:`gds_fdtd.smatrix.SMatrix`) regardless of the
 engine, so the analysis below is identical for tidy3d, Lumerical, and beamz.
 
 S-Parameter Fundamentals
@@ -24,7 +24,7 @@ Getting the S-matrix
 --------------------
 
 ``run()`` is the only method that spends money/licenses/compute; it returns an
-``SMatrix``. Nothing is stored on the solver — hold onto the returned object:
+``SMatrix``. Nothing is stored on the solver; hold onto the returned object:
 
 .. code-block:: python
 
@@ -72,7 +72,7 @@ returns ``|S|²`` in dB. Both are ``(F,)`` arrays over the wavelength grid.
     print(f"Peak transmission: {s21_db.max():.2f} dB")
     print(f"Peak reflection:   {s11_db.max():.2f} dB")
 
-Unmeasured paths (partial matrices) are ``NaN`` — a device simulated with only
+Unmeasured paths (partial matrices) are ``NaN``. A device simulated with only
 port 1 excited leaves the port-2-excited columns ``NaN``, which the accessors,
 physics checks, and exporters all handle.
 
@@ -108,10 +108,17 @@ is below −60 dB are hidden so large matrices stay readable):
     paths = [("opt2", "opt1", 1, 1), ("opt1", "opt1", 1, 1)]
     plot_smatrix(smatrix, kind="db", paths=paths)
 
+.. figure:: images/ybranch_sparams.png
+   :width: 80%
+   :align: center
+
+   A y-branch S-matrix: the two transmission paths near −3 dB, reflection far
+   below.
+
 Exporting
 ---------
 
-``SMatrix`` writes the standard interchange formats directly — no hand-rolled
+``SMatrix`` writes the standard interchange formats directly, no hand-rolled
 writers needed:
 
 .. code-block:: python
@@ -128,18 +135,18 @@ writers needed:
 Notes:
 
 - ``.dat`` and ``.npz``/``.h5`` preserve NaN (unmeasured) paths; Touchstone
-  requires a complete matrix and raises on NaN — export ``.dat`` for partial
+  requires a complete matrix and raises on NaN, export ``.dat`` for partial
   matrices.
 - Touchstone flattens ``(port, mode)`` pairs port-major; the ordering is written
   into the file header.
 - ``.dat`` is round-trip lossless (``to_dat`` → ``from_dat``); the INTERCONNECT
-  reader/writer is an internal helper (``gds_fdtd._sparams``) — use the
+  reader/writer is an internal helper (``gds_fdtd._sparams``), use the
   ``SMatrix`` methods above rather than importing it.
 
 Working offline with recorded results
 --------------------------------------
 
-You do not need an engine to exercise the S-matrix API — ``examples/04_reading_results``
+You do not need an engine to exercise the S-matrix API; ``examples/04_reading_results``
 loads a recorded real result and gives the full offline tour of the I/O, physics
 checks, and plotting. For the Lumerical INTERCONNECT ``.dat`` format specifically:
 
