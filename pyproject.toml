@@ -53,6 +53,10 @@ prefab      = ["prefab>=1.2.0"]
 siepic      = ["SiEPIC>=0.5.25"]
 fuzz        = ["atheris>=3.0"]                 # run fuzz/ targets locally (CI uses ClusterFuzzLite)
 
+# convenience bundles (self-referential; Lumerical needs no extra, it uses your local lumapi)
+engines     = ["gds_fdtd[tidy3d,beamz]"]                             # every pip-installable FDTD engine
+all         = ["gds_fdtd[tidy3d,beamz,gdsfactory,prefab,siepic]"]    # every engine + layout frontend
+
 dev = [
   "pip>=23.3",
   "wheel>=0.42.0",

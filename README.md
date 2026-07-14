@@ -21,10 +21,10 @@ smatrix = solver.run()
 
 | | |
 |:---:|:---:|
-| ![crossing field profile](docs/images/crossing_fields_tidy3d.png) | ![crossing S-parameters](docs/images/crossing_sparams.png) |
-| waveguide crossing on **tidy3d**, mesh 10 | thru / crosstalk / reflection per polarization, same run |
-| ![geometry with ports and simulation region](docs/images/crossing_geometry.png) | ![three-engine agreement](docs/images/three_engine_agreement.png) |
-| every example starts with geometry + ports + FDTD region + port extensions | the IDENTICAL job on all three engines: tidy3d ↔ Lumerical within **0.003 dB**, free beamz within 0.05 dB |
+| ![y-branch geometry, ports, FDTD region](docs/images/ybranch_geometry.png) | ![y-branch field intensity](docs/images/ybranch_field.png) |
+| a y-branch splitter from the SiEPIC PDK: device polygons, auto-detected ports, FDTD region | its field: one input mode splitting evenly into two arms (tidy3d) |
+| ![y-branch S-parameters](docs/images/ybranch_sparams.png) | ![three-engine agreement](docs/images/three_engine_agreement.png) |
+| the S-parameters: a −3 dB power split across the band | the IDENTICAL job on all three engines: tidy3d and Lumerical within **0.003 dB**, free beamz within 0.05 dB |
 
 *All images are real solver output.*
 
@@ -72,53 +72,35 @@ S-parameters"* — paired `.py` (jupytext) + executed `.ipynb`. See
 
 ## Installation
 
-You can install `gds_fdtd` using the following options:
-
-### Quick install (PyPI)
-
 ```bash
-pip install gds-fdtd
+pip install gds-fdtd            # core
+pip install "gds-fdtd[all]"     # + every engine and layout frontend
 ```
 
-### Option: Basic Installation from source
-
-To install the core functionality of `gds_fdtd`, clone the repository and install using `pip`:
+From source, editable:
 
 ```bash
-git clone https://github.com/SiEPIC/gds_fdtd.git
-cd gds_fdtd
-pip install -e .
+git clone https://github.com/SiEPIC/gds_fdtd.git && cd gds_fdtd
+pip install -e ".[all]"         # everything, editable
+pip install -e ".[all,dev]"     # + test and lint tools, for contributing
 ```
 
-### Option: Development Installation
+**Lumerical** needs no extra; the adapter finds `lumapi` from your local Lumerical install.
 
-For contributing to the development or if you need testing utilities, install with the dev dependencies:
+To pick plugins individually, each is its own extra:
 
-```bash
-git clone https://github.com/SiEPIC/gds_fdtd.git
-cd gds_fdtd
-pip install -e .[dev]
-```
+| extra | adds |
+|---|---|
+| `tidy3d` | [Tidy3D](https://github.com/flexcompute/tidy3d) cloud solver |
+| `beamz` | [beamz](https://github.com/beamzorg/beamz) open-source JAX solver |
+| `gdsfactory` | [gdsfactory](https://github.com/gdsfactory/gdsfactory) frontend |
+| `siepic` | [SiEPIC](https://github.com/SiEPIC/SiEPIC-Tools) / KLayout frontend |
+| `prefab` | [PreFab](https://github.com/PreFab-Photonics/PreFab) lithography prediction |
+| `engines` | tidy3d + beamz |
+| `all` | every plugin above |
+| `dev` | test and lint tooling (for contributing) |
 
-This will install additional tools like `pytest` and `coverage` for testing.
-
-### Optional extras
-
-| extra      | purpose                        | install command                             |
-|------------|--------------------------------|---------------------------------------------|
-| tidy3d     | [Tidy3D](https://github.com/flexcompute/tidy3d) cloud solver (>= 2.11)   | `pip install -e .[tidy3d]`                  |
-| beamz      | [beamz](https://github.com/beamzorg/beamz) open-source JAX solver        | `pip install -e .[beamz]`                   |
-| gdsfactory | [GDSFactory](https://github.com/gdsfactory/gdsfactory) (>= 9) EDA support | `pip install -e .[gdsfactory]`              |
-| siepic     | [SiEPIC](https://github.com/SiEPIC/SiEPIC-Tools) EDA support             | `pip install -e .[siepic]`                  |
-| prefab     | [PreFab](https://github.com/PreFab-Photonics/PreFab) lithography prediction | `pip install -e .[prefab]`                |
-| everything | dev tools + all plugins        | `pip install -e .[dev,tidy3d,beamz,gdsfactory,prefab,siepic]` |
-
-(Lumerical needs no extra: the adapter finds `lumapi` from the local installation.)
-
-### Requirements
-
-- Python ≥ 3.11
-- Runtime deps: numpy, matplotlib, shapely, PyYAML, klayout, pydantic, pydantic-settings
+Requires Python ≥ 3.11; core runtime deps (numpy, matplotlib, shapely, PyYAML, klayout, pydantic) install automatically.
 
 
 ### Running tests
