@@ -21,10 +21,10 @@ smatrix = solver.run()
 
 | | |
 |:---:|:---:|
-| ![y-branch geometry, ports, FDTD region](docs/images/ybranch_geometry.png) | ![y-branch field intensity](docs/images/ybranch_field.png) |
-| a y-branch splitter from the SiEPIC PDK: device polygons, auto-detected ports, FDTD region | its field: one input mode splitting evenly into two arms (tidy3d) |
-| ![y-branch S-parameters](docs/images/ybranch_sparams.png) | ![three-engine agreement](docs/images/three_engine_agreement.png) |
-| the S-parameters: a −3 dB power split across the band | the IDENTICAL job on all three engines: tidy3d and Lumerical within **0.003 dB**, free beamz within 0.05 dB |
+| ![waveguide crossing field](docs/images/crossing_fields_tidy3d.png) | ![waveguide crossing S-parameters](docs/images/crossing_sparams.png) |
+| a waveguide crossing on **tidy3d**: TE0 in opt1 passes straight through | its S-parameters (51 λ, TE + TM): −0.5 dB insertion loss, −41 dB crosstalk, −33 dB reflection |
+| ![y-branch field intensity](docs/images/ybranch_field.png) | ![three-engine agreement](docs/images/three_engine_agreement.png) |
+| a y-branch splitter: one input mode splitting evenly into two arms | the IDENTICAL job on all three engines: tidy3d and Lumerical within **0.003 dB**, free beamz within 0.05 dB |
 
 *All images are real solver output.*
 
