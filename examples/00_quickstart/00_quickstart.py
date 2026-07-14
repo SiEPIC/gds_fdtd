@@ -15,17 +15,15 @@
 # %% [markdown]
 # # 00 · Quickstart — a layout to S-parameters in ten lines
 #
-# The whole toolbox in one breath: take a component, pair it with a technology,
-# pick an engine, and get a scattering matrix back. This runs on **beamz** — the
-# free, open-source JAX FDTD engine — so there's no cloud account or license to
-# set up.
+# Take a component, pair it with a technology, pick an engine, and get a
+# scattering matrix back. This runs on **beamz**, the free open-source JAX FDTD
+# engine, so there's no cloud account or license to set up.
 #
 # ```
 # Component  +  Technology  +  SimulationSpec   ──get_solver(engine)──▶  SMatrix
 # ```
 #
-# The rest of the guide (`01`–`10`) unpacks each piece. This page is just proof
-# that it's quick.
+# The rest of the guide (`01`–`10`) covers each piece in detail.
 
 # %%
 from pathlib import Path
@@ -69,8 +67,8 @@ print(f"through |S21| peak: {float(smatrix.magnitude_db(out='o2', in_='o1').max(
 # %% [markdown]
 # ## What came back
 #
-# The geometry (auto-detected ports + simulation region) and the S-parameters —
-# a straight waveguide passes ~all its power through (≈ 0 dB).
+# The geometry (auto-detected ports and simulation region) and the S-parameters.
+# A straight waveguide passes most of its power through, near 0 dB.
 
 # %%
 plot_component(component, spec)
@@ -80,8 +78,8 @@ plot_smatrix(smatrix, kind="db")
 plt.show()
 
 # %% [markdown]
-# …and the run's **field profile** — |E|² in the device plane, the guided mode
-# carrying power left to right (every simulation example ends with this view):
+# The run's **field profile**: |E|² in the device plane, showing the guided mode
+# carrying power from left to right.
 
 # %%
 solver.plot_fields(axis="z")
@@ -90,9 +88,9 @@ plt.show()
 # %% [markdown]
 # ## Recap & next
 #
-# That's the entire contract: `Component` + `Technology` + `SimulationSpec` →
-# `SMatrix`. `validate()`, `build()`, and `estimate()` preview the job offline
-# and free before `run()` spends anything.
+# The workflow is `Component` + `Technology` + `SimulationSpec` → `SMatrix`.
+# `validate()`, `build()`, and `estimate()` preview the job offline and free
+# before `run()` spends anything.
 #
 # Next: **`01_layout_to_component`** (loading real layouts) and
 # **`03_first_simulation`** (the full flow, step by step).

@@ -21,9 +21,9 @@
 #    stepping the mesh and measures how much the S-matrix still moves.
 # 2. **How do I avoid paying for the same run twice?** — `run_cached` hashes the
 #    whole job and reloads the stored result on a repeat.
-# 3. **Is my *converged* answer even *correct*?** — the subtle one. A sweep tells
-#    you when an engine has stopped changing, not whether it stopped at the right
-#    value. The only way to know is to **cross-check a second engine**.
+# 3. **Is my *converged* answer *correct*?** A sweep tells you when an engine has
+#    stopped changing, which is not the same as stopping at the right value. To
+#    check that, **cross-check a second engine**.
 #
 # §1–2 run on free **beamz** (a straight waveguide). §3 tackles question 3 on a
 # hard device using **recorded** beamz + tidy3d + Lumerical results, so the
@@ -119,11 +119,11 @@ print(f"identical result: {again.recommend(TOL_DB) == rec}")
 # ## 3 · Converged ≠ correct — cross-validate on a hard device
 #
 # A sweep only tells you an engine *stopped changing*. On a benign device that's
-# enough; on a hard one it can plateau at the **wrong** value. Meet
-# **`sbend_dontfabme`** (from `examples/devices.gds`) — a deliberately *sharp*
-# S-bend that offsets the guide 0.5 µm in ~1 µm. A bend that tight strongly
-# **converts the fundamental mode into higher-order modes + radiation**, so its
-# true loss is large and it is a stress test for any solver.
+# enough; on a hard one it can plateau at the **wrong** value.
+# **`sbend_dontfabme`** (from `examples/devices.gds`) is a *sharp* S-bend that
+# offsets the guide 0.5 µm in ~1 µm. A bend that tight strongly **converts the
+# fundamental mode into higher-order modes and radiation**, so its true loss is
+# large and it stresses any solver.
 #
 # First, the geometry the solvers build — device + cladding + the port
 # extensions that carry each port out through the domain edge:
@@ -175,25 +175,24 @@ fig.tight_layout()
 plt.show()
 
 # %% [markdown]
-# **tidy3d and Lumerical — two completely independent implementations — converge
-# to the same answer**: S21 ≈ −5.6 dB (they agree within ~0.03 dB from Lumerical's
+# **tidy3d and Lumerical, two independent implementations, converge to the same
+# answer**: S21 ≈ −5.6 dB (they agree within ~0.03 dB from Lumerical's
 # second-coarsest setting onward) and S11 ≈ −27.7 dB (within ~0.1 dB).
-# **beamz never converges** — its S21 *wanders* between about −4.7 and −2.0 dB
-# and shows no trend toward the references; its finest point here (mesh 20) is
-# −1.99 dB, its *farthest*. When refining the mesh moves the answer around the
-# *wrong* value instead of settling on the right one, the error is in the
-# **model**, not the resolution — no mesh will fix it.
+# **beamz never converges**: its S21 wanders between about −4.7 and −2.0 dB with
+# no trend toward the references, and its finest point here (mesh 20) is −1.99 dB,
+# its farthest. When refining the mesh moves the answer around the wrong value
+# instead of settling on the right one, the error is in the **model** rather than
+# the resolution, and no mesh will fix it.
 
 # %% [markdown]
-# ### First rule out the obvious — is it the same launched mode?
+# ### Is it the same launched mode?
 #
-# A wider field could just mean a different injected mode. It doesn't: **all
-# three** mode solvers — tidy3d's local plugin, beamz's, and Lumerical's port
-# FDE (extracted from the very port that feeds its FDTD run) — find the
-# **fundamental TE0** of the 0.5 µm guide at nearly identical effective index,
-# and their lateral profiles sit on top of each other. So the waveguide and the
-# launched mode are the same everywhere — whatever differs downstream is *not*
-# a wider guide.
+# A wider field could mean a different injected mode. It does not: all three mode
+# solvers — tidy3d's local plugin, beamz's, and Lumerical's port FDE (extracted
+# from the port that feeds its FDTD run) — find the **fundamental TE0** of the
+# 0.5 µm guide at nearly identical effective index, and their lateral profiles
+# sit on top of each other. The waveguide and the launched mode are the same
+# across engines, so whatever differs downstream is not a wider guide.
 
 # %%
 md = np.load(REC / "sbend_injected_modes.npz")
@@ -216,18 +215,16 @@ plt.show()
 # %% [markdown]
 # ### Now the field through the bend — linear *and* log
 #
-# Same launched mode, so watch how the field **evolves**. Top row is a **linear**
-# scale (only the strong, guided field shows — faint radiation can't inflate it);
-# bottom is **log (dB)** (the radiation becomes visible). Each panel is normalized
-# to its own peak; cyan rings mark the two ports.
+# The panels below show how the field evolves through the bend. Top row is a
+# **linear** scale (only the strong guided field shows; faint radiation can't
+# inflate it); bottom is **log (dB)** (the radiation becomes visible). Each panel
+# is normalized to its own peak; cyan rings mark the two ports.
 #
-# > **Rendering matters.** tidy3d's adaptive mesh is *non-uniform* (35–90 nm
-# > cells here), so its field must be drawn on its **true grid coordinates**
-# > (`pcolormesh`) — `imshow` with a uniform extent stretches the finely-meshed
-# > core ~2× and makes the waveguide *look* wider than it is. An earlier
-# > revision of this figure had exactly that bug and read as "tidy3d simulates
-# > a wider guide"; it doesn't. beamz's grid is uniform, so either rendering is
-# > faithful for it.
+# > **Rendering note.** tidy3d's adaptive mesh is *non-uniform* (35–90 nm cells
+# > here), so its field must be drawn on its **true grid coordinates**
+# > (`pcolormesh`); an `imshow` with a uniform extent stretches the finely-meshed
+# > core about 2× and makes the waveguide look wider than it is. beamz's grid is
+# > uniform, so either rendering is faithful for it.
 
 # %%
 bz = np.load(REC / "sbend_beamz_field.npz")
@@ -276,33 +273,31 @@ plt.show()
 # sidewalls. (Note how tidy3d and Lumerical even share the exact same domain,
 # x −1…2 µm × y −2.5…3 µm — both are built from `bounds + buffer`.)
 #
-# So the disagreement is **not** a different simulated structure, and it is not
-# obvious in the field picture — it lives in the **energy accounting**: tidy3d
-# and Lumerical *both* report S21 ≈ −5.6 dB where beamz's finest mesh says
-# −2.0 dB, and the convergence curves above show beamz never trending toward
-# the references.
+# The disagreement is not a different simulated structure, and it is not visible
+# in the field picture; it is in the **energy accounting**. tidy3d and Lumerical
+# both report S21 ≈ −5.6 dB where beamz's finest mesh says −2.0 dB, and the
+# convergence curves above show beamz never trending toward the references.
 #
-# ### The verdict — converged ≠ correct
+# ### Converged ≠ correct
 #
 # As an energy budget at 1.55 µm: tidy3d (S21 −5.6, S11 −27.6 dB) and Lumerical
-# (S21 −5.63, S11 −27.7 dB) — two fully independent implementations, agreeing
-# within 0.03 dB — put a stable ~**72 %** of the input into
-# radiation/mode-conversion; beamz's estimate swings with mesh (roughly
-# 35–55 % lost) and never reaches it. The gap is a **model** limit: the
-# references do a proper multi-mode modal decomposition at the ports, while
-# beamz's v1 adapter uses single-mode, per-direction normalization that
-# under-counts mode conversion. beamz is excellent for straights and *adiabatic*
-# transitions (it matches the `10_cookbook` Si→SiN escalator within ~0.1 dB) —
-# but a sharp, radiative bend is outside its comfort zone.
+# (S21 −5.63, S11 −27.7 dB), two independent implementations agreeing within
+# 0.03 dB, put a stable ~**72 %** of the input into radiation and mode
+# conversion; beamz's estimate swings with mesh (roughly 35–55 % lost) and never
+# reaches it. The gap is a **model** limit: the references do a multi-mode modal
+# decomposition at the ports, while beamz's v1 adapter uses single-mode,
+# per-direction normalization that under-counts mode conversion. beamz is
+# accurate for straights and *adiabatic* transitions (it matches the
+# `10_cookbook` Si→SiN escalator within ~0.1 dB), but a sharp, radiative bend is
+# beyond what its v1 normalization handles.
 #
-# **Lesson:** a convergence sweep is *necessary but not sufficient*. For anything
+# **Lesson:** a convergence sweep is necessary but not sufficient. For anything
 # strongly multi-mode or radiative, cross-validate against a second engine before
-# you trust the number — with two references agreeing, the verdict here is
-# unambiguous.
+# you trust the number; here two references agree, which settles it.
 #
 # ## Recap & next
 #
 # `sweep` finds the coarsest converged mesh; `run_cached` makes repeats free; and
-# convergence alone doesn't guarantee correctness — cross-check a second engine on
-# hard devices. Next: **`07_choosing_an_engine`** — the same job on beamz, tidy3d,
-# and Lumerical, and how they line up.
+# convergence alone doesn't guarantee correctness, so cross-check a second engine
+# on hard devices. Next: **`07_choosing_an_engine`**, the same job on beamz,
+# tidy3d, and Lumerical, and how they line up.

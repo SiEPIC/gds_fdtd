@@ -25,7 +25,7 @@ Recorded 2026-07-10 on the development environment. Regenerate with
 `solver.run_cached(cache_dir)` on the same job (the cache key includes engine
 versions, so a version bump re-runs).
 
-## Headline result
+## Summary
 
 Input split (opt1 → opt2/opt3), mean over the band, vs the −3.01 dB ideal:
 

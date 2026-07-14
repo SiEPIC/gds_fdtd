@@ -66,7 +66,7 @@ gf.gpdk.PDK.activate()
 # The strip waveguide's first two modes. **TE0** (E mostly in-plane, `Ex`) is
 # tightly confined; **TM0** (E mostly vertical, `Ez`… shown via its dominant
 # in-plane pattern) sits at lower effective index and leaks further into the
-# cladding — which is exactly why it couples across gaps faster. Solved offline
+# cladding — which is why it couples across gaps faster. Solved offline
 # with the free local mode solver.
 
 # %%
@@ -151,9 +151,9 @@ for eng, sm in pbs_sm.items():
         )
 
 # %% [markdown]
-# …and the same physics as **fields**: |E|² with a TE0 excitation (top row)
-# versus a TM0 excitation (bottom row), from each engine. Watch the TM field hop
-# across the gap while the TE field stays in its arm — on both engines.
+# The same physics as **fields**: |E|² with a TE0 excitation (top row) versus a
+# TM0 excitation (bottom row), from each engine. The TM field hops across the gap
+# while the TE field stays in its arm, on both engines.
 
 
 # %%
@@ -234,16 +234,15 @@ for eng, sm2 in psr_sm.items():
             print(f"{eng:10s} {pol_in:6s} {label:12s} {v:>12.2f}{mark}")
 
 # %% [markdown]
-# **Reading the table honestly.** The TE0 row is perfect — both engines agree
-# to a hundredth of a dB that TE0 sails through on the bus (`o3`, ≈ 0 dB),
-# untouched. The TM0 row is the interesting one: conversion happens
-# (`o2 as TE0` sits ~6 dB above the symmetric-oxide sidebar below) but it is
-# **partial** — much of the TM power radiates in the taper, and the two engines,
-# while agreeing qualitatively, differ on the weak converted paths (hybrid-mode
-# conversion is mesh-sensitive at this resolution). Two lessons in one device:
-# the *stock* gdsfactory cell needs dimension re-optimization for this exact
-# stack before it is a production PSR, and weak multi-mode paths are exactly
-# where you cross-check a second engine (the `06` lesson, polarized edition).
+# **Reading the table.** The TE0 row is clean: both engines agree to a hundredth
+# of a dB that TE0 passes through on the bus (`o3`, ≈ 0 dB), untouched. The TM0
+# row shows partial conversion: `o2 as TE0` sits ~6 dB above the symmetric-oxide
+# sidebar below, but much of the TM power radiates in the taper, and the two
+# engines, while agreeing qualitatively, differ on the weak converted paths
+# (hybrid-mode conversion is mesh-sensitive at this resolution). Two points
+# follow: the *stock* gdsfactory cell needs dimension re-optimization for this
+# stack before it is a production PSR, and weak multi-mode paths are where a
+# second engine is worth cross-checking (the `06` lesson, applied to polarization).
 #
 # The two excitations as fields, from each engine — TE0 undisturbed on the bus,
 # TM0 interacting strongly in the taper (partially converting, partially
@@ -264,7 +263,7 @@ plt.show()
 # ### Sidebar: why the cladding matters (a recorded negative result)
 #
 # We first ran the *identical layout* buried in **symmetric oxide** cladding.
-# The result is a beautiful non-event — TM0 sails through **unconverted**:
+# The result: TM0 passes through **unconverted**:
 
 # %%
 sym = SMatrix.from_npz(str(REC / "psr_symclad_lumerical.npz"))
@@ -281,8 +280,7 @@ print(
 # With oxide above *and* below, the structure has a vertical mirror symmetry;
 # TM0 and TE1 then belong to opposite symmetry classes and **cannot couple**,
 # no matter how adiabatic the taper. Breaking that symmetry (air top-cladding)
-# is what unlocks the rotation — a fact the S-matrix states more bluntly than
-# any textbook.
+# is what enables the rotation, which the S-matrix shows directly.
 #
 # ## Recap
 #
@@ -290,11 +288,11 @@ print(
 #   that asymmetry powers polarization devices.
 # - A stock directional coupler at TM's cross-maximum length acts as a **PBS** —
 #   and a mis-chosen length lets TM beat across *and back* (we measured both).
-# - gdsfactory's **PSR**: the TE path is perfect (−0.01 dB, both engines
-#   agreeing exactly), and TM0→TE0 conversion happens **only** with the vertical
-#   symmetry broken (air-clad) — but the *stock* dimensions convert only
-#   partially in this stack, and the weak converted paths are where the two
-#   engines differ. Re-optimize the cell for your stack, and cross-validate.
+# - gdsfactory's **PSR**: the TE path is clean (−0.01 dB, both engines in close
+#   agreement), and TM0→TE0 conversion happens **only** with the vertical
+#   symmetry broken (air-clad); the *stock* dimensions convert only partially in
+#   this stack, and the weak converted paths are where the two engines differ.
+#   Re-optimize the cell for your stack, and cross-validate.
 #   All three recordings (air-clad × 2 engines + the symmetric-oxide negative
 #   control) are committed.
 # - Polarization work needs a multi-mode engine (tidy3d or Lumerical);

@@ -15,9 +15,9 @@
 # %% [markdown]
 # # 07 · Choosing an engine — three solvers, one job
 #
-# The whole promise of gds_fdtd is that **one** `(component, technology, spec)`
-# runs on **any** engine and returns the **same** `SMatrix`. This notebook puts
-# that to the test: we take a single device and run it on all three engines —
+# In gds_fdtd, **one** `(component, technology, spec)` runs on **any** engine and
+# returns the **same** `SMatrix`. This notebook takes a single device, runs it on
+# all three engines —
 #
 # | Engine | Where it runs | Cost | Good for |
 # |--------|---------------|------|----------|
@@ -25,13 +25,12 @@
 # | **tidy3d** | the cloud | FlexCredits | fast, broadband, big jobs, no local hardware |
 # | **Lumerical** | your workstation | a license seat | the foundry-standard reference |
 #
-# — and ask the only question that matters: **do they agree?**
+# — and asks whether they agree.
 #
 # The testbed is the **SiEPIC EBeam `ebeam_y_1550`** 1×2 y-branch, loaded
-# straight from the KLayout/SiEPIC PDK — *no gdsfactory anywhere*. That's the
-# point: the same solver-agnostic `Component` drives every engine, and beamz
-# now reads the KLayout-sourced polygons through a component shim just like the
-# others.
+# straight from the KLayout/SiEPIC PDK, with no gdsfactory involved: the same
+# solver-agnostic `Component` drives every engine, and beamz reads the
+# KLayout-sourced polygons through a component shim like the others.
 #
 # > **These results are recorded artifacts.** Each engine was run once
 # > (`solver.run_cached(...)`) and the resulting `SMatrix` saved under
@@ -124,9 +123,9 @@ if component is not None:
 # }
 # ```
 #
-# We kept it deliberately **small** — mesh 6, five wavelengths, a tight domain
-# (~3 M cells, ~0.15 GB) — so the local engines stay well under a laptop's
-# memory. Below we load the `SMatrix` each of those runs produced.
+# We kept it **small** — mesh 6, five wavelengths, a tight domain (~3 M cells,
+# ~0.15 GB) — so the local engines stay well under a laptop's memory. Below we
+# load the `SMatrix` each of those runs produced.
 
 # %%
 smatrices = {
@@ -163,8 +162,7 @@ print(f"\n==> three engines agree on the split to {worst:.3f} dB (worst pair, an
 # %% [markdown]
 # The three independent FDTD engines — a free JAX kernel, a cloud solver, and a
 # commercial one — land within a few hundredths of a dB of each other and of the
-# −3 dB ideal. That agreement, on the identical job, is the whole thesis of the
-# toolbox in one number.
+# −3 dB ideal, on the identical job.
 
 # %%
 # compare_smatrices().plot draws the overlay; its default title reports the
@@ -177,10 +175,10 @@ plt.show()
 # %% [markdown]
 # ## 5 · The physics behind the numbers — mode and field
 #
-# The S-parameters compress a lot of physics into a few numbers. Two views to
-# keep them honest: the **mode** every engine launches into the 0.5 µm input
-# guide (solved offline, free), and the recorded tidy3d **field** through the
-# device — the −3 dB split as an actual picture.
+# The S-parameters compress a lot of physics into a few numbers. Two views
+# behind them: the **mode** every engine launches into the 0.5 µm input guide
+# (solved offline, free), and the recorded tidy3d **field** through the device,
+# the −3 dB split shown as a field map.
 
 # %%
 from gds_fdtd.grid import resolve_index  # noqa: E402
@@ -205,7 +203,7 @@ ax.set_title("y-branch |E|² — the −3 dB split as a field (tidy3d, recorded)
 plt.show()
 
 # %% [markdown]
-# ## 6 · An honest caveat (beamz v1)
+# ## 6 · A caveat (beamz v1)
 #
 # Cross-engine benchmarks are only useful if you report what you *can't* trust.
 # At this coarse mesh the reflections (`S11` ≈ −25 dB) sit near each engine's

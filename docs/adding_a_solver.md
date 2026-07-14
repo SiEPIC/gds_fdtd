@@ -112,7 +112,7 @@ class and you inherit ~30 contract tests for free. Add on top:
 ## Checklist
 
 - [ ] constructor pure; `validate/build/estimate` offline; only `run()` spends
-- [ ] `capabilities` honest; `probe_available()` if the engine can be absent
+- [ ] `capabilities` accurate; `probe_available()` if the engine can be absent
 - [ ] port extensions through your absorbing boundary (S11 below −25 dB on a
       straight waveguide is the sign you got this right; −7 dB means you didn't)
 - [ ] `SMatrix.from_entries` with 1-based mode ids; reciprocity/passivity pass

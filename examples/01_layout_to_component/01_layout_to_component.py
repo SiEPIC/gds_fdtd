@@ -56,7 +56,7 @@ component = load_component_from_tech(cell=cell, tech=tech)
 print(f"loaded {component.name!r}")
 
 # %% [markdown]
-# ## 2 · Ports — detected, never hand-placed
+# ## 2 · Ports — detected automatically
 #
 # A crossing has four ports. Each carries its own name, µm coordinates, width,
 # and a snapped direction (0/90/180/270°) — everything an engine needs to launch
@@ -87,7 +87,7 @@ print(f"\nbounds: x [{b.x_min:.2f}, {b.x_max:.2f}]  y [{b.y_min:.2f}, {b.y_max:.
 # The standard picture: device polygons (per layer), the detected ports
 # (arrows + width ticks), the `devrec` bounds, and — given a `SimulationSpec` —
 # the FDTD region and the port-extension stubs the solvers push through the PML.
-# You will start every simulation notebook with exactly this view.
+# Each simulation notebook opens with this geometry view.
 
 # %%
 plot_component(component, spec=SimulationSpec(buffer=1.0))
@@ -99,8 +99,8 @@ del layout  # release the KLayout objects
 # ## Recap & next
 #
 # One `Component` — geometry + materials + ports — is all any engine needs, and
-# it came from a plain GDS file plus a technology. The rest of the toolbox does
-# not care where it came from.
+# it came from a plain GDS file plus a technology. The rest of the toolbox works
+# the same regardless of the source.
 #
 # - **`02_technology`** — the material side of that technology.
 # - **`03_first_simulation`** — put this Component through an FDTD engine.

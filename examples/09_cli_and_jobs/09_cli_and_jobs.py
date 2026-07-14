@@ -103,7 +103,7 @@ _cli("build", str(workdir / "job.json"))
 #
 # `run` executes the job; `--backend subprocess` runs it in a **separate process**
 # (so one bad job can't take down a sweep) and enforces the job's wall-clock
-# budget. The subprocess backend re-invokes this same CLI, which is exactly why
+# budget. The subprocess backend re-invokes this same CLI, which is why
 # the JSON boundary matters — the child rebuilds the job from the file alone:
 #
 # ```bash

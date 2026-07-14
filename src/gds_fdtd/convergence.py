@@ -162,7 +162,7 @@ def sweep(
     """Run the same job at each ``spec.<field> = value`` and compare results.
 
     WARNING: each distinct value costs one full run() (money/licenses/time);
-    pass ``cache_dir`` so repeated sweeps only pay for genuinely new points.
+    pass ``cache_dir`` so repeated sweeps only pay for new points.
     """
     base = spec if spec is not None else SimulationSpec()
     if field not in type(base).model_fields:

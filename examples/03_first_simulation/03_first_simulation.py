@@ -121,9 +121,10 @@ plt.show()
 # %% [markdown]
 # ## 4 · What the solver meshes
 #
-# The permittivity grid the FDTD run is built on — the single most useful sanity
-# check in FDTD: *is my structure what I think it is?* Here, top-down through the
-# device layer, you can see the input taper fan out into the two branches.
+# The permittivity grid the FDTD run is built on. This is the check that catches
+# the most mistakes: whether the meshed structure is the one you intended. Here,
+# top-down through the device layer, the input taper fans out into the two
+# branches.
 
 # %%
 plot_permittivity(component, dx=0.04, axis="z")
@@ -168,9 +169,9 @@ print(f"input split — opt2←opt1: {s21:.2f} dB   opt3←opt1: {s31:.2f} dB")
 print("(an ideal lossless 1×2 splitter gives −3.01 dB into each arm)")
 
 # %% [markdown]
-# There it is — power from `opt1` divides roughly in half into the two arms,
-# within a few tenths of a dB of the −3 dB ideal. The plot shows how that split
-# holds across the wavelength band.
+# Power from `opt1` divides roughly in half into the two arms, within a few
+# tenths of a dB of the −3 dB ideal. The plot shows how that split holds across
+# the wavelength band.
 
 # %%
 plot_smatrix(smatrix, kind="db")
@@ -179,9 +180,9 @@ plt.show()
 # %% [markdown]
 # ## 7 · The field
 #
-# Finally, the |E|² intensity in the device plane for the `opt1` excitation —
-# the picture worth a thousand S-parameters. Watch the mode launched into the
-# single input waveguide taper out and split evenly down the two branches.
+# The |E|² intensity in the device plane for the `opt1` excitation. The mode
+# launched into the single input waveguide tapers out and splits evenly down
+# the two branches.
 #
 # *(This field was rendered from a small **tidy3d cloud** run of the same
 # y-branch — the compute is remote, so a full 3-D field costs no local memory.
