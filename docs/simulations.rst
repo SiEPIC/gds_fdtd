@@ -81,8 +81,8 @@ Nothing so far cost anything: no cloud tasks, no license checkout.
     plot_smatrix(smatrix, kind="db")
     solver.plot_fields(axis="z")
 
-Picking the mesh honestly
--------------------------
+Choosing the mesh
+-----------------
 
 Don't guess — sweep and let the S-matrix convergence decide. With a cache
 directory, repeating a sweep never re-spends:

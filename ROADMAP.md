@@ -51,8 +51,8 @@ Five workstreams. They are independent; parallelize freely.
 ### WS1 — Examples become executed, verified notebooks
 
 The example scripts are the front door. Turn them into notebooks with
-real, committed outputs (plots inline), executable end-to-end, and kept
-honest by CI. **Mostly done** (see remaining CI item below).
+real, committed outputs (plots inline), executable end-to-end, and checked
+by CI. **Mostly done** (see remaining CI item below).
 
 - **Author format:** ✅ DONE. The `.py` scripts are the source of truth, paired
   to notebooks with [jupytext](https://jupytext.readthedocs.io/) (percent
@@ -67,7 +67,7 @@ honest by CI. **Mostly done** (see remaining CI item below).
 - **Gallery:** ✅ DONE. Executed notebooks render into the Sphinx docs via
   [myst-nb](https://myst-nb.readthedocs.io/) (`nb_execution_mode = "off"` — the
   committed outputs are shown as-is), so the website shows real field profiles
-  and S-parameters, not just code.
+  and S-parameters, not source alone.
 - **Cleanup:** ✅ DONE. The stray `examples/notebooks/faid/` notebook (pre-0.5,
   unreferenced, once carried a base64 license token in its logs) was removed;
   the numbered `examples/NN_*` set is the single source of truth.
@@ -94,11 +94,11 @@ low only because those extras aren't in the base test env) and in the legacy
   `grid`/`extraction` (energy/overlap identities). These double as the
   fuzzing signal (see WS5).
 - **beamz** is free and CPU-runnable → real (small, `@pytest.mark.slow`)
-  end-to-end tests in the all-extras leg, not just mocks.
+  end-to-end tests in the all-extras leg, not mocks alone.
 - **gdsfactory / mode solver** run offline locally → real conversion and
   n_eff tests.
 - *Done when:* all-extras leg ≥ 90% branch coverage, every new test asserts
-  behavior, and the base-profile floor also rises where honest.
+  behavior, and the base-profile floor also rises where warranted.
 
 ### WS3 — De-slop & refactor for robustness
 
@@ -158,7 +158,7 @@ structural ceilings) — we max what's real and don't game the rest.
 
 ## Feature ideas (menu — pick as inspiration strikes)
 
-Not committed; a palette to choose from. Roughly ordered by leverage.
+Not committed; a palette to choose from. Roughly ordered by impact.
 
 - **fdtdz adapter** — finishes the free-GPU story; the whole
   rasterize→modes→extraction pipeline is already built and tested (blocked

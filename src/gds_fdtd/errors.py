@@ -16,7 +16,7 @@ from __future__ import annotations
 
 
 class GdsFdtdError(Exception):
-    """Base class for every error gds_fdtd raises deliberately."""
+    """Base class for every error gds_fdtd raises intentionally."""
 
 
 class TechnologyError(GdsFdtdError, ValueError):

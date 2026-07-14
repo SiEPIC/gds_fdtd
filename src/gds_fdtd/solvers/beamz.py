@@ -104,10 +104,10 @@ class _ComponentImportShim:
     ``gdsf.prepare_component``/``load`` pipeline consumes from a gdsfactory
     component: ``name``, ``get_polygons_points(by=...)`` and ``ports``.
 
-    This is the whole point of the toolbox — the polygons gds_fdtd already
-    extruded from *any* source (KLayout/SiEPIC, gdsfactory, raw GDS) feed beamz
-    through its own tuned extrusion/port pipeline, so beamz is no longer limited
-    to gdsfactory-object inputs. Coordinates are microns on both sides.
+    This lets the polygons gds_fdtd already extruded from *any* source
+    (KLayout/SiEPIC, gdsfactory, raw GDS) feed beamz through its own tuned
+    extrusion/port pipeline, so beamz is not limited to gdsfactory-object
+    inputs. Coordinates are microns on both sides.
     """
 
     def __init__(self, component, only_ports=None):

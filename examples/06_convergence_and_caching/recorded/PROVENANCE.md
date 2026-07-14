@@ -1,6 +1,6 @@
 # Recorded results — `sbend_dontfabme` cross-engine convergence (06 §3)
 
-Real solver output for the `sbend_dontfabme` device (a deliberately sharp S-bend
+Real solver output for the `sbend_dontfabme` device (a sharp S-bend
 from `examples/devices.gds`), used by `06_convergence_and_caching` §3 so the
 cross-validation study reproduces **for free** — the notebook loads these; no
 tidy3d key or FlexCredits and no multi-hour beamz run are needed to re-render it.
@@ -24,7 +24,7 @@ tidy3d key or FlexCredits and no multi-hour beamz run are needed to re-render it
   fast straight sweep in §1–2). tidy3d (cloud) reaches mesh 25 cheaply.
 - **Recorded:** 2026-07-11. tidy3d cost ≈ 0.45 FlexCredits total (this device is
   small — every task hit the ~0.05 FC/task floor).
-- **Headline:** tidy3d converges cleanly to S21 ≈ −5.64 dB / S11 ≈ −27.6 dB, and
+- **Summary:** tidy3d converges cleanly to S21 ≈ −5.64 dB / S11 ≈ −27.6 dB, and
   **Lumerical independently confirms it** — S21 ≈ −5.63 dB / S11 ≈ −27.7 dB, flat
   from mesh-accuracy 2 onward, i.e. the two references agree within ~0.03 dB on
   the identical job (~72 % radiated/mode-converted by the sharp bend). beamz
@@ -61,6 +61,6 @@ figure, the full per-engine setup was audited:
   `spec.buffer`) whenever they exceed its floor — for THIS job the resulting
   geometry is bit-identical to what was recorded, so these artifacts remain
   valid.
-- The S-parameter verdict is unchanged by the audit: tidy3d converges to
+- The S-parameter conclusion is unchanged by the audit: tidy3d converges to
   S21 ≈ −5.6 dB; beamz wanders and never converges (its v1 single-mode
   normalization under-counts the bend's mode conversion).

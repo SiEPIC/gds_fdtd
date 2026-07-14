@@ -29,9 +29,9 @@
 # | **raw GDS** | any `.gds` from any tool | `lyprocessor.load_cell` → `load_component_from_tech` |
 # | **PreFab** | a lithography-predicted GDS | `lyprocessor.load_device(prefab_model=…)` |
 #
-# The finale is the full **frontend × engine matrix**: three devices — one from
-# each frontend — each simulated on all three engines, with recorded results so
-# this notebook reproduces for free.
+# The last section is the full **frontend × engine matrix**: three devices — one
+# from each frontend — each simulated on all three engines, with recorded results
+# so this notebook reproduces for free.
 
 # %%
 import json
@@ -65,8 +65,8 @@ components = {}  # frontend label -> Component
 #
 # [gdsfactory](https://gdsfactory.github.io/gdsfactory/) builds components in
 # Python. `from_gdsfactory` reads the polygons on each technology layer and
-# lifts the gdsfactory ports into gds_fdtd ports. Our specimen: a gentle
-# **S-bend** (`bend_s`, 5×1 µm) — it also stars in the matrix at the end.
+# lifts the gdsfactory ports into gds_fdtd ports. The device: a gentle
+# **S-bend** (`bend_s`, 5×1 µm), used again in the matrix at the end.
 
 # %%
 import gdsfactory as gf  # noqa: E402
@@ -103,9 +103,9 @@ except ImportError:
 # ## 3 · A raw GDS file — from any tool
 #
 # No PDK, no framework: point `load_cell` at any `.gds` whose polygons land on
-# the technology's device/pin/DevRec layers. Our specimen is `sbend_dontfabme`
-# from `examples/devices.gds` — the deliberately *sharp* S-bend that
-# `06_convergence_and_caching` uses as its stress test.
+# the technology's device/pin/DevRec layers. Here it is `sbend_dontfabme` from
+# `examples/devices.gds`, the *sharp* S-bend that `06_convergence_and_caching`
+# uses as its stress test.
 
 # %%
 cell, _ = load_cell(str(_find("examples/devices.gds")), top_cell="sbend_dontfabme")
@@ -250,12 +250,12 @@ plt.show()
 #   trustworthy on gradual structures, whatever frontend supplied them.
 # - **`ebeam_y_1550`** (SiEPIC): all three agree on the −3 dB split to ~0.16 dB
 #   (see `07` for the full analysis and beamz's reverse-column caveat).
-# - **`sbend_dontfabme`** (deliberately sharp): tidy3d and Lumerical agree to
-#   ~0.03 dB while beamz sits ~3.6 dB off *and never converges* — the
-#   `06_convergence_and_caching` lesson, visible here as the one dark cell.
+# - **`sbend_dontfabme`** (sharp): tidy3d and Lumerical agree to ~0.03 dB while
+#   beamz sits ~3.6 dB off *and never converges* — the `06_convergence_and_caching`
+#   lesson, visible here as the one dark cell.
 #
-# The pattern is the point: agreement (or honest disagreement) is a property of
-# the **physics and the engine**, never of which EDA tool drew the layout.
+# The takeaway: agreement (or disagreement) is a property of the **physics and
+# the engine**, not of which EDA tool drew the layout.
 
 # %% [markdown]
 # ### The gdsfactory row in full — spectra on all three engines
@@ -345,8 +345,8 @@ for name, comp in components.items():
 # Your EDA choice and your engine choice are **independent axes**: gdsfactory,
 # SiEPIC/KLayout, raw GDS, and PreFab all become the same `Component`, and that
 # `Component` runs unchanged on beamz, tidy3d, and Lumerical. Cross-engine
-# agreement — the real kind, with numbers — depends on the physics (gentle vs
-# radiative structures) and the engine's model, never on the drawing tool.
+# agreement depends on the physics (gentle vs radiative structures) and the
+# engine's model, not on the drawing tool.
 #
 # - **`06_convergence_and_caching`** — the sharp-bend row of the matrix, in depth.
 # - **`07_choosing_an_engine`** — the SiEPIC row, in depth.

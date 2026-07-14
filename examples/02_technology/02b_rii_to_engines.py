@@ -16,15 +16,14 @@
 # # 02b · One refractiveindex.info model, every engine
 #
 # `02_technology` showed that the engines' *shipped* material models agree with
-# refractiveindex.info. This notebook does the thing that actually matters in
-# practice: **take a real measured model straight from refractiveindex.info —
-# its full complex, wavelength-dependent `n(λ) + i·k(λ)` — and feed that exact
-# model into each FDTD engine.**
+# refractiveindex.info. This notebook takes a real measured model straight from
+# refractiveindex.info — its full complex, wavelength-dependent `n(λ) + i·k(λ)` —
+# and feeds that exact model into each FDTD engine.
 #
 # The material is **gold (Johnson & Christy 1972)** — a strongly dispersive,
-# strongly *lossy* material where the imaginary part is anything but an
-# afterthought (k runs from ~3 in the visible to ~11 in the near-IR). If a model
-# survives the trip into an engine intact, this is where you'd see it break.
+# strongly *lossy* material where the imaginary part carries real weight (k runs
+# from ~3 in the visible to ~11 in the near-IR). If a model is going to break on
+# the trip into an engine, it breaks here.
 
 # %%
 from pathlib import Path
@@ -88,7 +87,7 @@ print(f"tidy3d dispersive medium: max |Δn|={np.max(np.abs(nk_td[:, 0] - n_rii))
 #
 # Lumerical takes the model as a **sampled material**: the `(frequency,
 # permittivity)` table itself. It stores the data verbatim, so it reproduces
-# the refractiveindex.info model essentially exactly. (Needs a Lumerical
+# the refractiveindex.info model almost exactly. (Needs a Lumerical
 # license; skipped gracefully without one.)
 
 # %%

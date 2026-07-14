@@ -27,11 +27,11 @@ rows reuse the artifacts recorded for `07_choosing_an_engine` and
 Recorded 2026-07-12. Regenerate with the script recipe in the notebook (§6) or
 `solver.run_cached(...)` on the same job.
 
-## Headline
+## Summary
 
 A gentle (adiabatic) bend is beamz-friendly physics: all three engines agree
 on S21 across the band (see the executed notebook for the exact spread),
-in contrast to the deliberately sharp `sbend_dontfabme` where beamz never
+in contrast to the sharp `sbend_dontfabme` where beamz never
 converges (that story is `06_convergence_and_caching` §3).
 
 ## Field artifacts (added with the fields/modes gap-fill)

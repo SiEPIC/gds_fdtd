@@ -91,7 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   adapters — is unchanged; only the misleading "legacy" name is gone. No
   deprecation alias (consistent with the rest of this 0.6.0 cleanup). Migration:
   replace `tech.to_legacy_dict()` with `tech.to_solver_dict()`.
-- The Tidy3D scene-building engine is now fully internal and honestly named.
+- The Tidy3D scene-building engine is now fully internal, with a name that reflects its role.
   The generic `fdtd_solver`/`fdtd_port` engine classes (the last pre-0.5 names
   in the tree) were renamed to `_TidyEngineBase`/`_TidyPort`, and the module
   `solvers/_engine_base.py` → `solvers/_tidy3d_base.py`. The supported

@@ -21,10 +21,9 @@
 # optional [refractiveindex.info](https://refractiveindex.info) reference, and
 # optional per-engine hints (`tidy3d_db`, `lum_db`).
 #
-# This notebook answers a question that matters if you care about accuracy:
-# **when you feed a real dispersive material into a simulation, does it match
-# the model the engine ships?** (Spoiler: yes — and where it doesn't, that's a
-# real lesson about your fab.)
+# This notebook checks whether a real dispersive material, fed into a simulation,
+# matches the model the engine ships. It does, to within a few parts in
+# ten-thousand; where it wouldn't, the mismatch points to a specific fab process.
 
 # %%
 from pathlib import Path
@@ -65,7 +64,7 @@ plt.show()
 # [refractiveindex.info](https://refractiveindex.info) is the community database
 # of measured optical constants. gds_fdtd reads it directly (`materials.rii`).
 # The FDTD engines each **ship their own** material models too. If both describe
-# the same physics, they should agree — so let's overlay them.
+# the same physics, they should agree — so we overlay them.
 #
 # We compare three workhorse silicon-photonics materials, each from a real
 # refractiveindex.info page against the matching tidy3d built-in model.

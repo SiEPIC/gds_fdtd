@@ -6,7 +6,7 @@ in-process; ``SubprocessBackend`` spawns ``gds-fdtd run job.json --out dir``
 — proving the serialization boundary and giving crash isolation and
 parallelism (a sweep can submit N jobs and collect as they finish).
 
-Handles are in-memory only (no job database) — deliberately out of scope.
+Handles are in-memory only (no job database), which is out of scope here.
 """
 
 from __future__ import annotations

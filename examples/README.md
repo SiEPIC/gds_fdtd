@@ -45,8 +45,9 @@ licensed machine and committed as an artifact of record.
 
 - **Source of truth is the paired `.py`** (jupytext *percent* format) — diff-friendly
   and reviewable. The committed `.ipynb` is that script **executed, with real
-  outputs** (plots and numbers) so the gallery shows genuine physics, not code.
-- **Kept honest by CI.** `tests/test_examples_importable.py` parses every
+  outputs** (plots and numbers), so the gallery shows actual results rather than
+  source alone.
+- **Checked by CI.** `tests/test_examples_importable.py` parses every
   example on every PR and fails if it imports a `gds_fdtd` symbol that no longer
   exists — so an API change can't silently rot the gallery. Full execution is
   run locally and the executed `.ipynb` committed; a dedicated notebook-execution

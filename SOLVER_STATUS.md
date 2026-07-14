@@ -1,7 +1,7 @@
 # Per-solver verification status
 
 CI cannot run licensed or credit-spending engines per-PR, so this file is
-the honest equivalent of a build badge: when each adapter was last verified
+the equivalent of a build badge: when each adapter was last verified
 against the REAL engine, with what, and how well it agreed.
 
 **Three-engine agreement (2026-07-08, IDENTICAL job, zero engine-specific kwargs):**

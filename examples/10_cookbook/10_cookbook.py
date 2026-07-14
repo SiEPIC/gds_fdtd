@@ -21,12 +21,12 @@
 # adiabatic mode transfer** used to route between the Si and SiN layers of a
 # photonic stack.
 #
-# It is the toolbox's signature **multi-layer** device: **two** patterned device
-# layers (Si at z 0–0.22 µm, SiN at z 0.3–0.7 µm), not one. The whole point of
-# this notebook is that the geometry is simple, so the **free** engine
-# ([beamz](https://github.com/beamzorg/beamz), Apache-2.0 JAX FDTD, CPU/GPU) runs
-# it end-to-end — and reproduces the same device that the commercial tidy3d and
-# Lumerical engines recorded, to within ~0.1 dB on the through path.
+# It is a **multi-layer** device: **two** patterned device layers (Si at
+# z 0–0.22 µm, SiN at z 0.3–0.7 µm), not one. The geometry is simple enough that
+# the **free** engine ([beamz](https://github.com/beamzorg/beamz), Apache-2.0 JAX
+# FDTD, CPU/GPU) runs it end-to-end, and reproduces the same device that the
+# commercial tidy3d and Lumerical engines recorded, to within ~0.1 dB on the
+# through path.
 #
 # Same three inputs → one output, exactly as everywhere else:
 # a `Component` + a `Technology` + a `SimulationSpec` → one `SMatrix`.
@@ -110,9 +110,9 @@ plt.show()
 #
 # What actually transfers is a **guided mode**: the light enters as the Si
 # strip's TE0 and must leave as the SiN strip's TE0. Both are solved offline
-# below (tidy3d's free local mode solver). Note the physics of why this works —
-# the SiN mode is *larger and less confined* (lower index contrast), and the
-# taper adiabatically morphs one into the other.
+# below (tidy3d's free local mode solver). The SiN mode is *larger and less
+# confined* (lower index contrast), and the taper adiabatically morphs one into
+# the other.
 
 # %%
 from gds_fdtd.grid import resolve_index  # noqa: E402
@@ -208,7 +208,7 @@ plt.show()
 # %% [markdown]
 # ## 6 · Cross-validation — free vs commercial
 #
-# The payoff. **beamz is the only engine executed in this notebook.** The tidy3d
+# **beamz is the only engine executed in this notebook.** The tidy3d
 # and Lumerical curves are **pre-recorded reference results** (`recorded/`, see
 # `PROVENANCE.md`) from an earlier live validation on those engines for the
 # *identical* device — they are *not* re-run here (that needs cloud credits / a

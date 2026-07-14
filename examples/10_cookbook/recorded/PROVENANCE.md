@@ -30,7 +30,7 @@ from the identical `(component, technology, spec)`:
 Recorded 2026-07-12/13. tidy3d total for both devices ≈ **1.98 FC**
 (budget-gated at 2.0; estimates verified before running).
 
-Headline @1.55 µm:
+Summary @1.55 µm:
 - **PBS** splits: TE through −0.54 dB / TM cross −1.77 dB (Lumerical; tidy3d
   overlaid in the notebook). At length 12 µm TM beats across *and back*
   (recorded during tuning, not committed).

@@ -125,8 +125,8 @@ print("HDF5 round-trip: identical ✓")
 # %% [markdown]
 # ## Recap & next
 #
-# The `SMatrix` is the single currency of the toolbox: `sel` a path, read loss /
-# phase, check reciprocity/passivity, and export to any standard format — the
+# The `SMatrix` is the common object across the toolbox: `sel` a path, read loss
+# and phase, check reciprocity/passivity, and export to any standard format, the
 # same regardless of which engine produced it.
 #
 # - **`05_fields_and_modes`** — the spatial picture behind these numbers.
