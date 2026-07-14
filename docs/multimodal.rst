@@ -1,8 +1,8 @@
 Multi-Modal Simulations
 =======================
 
-Multi-modal simulations track several waveguide modes — typically TE
-(mode 1) and TM (mode 2) — through one device: polarization-dependent
+Multi-modal simulations track several waveguide modes, typically TE
+(mode 1) and TM (mode 2), through one device: polarization-dependent
 loss, mode conversion, and polarization-insensitive design all need them.
 
 Enable with one field
@@ -22,6 +22,14 @@ TM-like. tidy3d and Lumerical support multimode; beamz v1 is single-mode
 TE (its ``capabilities.supports_multimode`` says so and ``validate()``
 rejects multi-mode jobs).
 
+.. figure:: images/modes_te_tm.png
+   :width: 90%
+   :align: center
+
+   The two modes a multi-mode job tracks, from the local mode solver: TE0 (E
+   in-plane, tightly confined) and TM0 (E vertical, lower index, less confined).
+   The confinement difference is what polarization devices exploit.
+
 Reading a multi-mode S-matrix
 -----------------------------
 
@@ -36,7 +44,7 @@ Every path is indexed by (out_port, in_port, out_mode, in_mode):
     # polarization-dependent loss across the band
     pdl_db = abs(thru_te - thru_tm)
 
-Curated plotting — mode-preserving paths only (conversion terms of a
+Curated plotting, mode-preserving paths only (conversion terms of a
 symmetric device sit at the noise floor and only clutter the plot):
 
 .. code-block:: python
@@ -63,9 +71,24 @@ Exports carry modes too: ``to_dat()`` writes per-mode entries INTERCONNECT
 understands, and ``to_touchstone()`` flattens (port, mode) pairs port-major
 (the convention is written into the file header).
 
+Polarization devices
+--------------------
+
+Multi-mode S-parameters are how you design and verify polarization components.
+A directional coupler, for instance, transfers TM across its gap far faster than
+TE, so one length routes the two polarizations to different ports:
+
+.. figure:: images/polarization_pbs_fields.png
+   :width: 90%
+   :align: center
+
+   A polarization beam splitter: with a TE0 input the field stays in its arm;
+   with TM0 it crosses the gap. Worked end to end (splitter and
+   splitter-rotator) in :doc:`_notebooks/10b_polarization`.
+
 Symmetry can halve multi-mode cost
 ----------------------------------
 
 For z-symmetric stacks, ``symmetry=(0, 0, 1)`` selects TE-like modes and
-``(0, 0, -1)`` TM-like — check your stack really is symmetric before using
+``(0, 0, -1)`` TM-like; check your stack really is symmetric before using
 it (the crossing example runs with no symmetry for exactly that reason).

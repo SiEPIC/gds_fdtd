@@ -35,6 +35,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_toggleprompt",  # For interactive prompts
     "sphinx_copybutton",  # Adds copy buttons to code blocks
+    "sphinx_design",  # grids/cards on the landing page
     "myst_nb",  # Markdown pages + executed-notebook gallery (supersedes myst_parser)
 ]
 

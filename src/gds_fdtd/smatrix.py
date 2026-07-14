@@ -156,7 +156,7 @@ class SMatrix:
     def magnitude_db(
         self, out: str | int, in_: str | int, mode_out: int = 1, mode_in: int = 1
     ) -> np.ndarray:
-        """|S|^2 in dB for one path."""
+        """``|S|²`` in dB for one path."""
         with np.errstate(divide="ignore", invalid="ignore"):
             return np.asarray(10 * np.log10(np.abs(self.sel(out, in_, mode_out, mode_in)) ** 2))
 
@@ -180,7 +180,7 @@ class SMatrix:
         return bool(finite.size == 0 or np.max(finite) <= 1.0 + atol)
 
     def power_balance(self) -> np.ndarray:
-        """Sum over outputs of |S|^2 per (F, in_port*mode) excitation; NaN-skipped."""
+        """Sum over outputs of ``|S|²`` per (F, in_port*mode) excitation; NaN-skipped."""
         m = np.abs(self._flat()) ** 2
         balance = np.nansum(np.where(np.isnan(m), np.nan, m), axis=1) * np.where(
             np.all(np.isnan(m), axis=1), np.nan, 1.0

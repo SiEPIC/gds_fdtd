@@ -4,7 +4,7 @@ gds_fdtd simulation toolbox.
 Convergence sweeps: rerun one job while stepping a single
 SimulationSpec field (mesh, run_time_factor, buffer, ...) and measure how
 much the S-matrix still moves between successive values. Generalizes the
-hand-rolled mesh sweeps of the legacy examples.
+hand-rolled mesh sweeps of the legacy examples::
 
     report = sweep(Tidy3DSolver, component, tech, spec,
                    field="mesh", values=[6, 10, 14, 18],
@@ -55,7 +55,7 @@ def _align_ports(a: SMatrix, b: SMatrix) -> list[tuple[str, str]]:
 
 
 def max_delta_db(a: SMatrix, b: SMatrix, floor_db: float = -30.0) -> float:
-    """Worst-case |Δ|S|²| in dB between two S-matrices of the same job.
+    """Worst-case ``|Δ|S|²|`` in dB between two S-matrices of the same job.
 
     Ports are aligned by name, or by trailing-digit id when the two solvers
     named them differently ('opt1' <-> '1'); ``b`` is interpolated onto the

@@ -203,7 +203,7 @@ class Tidy3DSolver(Solver):
 
 
 def plot_tidy3d_fields(modeler_data, axis: str = "z", savefig: str | None = None):
-    """Plot |E| of the '{axis}_field' monitor from a ModalComponentModelerData.
+    """Plot ``|E|`` of the '{axis}_field' monitor from a ModalComponentModelerData.
 
     Used by Tidy3DSolver.plot_fields.
     """

@@ -7,6 +7,7 @@ registry.
 
 Design decisions (rule 8 — everything below verified against beamz 0.4.3 and
 its own compact-model reference example, which is the UBC SiEPIC crossing):
+
 - geometry rides beamz's ``gdsf.prepare_component`` pipeline (extrusion, port
   extension, padding) rather than re-deriving its delicate port-plane/PML
   tuning. It is fed the source **gdsfactory component** when one is present, or
@@ -529,7 +530,7 @@ class BeamzSolver(Solver):
         )
 
     def plot_fields(self, axis: str = "z", savefig: str | None = None):
-        """|E|² profile at the core-center z-plane (first excitation)."""
+        """``|E|²`` profile at the core-center z-plane (first excitation)."""
         import matplotlib.pyplot as plt
 
         if axis != "z":

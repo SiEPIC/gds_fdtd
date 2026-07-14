@@ -3,8 +3,8 @@ Examples
 
 A guided path from *"load a layout"* to *"run it on any FDTD engine and read the
 S-parameters."* Each entry below is a real Jupyter notebook, executed and
-committed **with its outputs** — the plots and numbers you see are genuine solver
-output, not illustrations.
+committed **with its outputs**, so the plots and numbers you see are the actual
+solver output.
 
 Every notebook reproduces **for free**: the live runs use
 `beamz <https://github.com/beamzorg/beamz>`_ (Apache-2.0 JAX FDTD, on CPU) or
@@ -48,13 +48,16 @@ format) under ``examples/``; see ``examples/README.md`` for how to run them.
      - The identical job on beamz / tidy3d / Lumerical, and how they agree.
    * - 08
      - :doc:`_notebooks/08_frontends`
-     - gdsfactory, SiEPIC/KLayout, and PreFab (litho-prediction) front ends.
+     - Any EDA in, any engine out: gdsfactory / SiEPIC / raw-GDS frontends, then the full frontend × engine matrix.
    * - 09
      - :doc:`_notebooks/09_cli_and_jobs`
      - The ``gds-fdtd`` CLI and serializable ``JobSpec`` for remote/batch compute.
    * - 10
      - :doc:`_notebooks/10_cookbook`
      - Reference devices with known-good S-params — the **Si→SiN escalator** on the free engine.
+   * - 10b
+     - :doc:`_notebooks/10b_polarization`
+     - Polarization splitter and splitter-rotator from gdsfactory: TE/TM modes, multi-mode S-params, and per-polarization fields on two engines.
 
 .. toctree::
    :hidden:
@@ -73,3 +76,4 @@ format) under ``examples/``; see ``examples/README.md`` for how to run them.
    _notebooks/08_frontends
    _notebooks/09_cli_and_jobs
    _notebooks/10_cookbook
+   _notebooks/10b_polarization

@@ -6,13 +6,13 @@ Mode-overlap extraction — the last Tier-B enabler. Kernel engines
 into the complex modal amplitudes that become SMatrix entries. Everything is
 solver-independent numpy: fields in, complex out.
 
-Convention (the standard bidirectional mode-orthogonality projection):
+Convention (the standard bidirectional mode-orthogonality projection)::
 
-    a_m = [ ∫(E × H_m*)·n̂ dA + ∫(E_m* × H)·n̂ dA ] / (4 N_m)
-    N_m = ½ Re ∫ (E_m × H_m*)·n̂ dA
+    a_m = [ integral(E x H_m*).n dA + integral(E_m* x H).n dA ] / (4 N_m)
+    N_m = 0.5 Re integral (E_m x H_m*).n dA
 
-so a field equal to the mode gives a_m = 1 exactly, the backward-traveling
-mode gives 0, and |a_m|² is the fraction of the mode's normalized power
+so a field equal to the mode gives ``a_m = 1`` exactly, the backward-traveling
+mode gives 0, and ``|a_m|**2`` is the fraction of the mode's normalized power
 carried forward. ``direction="-"`` projects onto the backward mode instead
 (transverse H flips sign).
 """

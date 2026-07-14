@@ -9,7 +9,7 @@ build-backend = "hatchling.build"
 [project]
 name            = "gds_fdtd"
 dynamic         = ["version"]
-description     = "Solver-agnostic 3D FDTD for photonic layouts: GDS in, S-parameters out - tidy3d, Lumerical, or beamz behind one API."
+description     = "EDA- and solver-agnostic 3D FDTD simulation framework for photonic layouts: GDS in, S-parameters, fields, and compact models out - tidy3d, Lumerical, or beamz behind one API."
 authors         = [{ name = "Mustafa Hammood", email = "mustafa@siepic.com" }]
 license         = { text = "MIT" }
 readme          = { file = "README.md", content-type = "text/markdown" }

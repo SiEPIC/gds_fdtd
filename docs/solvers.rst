@@ -1,7 +1,7 @@
 Solvers
 =======
 
-Every engine sets up the same way — swap engines by changing one string:
+Every engine sets up the same way, swap engines by changing one string:
 
 .. code-block:: python
 
@@ -32,7 +32,7 @@ The lifecycle contract
    * - ``validate() -> list[str]``
      - every problem with the job as human-readable strings; ``[]`` = runnable
    * - ``build() -> SetupArtifacts``
-     - engine-native scene, **offline and deterministic** — no network, no license
+     - engine-native scene, **offline and deterministic**: no network, no license
    * - ``estimate() -> ResourceEstimate``
      - offline cost hints (cells, memory, number of simulations)
    * - ``run() -> SMatrix``
@@ -70,7 +70,7 @@ Available engines
 
 ``gds-fdtd solvers`` (CLI) lists every registered engine with availability
 and, when unavailable, the reason. Per-engine verification against the real
-engines lives in ``SOLVER_STATUS.md`` — the three engines agree within
+engines lives in ``SOLVER_STATUS.md``, the three engines agree within
 0.052 dB (tidy3d ↔ Lumerical within 0.0033 dB) on an identical job.
 
 Standard visualization flow
@@ -100,17 +100,25 @@ Beyond one engine
                    field="mesh", values=[6, 8, 10], cache_dir=".cache")
     report.recommend(tol_db=0.05)
 
-    # the agnosticism payoff: identical job, several engines, worst |dS| in dB
+    # cross-validate: identical job, several engines, worst |dS| in dB
     report = validate_across(
         [get_solver("tidy3d"), get_solver("lumerical"), get_solver("beamz")],
         component, tech, spec, cache_dir=".cache",
     )
 
+.. figure:: images/three_engine_agreement.png
+   :width: 80%
+   :align: center
+
+   The same y-branch on all three engines. Cross-validation quantifies the
+   worst-case disagreement (here a few hundredths of a dB on the split);
+   :doc:`_notebooks/07_choosing_an_engine` walks through it.
+
 Bring your own engine
 ---------------------
 
 Any FDTD engine becomes a gds_fdtd solver by implementing the four methods
-above — see :doc:`adding_a_solver` for the full guide, including the
+above, see :doc:`adding_a_solver` for the full guide, including the
 conformance test suite your adapter inherits for free.
 
 .. note::

@@ -1,7 +1,7 @@
 Architecture Overview
 =====================
 
-GDS in, S-parameters out — with every engine behind one contract.
+GDS in, S-parameters out, with every engine behind one contract.
 
 .. code-block:: text
 

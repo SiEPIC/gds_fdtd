@@ -7,6 +7,7 @@ plain YAML, so a small reader avoids a wrapper dependency. Offline-first by
 design: nothing here ever downloads; CI and docs use a committed page fixture.
 
 Database directory resolution order:
+
 1. explicit ``db_dir`` argument,
 2. ``GDS_FDTD_RII_DB`` environment variable,
 3. ``~/.cache/gds_fdtd/rii`` (where a user may clone/copy the database's
@@ -15,6 +16,7 @@ Database directory resolution order:
 Page path convention: ``<db_dir>/<shelf>/<book>/<page>.yml``.
 
 Supported data blocks (the overwhelmingly common ones):
+
 - ``tabulated nk`` / ``tabulated n`` / ``tabulated k``
 - ``formula 1`` (Sellmeier) and ``formula 2`` (Sellmeier-2)
 
