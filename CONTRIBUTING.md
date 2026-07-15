@@ -50,6 +50,23 @@ workflow requires green CI on the tagged commit, builds+inspects, publishes
 to PyPI via trusted publishing with attestations, and attaches an SBOM.
 There is no version to bump (hatch-vcs derives it from the tag).
 
+## Deprecation policy
+
+Pre-1.0, the supported public surface is the top-level exports
+(`Technology`, `SimulationSpec`, `get_solver`, `SMatrix`, the geometry
+classes) plus the documented modules in the API reference.
+
+- Removing or renaming anything public takes **two minor releases**: deprecate
+  in `0.N` (a `DeprecationWarning` naming the replacement, a CHANGELOG entry,
+  and updated docs), remove in `0.N+1`.
+- Exceptions raised on user-input paths derive from `GdsFdtdError` and also
+  from the builtin they replaced (e.g. `TechnologyError` is a `ValueError`),
+  so tightening an error type is not a breaking change.
+- Internal modules (leading underscore, e.g. `_sparams`) and anything not in
+  the API reference may change without notice.
+- Each deprecation gets a test asserting the warning fires, so removals can't
+  silently outlive their window.
+
 ## Repo settings checklist (maintainer-applied)
 
 These require admin permissions; PRs cannot change them:

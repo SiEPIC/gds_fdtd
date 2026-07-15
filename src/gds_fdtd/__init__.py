@@ -17,6 +17,9 @@ from . import (
 )
 from .geometry import Component, LayoutSource, Port, Region, Structure
 from .smatrix import SMatrix
+from .solvers import get_solver
+from .spec import SimulationSpec
+from .technology import Technology
 
 # Library logging etiquette: emit nothing unless the application (or
 # logging_config.setup_logging) configures handlers.
@@ -28,7 +31,10 @@ __all__ = [
     "Port",
     "Region",
     "SMatrix",
+    "SimulationSpec",
     "Structure",
+    "Technology",
+    "get_solver",
     "caching",
     "convergence",
     "errors",
