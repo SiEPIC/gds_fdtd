@@ -134,12 +134,15 @@ class Solver(ABC):
             except PackageNotFoundError:  # pragma: no cover - not installed
                 return "unknown"
 
-    def plot_fields(self, axis: str = "z", savefig: str | None = None) -> tuple[Any, Any]:
+    def plot_fields(
+        self, axis: str = "z", scale: str = "linear", savefig: str | None = None
+    ) -> tuple[Any, Any]:
         """Plot the frequency-domain field profile recorded by the run.
 
         Part of the standardized visualization flow (geometry -> S-params ->
-        fields). Requires spec.field_monitors to include the axis and run()
-        to have completed. Adapters override; the base raises with guidance.
+        fields). ``scale`` is ``"linear"`` or ``"db"`` (a log view). Requires
+        spec.field_monitors to include the axis and run() to have completed.
+        Adapters override; the base raises with guidance.
         """
         raise NotImplementedError(
             f"{type(self).__name__} does not implement field plotting; "

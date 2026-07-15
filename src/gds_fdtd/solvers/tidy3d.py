@@ -169,12 +169,16 @@ class Tidy3DSolver(Solver):
         da = modeler_data.smatrix()
         return self._dataarray_to_smatrix(da)
 
-    def plot_fields(self, axis: str = "z", savefig: str | None = None):
-        """Field profile from the first excitation's SimulationData."""
+    def plot_fields(self, axis: str = "z", scale: str = "linear", savefig: str | None = None):
+        """Field profile from the first excitation's SimulationData.
+
+        ``scale="db"`` gives a log view (see
+        :func:`gds_fdtd.plotting.plot_field`).
+        """
         data = getattr(self, "_modeler_data", None)
         if data is None:
             raise SolverError("run() has not completed; no field data available")
-        return plot_tidy3d_fields(data, axis=axis, savefig=savefig)
+        return plot_tidy3d_fields(data, axis=axis, scale=scale, savefig=savefig)
 
     # ---------------- conversion ----------------
 
@@ -202,12 +206,16 @@ class Tidy3DSolver(Solver):
         return SMatrix.from_entries(entries, name=self.component.name, port_names=port_names)
 
 
-def plot_tidy3d_fields(modeler_data, axis: str = "z", savefig: str | None = None):
-    """Plot ``|E|`` of the '{axis}_field' monitor from a ModalComponentModelerData.
+def plot_tidy3d_fields(
+    modeler_data, axis: str = "z", scale: str = "linear", savefig: str | None = None
+):
+    """Plot ``|E|²`` of the '{axis}_field' monitor from a ModalComponentModelerData.
 
-    Used by Tidy3DSolver.plot_fields.
+    Used by Tidy3DSolver.plot_fields. Extracts the field onto its true grid and
+    renders via :func:`gds_fdtd.plotting.plot_field`, so ``scale="db"`` gives a
+    log view. Drawn on the engine's own (non-uniform) mesh coordinates.
     """
-    import matplotlib.pyplot as plt
+    from ..plotting import plot_field
 
     sim_data_map = modeler_data.data
     items = (
@@ -219,16 +227,22 @@ def plot_tidy3d_fields(modeler_data, axis: str = "z", savefig: str | None = None
         raise SolverError("modeler data contains no per-task simulation data")
     task_name, sim_data = items[0]
     monitor_name = f"{axis}_field"
+    fd = sim_data[monitor_name]
     # the monitor is broadband: select the center frequency for a 2D plot
-    freqs = sim_data[monitor_name].Ex.coords["f"].values
+    freqs = np.asarray(fd.Ex.coords["f"].values)
     f0 = float(freqs[len(freqs) // 2])
-    fig, ax = plt.subplots(figsize=(9, 5))
-    sim_data.plot_field(monitor_name, "E", val="abs", f=f0, ax=ax)
-    from ..plotting import DEFAULT_CMAP
-
-    for mesh in ax.collections:  # tidy3d hardcodes its own cmap; restyle to ours
-        mesh.set_cmap(DEFAULT_CMAP)
-    ax.set_title(f"|E| ({monitor_name}) — excitation {task_name}")
-    if savefig:
-        fig.savefig(savefig, dpi=150, bbox_inches="tight")
-    return fig, ax
+    mag2 = sum(
+        np.abs(np.asarray(getattr(fd, c).sel(f=f0).values).squeeze()) ** 2
+        for c in ("Ex", "Ey", "Ez")
+    )
+    h_name, v_name = {"z": ("x", "y"), "y": ("x", "z"), "x": ("y", "z")}[axis]
+    h = np.asarray(fd.Ex.coords[h_name].values)
+    v = np.asarray(fd.Ex.coords[v_name].values)
+    return plot_field(
+        mag2.T,  # (h, v) -> (v, h) for row=v, col=h
+        x=h,
+        y=v,
+        scale=scale,
+        title=f"|E|² ({monitor_name}), excitation {task_name}",
+        savefig=savefig,
+    )
