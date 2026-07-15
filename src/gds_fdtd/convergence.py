@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from .errors import JobValidationError, SMatrixError
 from .smatrix import SMatrix
 from .spec import SimulationSpec
 
@@ -47,7 +48,7 @@ def _align_ports(a: SMatrix, b: SMatrix) -> list[tuple[str, str]]:
     da = {digits(n): n for n in a.port_names}
     db = {digits(n): n for n in b.port_names}
     if "" in da or "" in db or set(da) != set(db) or len(da) != a.n_ports:
-        raise ValueError(
+        raise SMatrixError(
             f"cannot align ports {a.port_names} vs {b.port_names}: names differ "
             "and trailing-digit ids do not match one-to-one"
         )
@@ -69,11 +70,11 @@ def max_delta_db(a: SMatrix, b: SMatrix, floor_db: float = -30.0) -> float:
     """
     pairs = _align_ports(a, b)
     if a.n_modes != b.n_modes:
-        raise ValueError(f"mode counts differ: {a.n_modes} vs {b.n_modes}")
+        raise SMatrixError(f"mode counts differ: {a.n_modes} vs {b.n_modes}")
 
     f_lo, f_hi = max(a.f.min(), b.f.min()), min(a.f.max(), b.f.max())
     if f_lo > f_hi:
-        raise ValueError("frequency grids do not overlap")
+        raise SMatrixError("frequency grids do not overlap")
     mask = (a.f >= f_lo) & (a.f <= f_hi)
     f = a.f[mask]
 
@@ -174,7 +175,7 @@ def sweep(
         solver = solver_cls(component, technology, s, workdir=workdir)
         problems = solver.validate()
         if problems:
-            raise ValueError(f"{field}={v}: job invalid: {problems}")
+            raise JobValidationError(f"{field}={v}: job invalid: {problems}")
         logger.info("convergence sweep: %s=%s", field, v)
         sm = solver.run_cached(cache_dir) if cache_dir is not None else solver.run()
         smatrices.append(sm)

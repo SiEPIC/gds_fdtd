@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from .errors import TechnologyError
 from .geometry import Component
 
 if TYPE_CHECKING:
@@ -38,7 +39,7 @@ def get_material(device: dict):
 
     mat_spec = device.get("material")
     if not isinstance(mat_spec, dict):
-        raise ValueError(
+        raise TechnologyError(
             f"Invalid technology entry: expected a 'material' mapping, got {mat_spec!r} "
             f"in device entry {device!r}"
         )
@@ -46,7 +47,7 @@ def get_material(device: dict):
     if "tidy3d_db" in mat_spec:
         tidy3d_db = mat_spec["tidy3d_db"]
         if not isinstance(tidy3d_db, dict) or not ("nk" in tidy3d_db or "model" in tidy3d_db):
-            raise ValueError(
+            raise TechnologyError(
                 "Invalid technology material: 'tidy3d_db' must be a mapping containing "
                 f"'nk' or 'model'; got {tidy3d_db!r}"
             )
@@ -62,7 +63,7 @@ def get_material(device: dict):
     if "lum_db" in mat_spec:
         lum_db = mat_spec["lum_db"]
         if not isinstance(lum_db, dict) or "model" not in lum_db:
-            raise ValueError(
+            raise TechnologyError(
                 "Invalid technology material: 'lum_db' must be a mapping containing "
                 f"'model'; got {lum_db!r}"
             )

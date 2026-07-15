@@ -9,6 +9,7 @@ import logging
 
 import klayout.db as pya
 
+from .errors import LayoutError
 from .geometry import Port, Region, Structure
 
 
@@ -74,7 +75,7 @@ def apply_prefab(gds_in: str, gds_out: str, top_cell: str, model: str = "ANT_Nan
     import prefab as pf
 
     if os.path.abspath(gds_in) == os.path.abspath(gds_out):
-        raise ValueError(
+        raise LayoutError(
             "gds_out must differ from gds_in — apply_prefab never overwrites its input"
         )
 
@@ -164,7 +165,7 @@ def load_cell(fname: str, top_cell: str | None = None) -> tuple["pya.Cell", "pya
         if len(ly.top_cells()) > 1:
             err_msg = "More than one top cell found, ensure only 1 top cell exists. Otherwise, specify the cell using the top_cell argument."
             logging.error(err_msg)
-            raise ValueError(err_msg)
+            raise LayoutError(err_msg)
         else:
             cell = ly.top_cell()
             name = cell.name
@@ -173,7 +174,7 @@ def load_cell(fname: str, top_cell: str | None = None) -> tuple["pya.Cell", "pya
         if cell is None:
             err_msg = f"Top cell with name {top_cell} not found."
             logging.error(err_msg)
-            raise ValueError(err_msg)
+            raise LayoutError(err_msg)
         name = cell.name
 
     return cell, ly
@@ -218,7 +219,7 @@ def load_region(
         it.next()
 
     if not devrec_polygons:
-        raise ValueError(
+        raise LayoutError(
             f"No DevRec box/polygon found on layer {layer_spec[0]}:{layer_spec[1]} "
             f"in cell {cell.name!r}. Check the technology 'devrec' layer."
         )

@@ -11,6 +11,7 @@ import numpy as np
 import tidy3d as td
 from tidy3d.plugins.smatrix import ModalComponentModeler, Port
 
+from gds_fdtd.errors import JobValidationError
 from gds_fdtd.solvers._tidy3d_base import _TidyEngineBase
 
 
@@ -134,7 +135,7 @@ class _TidyEngine(_TidyEngineBase):
         for axis_name, boundary_name in zip("xyz", self.boundary, strict=True):
             key = str(boundary_name).lower()
             if key not in mapping:
-                raise ValueError(
+                raise JobValidationError(
                     f"Unsupported boundary {boundary_name!r} for axis {axis_name}. "
                     f"Supported: {sorted(mapping)}"
                 )
@@ -155,7 +156,7 @@ class _TidyEngine(_TidyEngineBase):
                 direction = "+" if tp.direction == "forward" else "-"
                 size = [self.width_ports, 0, self.depth_ports]
             else:
-                raise ValueError(f"Invalid span configuration for port {tp.name}")
+                raise JobValidationError(f"Invalid span configuration for port {tp.name}")
 
             # Create Tidy3D Port object with multi-modal support
             port = Port(
@@ -299,7 +300,7 @@ class _TidyEngine(_TidyEngineBase):
             center = [cx, cy, z_center]
             size = [0, td.inf, td.inf]
         else:
-            raise ValueError(
+            raise JobValidationError(
                 f"Invalid axis {axis!r} for field monitor. Valid selections are 'x', 'y', 'z'."
             )
         return td.FieldMonitor(

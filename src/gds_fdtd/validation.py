@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from .convergence import max_delta_db
+from .errors import JobValidationError
 from .smatrix import SMatrix
 from .spec import SimulationSpec
 
@@ -124,7 +125,7 @@ def validate_across(
         solver = s if not isinstance(s, type) else s(component, technology, spec, workdir=workdir)
         problems = solver.validate()
         if problems:
-            raise ValueError(f"{solver.name}: job invalid: {problems}")
+            raise JobValidationError(f"{solver.name}: job invalid: {problems}")
         logger.info("cross-solver validation: running %s", solver.name)
         results[solver.name] = (
             solver.run_cached(cache_dir) if cache_dir is not None else solver.run()
