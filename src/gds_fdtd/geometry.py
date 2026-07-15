@@ -12,6 +12,8 @@ import pya
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
+from .errors import LayoutError
+
 c0_um = 299792458000000.0  # speed of light in um/s
 
 
@@ -90,7 +92,7 @@ def calculate_polygon_extension(
             [center[0] + width / 2, center[1] - buffer],
             [center[0] + width / 2, center[1]],
         ]
-    raise ValueError(f"Invalid direction: {direction}. Supported: 0, 90, 180, 270.")
+    raise LayoutError(f"Invalid direction: {direction}. Supported: 0, 90, 180, 270.")
 
 
 class Port:
@@ -136,7 +138,7 @@ class Port:
         self.layer: list[int] | None = None
 
         if self.direction not in [0, 90, 180, 270]:
-            raise ValueError(
+            raise LayoutError(
                 f"Invalid direction: {self.direction}. Supported directions are 0, 90, 180, 270."
             )
 
@@ -182,11 +184,11 @@ class Port:
             int: The extracted port index.
 
         Raises:
-            ValueError: If the port name has no trailing digits.
+            LayoutError: If the port name has no trailing digits.
         """
         m = re.search(r"(\d+)$", self.name)
         if m is None:
-            raise ValueError(
+            raise LayoutError(
                 f"Port name {self.name!r} has no trailing digits to derive an index from."
             )
         return int(m.group(1))
@@ -248,7 +250,7 @@ class Structure:
         self.sidewall_angle = sidewall_angle
         self.layer = list(layer) if layer is not None else [1, 0]
         if role not in ("device", "substrate", "superstrate"):
-            raise ValueError(
+            raise LayoutError(
                 f"Invalid structure role {role!r}; expected 'device', 'substrate' or 'superstrate'."
             )
         self.role = role

@@ -33,6 +33,11 @@ class LayoutError(GdsFdtdError, ValueError):
     """A layout could not be loaded or interpreted (missing cell, ports, ...)."""
 
 
+class SMatrixError(GdsFdtdError, ValueError):
+    """An S-matrix is malformed or was used inconsistently (bad shapes,
+    unknown port/mode, mixed frequency grids, unsupported export)."""
+
+
 class JobValidationError(GdsFdtdError, ValueError):
     """A simulation job failed validate() — fix the job, don't retry."""
 

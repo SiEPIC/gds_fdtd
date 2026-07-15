@@ -123,9 +123,10 @@ def test_rii_out_of_range_raises():
 
 
 def test_rii_missing_page_gives_actionable_error():
+    from gds_fdtd.errors import TechnologyError
     from gds_fdtd.materials import load_rii_material
 
-    with pytest.raises(FileNotFoundError, match="GDS_FDTD_RII_DB"):
+    with pytest.raises(TechnologyError, match="GDS_FDTD_RII_DB"):
         load_rii_material("main", "Unobtainium", "X-0", db_dir=TESTS_DIR / "rii_db")
 
 

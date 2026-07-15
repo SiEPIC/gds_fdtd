@@ -23,6 +23,7 @@ import re
 
 import numpy as np
 
+from ..errors import LayoutError
 from ..geometry import Component, Port, Region, Structure
 from ..simprocessor import get_material
 
@@ -100,7 +101,7 @@ def from_gdsfactory(c, tech, z_span: float = 4.0) -> Component:
                 )
             )
     if not structures:
-        raise ValueError(
+        raise LayoutError(
             f"component {c.name!r} has no polygons on any technology device layer "
             f"(tech layers: {sorted(device_layers)}; component layers: "
             f"{sorted(map(tuple, polygons_by_layer))})"

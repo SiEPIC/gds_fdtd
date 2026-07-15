@@ -24,6 +24,8 @@ from typing import Any, cast
 
 import numpy as np
 
+from .errors import SMatrixError
+
 C_M_S = 299792458.0  # speed of light in m/s
 
 # Upper bound on the dense S-matrix element count (F·P²·M²). ~1.6 GB as
@@ -48,18 +50,18 @@ class SMatrix:
         self.port_names = [str(n) for n in self.port_names]
         P = len(self.port_names)
         if self.f.ndim != 1:
-            raise ValueError(f"f must be 1-D; got shape {self.f.shape}")
+            raise SMatrixError(f"f must be 1-D; got shape {self.f.shape}")
         if self.s.ndim != 5 or self.s.shape[:3] != (self.f.size, P, P):
-            raise ValueError(
+            raise SMatrixError(
                 f"s must have shape (F, P, P, M, M) = ({self.f.size}, {P}, {P}, M, M); "
                 f"got {self.s.shape}"
             )
         if self.s.shape[3] != self.s.shape[4]:
-            raise ValueError(f"mode axes must be square; got {self.s.shape[3:]} ")
+            raise SMatrixError(f"mode axes must be square; got {self.s.shape[3:]} ")
         if len(set(self.port_names)) != P:
-            raise ValueError(f"duplicate port names: {self.port_names}")
+            raise SMatrixError(f"duplicate port names: {self.port_names}")
         if self.f.size > 1 and not np.all(np.diff(self.f) > 0):
-            raise ValueError("f must be strictly ascending")
+            raise SMatrixError("f must be strictly ascending")
         self._port_index = {n: i for i, n in enumerate(self.port_names)}
 
     # ---------------- basic properties ----------------
@@ -95,7 +97,7 @@ class SMatrix:
         """
         entries = list(entries)
         if not entries:
-            raise ValueError("no entries given")
+            raise SMatrixError("no entries given")
 
         names = list(port_names) if port_names else []
         max_mode = 1
@@ -109,7 +111,7 @@ class SMatrix:
             if f_ref is None:
                 f_ref = f
             elif f.shape != f_ref.shape or not np.allclose(f, f_ref):
-                raise ValueError("all entries must share one frequency grid")
+                raise SMatrixError("all entries must share one frequency grid")
 
         assert f_ref is not None  # entries is non-empty (checked above)
         order = np.argsort(f_ref)
@@ -120,7 +122,7 @@ class SMatrix:
         # otherwise attempt a multi-TiB allocation (found by fuzzing).
         n_elements = F * P * P * M * M
         if n_elements > _MAX_SMATRIX_ELEMENTS:
-            raise ValueError(
+            raise SMatrixError(
                 f"refusing to build an S-matrix of {n_elements:,} elements "
                 f"(freqs={F}, ports={P}, modes={M}); the port or mode indices "
                 "look corrupt — check the input."
@@ -242,14 +244,14 @@ class SMatrix:
         fill the matrix).
         """
         if np.any(np.isnan(self.s)):
-            raise ValueError(
+            raise SMatrixError(
                 "SMatrix contains unmeasured (NaN) paths; Touchstone requires a "
                 "complete matrix. Use to_dat() for partial matrices."
             )
         n = self.n_ports * self.n_modes
         expected_ext = f".s{n}p"
         if not path.lower().endswith(expected_ext):
-            raise ValueError(f"path must end with {expected_ext} for {n} flattened ports")
+            raise SMatrixError(f"path must end with {expected_ext} for {n} flattened ports")
 
         m = self._flat()  # (F, N, N), port-major mode-minor — matches the convention
         lines = [

@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..errors import JobValidationError
+from ..errors import JobValidationError, SolverError
 from ..smatrix import SMatrix
 from .base import (
     ResourceEstimate,
@@ -540,7 +540,7 @@ class BeamzSolver(Solver):
             raise JobValidationError("BeamzSolver v1 records the z-plane profile only")
         fields = getattr(self, "_field_z", None)
         if fields is None:
-            raise RuntimeError(
+            raise SolverError(
                 "no field data: include 'z' in spec.field_monitors and call run() first"
             )
         mag2 = sum(np.abs(np.squeeze(v)) ** 2 for v in fields.values())  # rows already y
@@ -697,7 +697,7 @@ class BeamzSolver(Solver):
                 nx0 = round(float(design.width) / dx)
                 nx = next((n for n in range(max(nx0 - 3, 1), nx0 + 4) if ncells % n == 0), None)
                 if nx is None:
-                    raise RuntimeError(f"cannot factor field plane: {ncells} cells vs Nx~{nx0}")
+                    raise SolverError(f"cannot factor field plane: {ncells} cells vs Nx~{nx0}")
                 # beamz grids are (z, y, x)-ordered: the flattened plane is
                 # y-major with x fastest -> reshape to (Ny, Nx)
                 self._field_z = {

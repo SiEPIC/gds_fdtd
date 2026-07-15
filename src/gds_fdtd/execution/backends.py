@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, Protocol, cast, runtime_checkable
 
+from ..errors import SolverError
 from .jobspec import RESULT_FILENAME, JobResult, JobSpec, run_job
 
 logger = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ class LocalBackend:
 
     def result(self, handle: JobHandle) -> JobResult:
         if handle._state["status"] == "failed":
-            raise RuntimeError(f"job {handle.id} failed") from handle._state["error"]
+            raise SolverError(f"job {handle.id} failed") from handle._state["error"]
         return cast(JobResult, handle._state["result"])
 
     def cancel(self, handle: JobHandle) -> None:
@@ -130,7 +131,7 @@ class SubprocessBackend:
         self._finalize(handle)
         if rc != 0:
             log_tail = (handle.out_dir / "job.log").read_text()[-2000:]
-            raise RuntimeError(f"job {handle.id} exited {rc}; log tail:\n{log_tail}")
+            raise SolverError(f"job {handle.id} exited {rc}; log tail:\n{log_tail}")
         return JobResult.from_file(handle.out_dir / RESULT_FILENAME)
 
     def cancel(self, handle: JobHandle) -> None:

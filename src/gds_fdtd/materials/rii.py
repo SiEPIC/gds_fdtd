@@ -32,6 +32,8 @@ from pathlib import Path
 import numpy as np
 import yaml
 
+from ..errors import TechnologyError
+
 
 def _default_db_dir() -> Path:
     env = os.environ.get("GDS_FDTD_RII_DB")
@@ -63,7 +65,7 @@ class RiiMaterial:
         w = np.atleast_1d(np.asarray(wavelength_um, dtype=float))
         lo, hi = self.wavelength_range_um
         if w.min() < lo or w.max() > hi:
-            raise ValueError(
+            raise TechnologyError(
                 f"wavelength {w.min():.4g}-{w.max():.4g} um outside the tabulated "
                 f"range [{lo:.4g}, {hi:.4g}] um of {self.shelf}/{self.book}/{self.page}"
             )
@@ -120,7 +122,7 @@ def _parse_tabulated(block: dict, columns: int) -> tuple[np.ndarray, ...]:
     ]
     arr = np.asarray(rows, dtype=float)
     if arr.shape[1] < columns:
-        raise ValueError(f"tabulated block has {arr.shape[1]} columns; expected >= {columns}")
+        raise TechnologyError(f"tabulated block has {arr.shape[1]} columns; expected >= {columns}")
     order = np.argsort(arr[:, 0])
     arr = arr[order]
     return tuple(arr[:, i] for i in range(columns))
@@ -146,7 +148,7 @@ def load_rii_material(
     base = Path(db_dir) if db_dir is not None else _default_db_dir()
     path = base / shelf / book / f"{page}.yml"
     if not path.exists():
-        raise FileNotFoundError(
+        raise TechnologyError(
             f"refractiveindex.info page not found: {path}. Set GDS_FDTD_RII_DB (or pass "
             "db_dir=) to a local copy of the database's 'data' directory "
             "(https://github.com/polyanskiy/refractiveindex.info-database)."
@@ -157,7 +159,7 @@ def load_rii_material(
 
     data_blocks = doc.get("DATA")
     if not data_blocks:
-        raise ValueError(f"{path}: no DATA section")
+        raise TechnologyError(f"{path}: no DATA section")
 
     wavelength = n = k = None
     for block in data_blocks:
@@ -180,12 +182,12 @@ def load_rii_material(
             wavelength = np.linspace(lo, hi, 512)
             n = _sellmeier(coeffs, wavelength, formula)
         elif btype.startswith("formula"):
-            raise ValueError(
+            raise TechnologyError(
                 f"{path}: dispersion '{btype}' is not supported yet "
                 "(supported: tabulated nk/n/k, formula 1, formula 2)"
             )
 
     if wavelength is None or n is None:
-        raise ValueError(f"{path}: no usable refractive-index data block found")
+        raise TechnologyError(f"{path}: no usable refractive-index data block found")
 
     return RiiMaterial(shelf=shelf, book=book, page=page, wavelength_um=wavelength, n=n, k=k)

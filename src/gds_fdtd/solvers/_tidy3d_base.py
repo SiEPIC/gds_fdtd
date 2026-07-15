@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from gds_fdtd.errors import JobValidationError
 from gds_fdtd.geometry import Component, Port
 from gds_fdtd.logging_config import (
     log_dict,
@@ -69,13 +70,13 @@ class _TidyPort:
         modes = self.modes
 
         if len(position) != 3:
-            raise ValueError("Position must be a list of 3 floats")
+            raise JobValidationError("Position must be a list of 3 floats")
         if len(span) != 3:
-            raise ValueError("Span must be a list of 3 floats")
+            raise JobValidationError("Span must be a list of 3 floats")
         if direction not in ["forward", "backward"]:
-            raise ValueError("Direction must be either 'forward' or 'backward'")
+            raise JobValidationError("Direction must be either 'forward' or 'backward'")
         if len(modes) == 0:
-            raise ValueError("Modes must be a list of integers")
+            raise JobValidationError("Modes must be a list of integers")
 
 
 class _TidyEngineBase:
@@ -167,7 +168,7 @@ class _TidyEngineBase:
             self.port_input = [port_input]
         for p in self.port_input:
             if not hasattr(p, "name"):
-                raise ValueError(
+                raise JobValidationError(
                     f"Invalid port object in port_input: {p!r}. Expected component "
                     "port objects (or None for all ports)."
                 )
@@ -309,7 +310,7 @@ class _TidyEngineBase:
                 ]  # x_span=None (injection axis), y_span, z_span
 
             else:
-                raise ValueError(
+                raise JobValidationError(
                     f"Port direction {p.direction}° not supported. Supported directions: 0°, 90°, 180°, 270°"
                 )
 
@@ -359,7 +360,7 @@ class _TidyEngineBase:
             )
         except Exception as e:
             self.logger.error(str(e))
-            raise ValueError(str(e)) from e
+            raise JobValidationError(str(e)) from e
         self.logger.info("Simulation parameters validated successfully")
 
     def _calculate_simulation_time(

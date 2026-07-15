@@ -24,6 +24,8 @@ from typing import TYPE_CHECKING, Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from .errors import TechnologyError
+
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from .materials.rii import RiiMaterial
 
@@ -292,11 +294,11 @@ class Technology(BaseModel):
         with open(file_path) as f:
             data = yaml.safe_load(f)
         if not isinstance(data, dict) or "technology" not in data:
-            raise ValueError(f"{file_path}: expected a top-level 'technology' mapping")
+            raise TechnologyError(f"{file_path}: expected a top-level 'technology' mapping")
         try:
             return cls.model_validate(data["technology"])
         except Exception as e:
-            raise ValueError(f"Invalid technology file {file_path}: {e}") from e
+            raise TechnologyError(f"Invalid technology file {file_path}: {e}") from e
 
     def to_solver_dict(self) -> dict[str, Any]:
         """The schema-v1 dict shape the solver adapters and simprocessor consume."""
