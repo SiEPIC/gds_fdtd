@@ -62,7 +62,7 @@ dev = [
   "wheel>=0.42.0",
   "build>=1.0.0",
   "twine>=4.0.2",
-  "watchdog>=3.0.0",
+  "watchdog>=6.0.0",
   "pytest>=8.1",
   "pytest-cov>=5.0",
   "coverage",
