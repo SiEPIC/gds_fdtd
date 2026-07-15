@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — targeting 0.6.0 (breaking)
+## [0.6.0] - 2026-07-15 (breaking)
 
 ### Removed (BREAKING)
 - The pre-0.5 solver classes and their modules were removed:
@@ -75,6 +75,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   parsers (`fuzz/`), run directly on PRs that touch the library.
 - Release artifacts are now Sigstore-signed (keyless, GitHub OIDC); the
   `.sigstore` bundles are attached to each GitHub Release.
+- **Executed-notebook examples curriculum** (`00_quickstart` …
+  `10b_polarization`, 13 notebooks): jupytext-paired `.py` sources committed
+  alongside executed `.ipynb` with real solver outputs. Includes the
+  three-engine y-branch comparison, the sharp-S-bend convergence study
+  (converged ≠ correct), the frontend × engine matrix (gdsfactory / SiEPIC /
+  raw GDS on beamz / tidy3d / Lumerical), and polarization devices (a
+  directional-coupler PBS and gdsfactory's splitter-rotator, TE0+TM0 on two
+  engines, with the symmetric-cladding negative control). Recorded artifacts
+  ship with PROVENANCE notes so every notebook reproduces for free.
+- **Visualization toolkit** (`gds_fdtd.plotting`): `plot_component` (geometry +
+  auto-detected ports + FDTD region), `plot_tech_stack`, `plot_permittivity`,
+  `plot_mode`, `smatrix_summary`, and `plot_field` with linear and log (dB)
+  scales; every solver's `plot_fields()` gained a `scale=` argument and draws
+  on the engine's true (non-uniform) grid. `gds_fdtd.modes.waveguide_mode`
+  solves strip modes offline via tidy3d's local plugin.
+- **Documentation overhaul**: the API reference now covers the whole public
+  surface (27 module pages, grouped by topic); new frontends guide (what a
+  frontend is, the built-ins, and how to write your own — verified example);
+  the technology page rebuilt around the three material sources and
+  refractiveindex.info; real figures throughout; sphinx-design landing page.
+- **Top-level API exports**: `from gds_fdtd import Technology, SimulationSpec,
+  get_solver` (joining `SMatrix` and the geometry classes).
+- **Convenience install extras**: `pip install gds_fdtd[all]` (every engine +
+  frontend) and `[engines]` (tidy3d + beamz).
+- **Property-based tests** (hypothesis, new dev dependency) for the numeric
+  core — S-matrix I/O round-trips, reciprocity/passivity invariants,
+  port-extension geometry, technology v1↔v2 equivalence — plus a real beamz
+  end-to-end test (slow-marked) in the CI all-extras leg. All-extras branch
+  coverage rose 81% → 90.2%; the CI gate ratcheted 80 → 90.
+- A written **deprecation policy** (CONTRIBUTING.md): two-minor-release
+  window, `DeprecationWarning` + CHANGELOG + a warning-asserting test.
 
 ### Fixed
 - `SMatrix.from_entries` (and therefore `SMatrix.from_dat`) rejected a
@@ -82,6 +113,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   malformed `.dat` claiming a ~10**6 mode id tried to allocate 623 TiB and
   raised `MemoryError`. It now raises a clean `ValueError` (found by the new
   `.dat` fuzz target).
+- `compare_smatrices`/`max_delta_db` no longer return `+inf` when one engine
+  has a dead (all-zero) column: values are clamped to the floor and compared
+  in dB, so partial results read as a bounded disagreement.
+- The tidy3d adapter crashed on lossy constant materials (`nk` with k > 0) by
+  building a complex permittivity; both call sites now use `Medium.from_nk`
+  (found live by the air-clad PSR run, whose superstrate is `nk: 1.0`).
+- beamz now honors `spec.buffer` and `spec.z_min`/`z_max` whenever they exceed
+  its physical guard-band floors (computed over all device layers, so
+  multilayer stacks get full clearance); default jobs are bit-identical.
+- Field plots render on the engine's true grid coordinates: tidy3d's adaptive
+  mesh drawn with a uniform `imshow` stretched the finely-meshed core ~2× and
+  made the waveguide look wider than simulated (setup-parity audit, example
+  06). All field figures and `plot_fields` now use `pcolormesh`.
+- `lyprocessor` port detection: a >2-point pin path *returned* an exception
+  instead of raising it, diagonal pins fell through silently, and an unlabeled
+  pin produced a `None` port name — all three now raise `LayoutError` (caught
+  by the whole-package strict-typing pass).
+- The tidy3d workdir now defaults under the current directory instead of the
+  system temp dir (often a small RAM-backed tmpfs), and result downloads are
+  routed there too — multi-GB field downloads no longer die with
+  `OSError 28: No space left on device`.
+- `smatrix_summary` uses an engineering reciprocity/passivity tolerance
+  (1e-2) suited to real FDTD output instead of flagging every physical result.
 
 ### Changed
 - (BREAKING) Renamed the technology-to-dict method: `Technology.to_legacy_dict()`
@@ -98,8 +152,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Tidy3DSolver` adapter is the only entry point; the engine base no longer
   imports the legacy `core.technology` type (it took the modern `Technology`
   in practice). No public API changed — all of these names are internal.
-- `mypy --strict` is now enforced on 13 modules (was 5), covering the whole
-  modern core; two latent type bugs were fixed in the process.
+- Errors raised on user-input paths (files, tech dicts, layouts, jobs,
+  results I/O) now derive from the `GdsFdtdError` hierarchy — including the
+  new `SMatrixError` — while dual-inheriting the builtin they replaced
+  (`ValueError`, `RuntimeError`, …), so existing `except` clauses keep
+  working. `materials.rii`'s missing-page error changed base from
+  `FileNotFoundError` to `TechnologyError` (still a `ValueError`).
+- `mypy --strict` now passes on the **whole package** (34 files) and is a
+  required CI gate (was: 13-module core + advisory rest).
+- The internal `_sparams` module logs through the package logger instead of
+  printing (library etiquette: silent unless logging is configured).
+- One unified project description across pyproject/README/docs.
 
 ### Security
 - Branch protection enabled on `main`; solo-friendly (PR + green CI +
