@@ -20,7 +20,6 @@ import tempfile
 from pathlib import Path
 
 from ..errors import JobValidationError, SolverError, SolverUnavailableError
-from ..plotting import DEFAULT_CMAP
 from ..smatrix import SMatrix
 from .base import (
     ResourceEstimate,
@@ -332,17 +331,20 @@ class LumericalSolver(Solver):
             cost_hint="local compute; requires a Lumerical FDTD license",
         )
 
-    def plot_fields(self, axis: str = "z", savefig: str | None = None):
+    def plot_fields(self, axis: str = "z", scale: str = "linear", savefig: str | None = None):
         """Field profile from the first S-parameter sweep sub-project.
 
         Opens a (headless) lumapi session, loads <name>_sparams/sparams_1.fsp
         written by run(), and plots |E|^2 of the profile monitor at the center
-        frequency. Requires spec.field_monitors to include the axis.
+        frequency. ``scale="db"`` gives a log view (see
+        :func:`gds_fdtd.plotting.plot_field`). Requires spec.field_monitors to
+        include the axis.
         """
         import os
 
-        import matplotlib.pyplot as plt
         import numpy as np
+
+        from ..plotting import plot_field
 
         if axis not in self.spec.field_monitors:
             raise JobValidationError(f"axis {axis!r} was not monitored (spec.field_monitors)")
@@ -370,16 +372,14 @@ class LumericalSolver(Solver):
         mag2 = np.sum(np.abs(E[:, :, 0, fi, :]) ** 2, axis=-1)
         x = np.asarray(res["x"]).squeeze() * 1e6
         y = np.asarray(res["y"]).squeeze() * 1e6
-        fig, ax = plt.subplots(figsize=(9, 5))
-        im = ax.pcolormesh(x, y, mag2.T, shading="auto", cmap=DEFAULT_CMAP)
-        fig.colorbar(im, ax=ax, label="|E|²")
-        ax.set_xlabel("x [µm]")
-        ax.set_ylabel("y [µm]")
-        ax.set_aspect("equal")
-        ax.set_title(f"|E|² (profile_{axis}) — excitation port 1, center frequency")
-        if savefig:
-            fig.savefig(savefig, dpi=150, bbox_inches="tight")
-        return fig, ax
+        return plot_field(
+            mag2.T,
+            x=x,
+            y=y,
+            scale=scale,
+            title=f"|E|² (profile_{axis}), excitation port 1, center frequency",
+            savefig=savefig,
+        )
 
     def run(self) -> SMatrix:
         """Open a lumapi session (license checkout), replay the script, sweep."""

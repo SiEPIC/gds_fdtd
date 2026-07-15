@@ -17,7 +17,13 @@ matplotlib.use("Agg")
 
 from gds_fdtd.lyprocessor import load_cell
 from gds_fdtd.modes import Mode
-from gds_fdtd.plotting import plot_mode, plot_permittivity, plot_tech_stack, smatrix_summary
+from gds_fdtd.plotting import (
+    plot_field,
+    plot_mode,
+    plot_permittivity,
+    plot_tech_stack,
+    smatrix_summary,
+)
 from gds_fdtd.simprocessor import load_component_from_tech
 from gds_fdtd.smatrix import SMatrix
 from gds_fdtd.technology import Technology
@@ -118,6 +124,23 @@ def test_plot_mode_total_and_component():
 def test_plot_mode_rejects_unknown_field():
     with pytest.raises(ValueError, match="unknown field"):
         plot_mode(_synthetic_mode(), field="Q")
+
+
+def test_plot_field_linear_and_db():
+    mag2 = (np.random.default_rng(0).random((30, 40))) ** 2
+    # linear: normalized to peak, imshow via extent, clim 0..1
+    _, ax = plot_field(mag2, extent=(0, 4, 0, 3), scale="linear")
+    assert len(ax.images) == 1
+    assert ax.images[0].get_clim() == (0.0, 1.0)
+    # db: pcolormesh on true coords, clim floor_db..0
+    _, ax2 = plot_field(mag2, x=np.arange(40), y=np.arange(30), scale="db", floor_db=-25)
+    assert len(ax2.collections) == 1 and len(ax2.images) == 0
+    assert ax2.collections[0].get_clim() == (-25.0, 0.0)
+
+
+def test_plot_field_rejects_unknown_scale():
+    with pytest.raises(ValueError, match="scale must be one of"):
+        plot_field(np.ones((4, 4)), scale="log10")
 
 
 def test_waveguide_mode_canonical_soi_strip():

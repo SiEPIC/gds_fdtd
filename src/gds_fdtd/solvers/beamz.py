@@ -33,7 +33,6 @@ from __future__ import annotations
 import numpy as np
 
 from ..errors import JobValidationError
-from ..plotting import DEFAULT_CMAP
 from ..smatrix import SMatrix
 from .base import (
     ResourceEstimate,
@@ -529,9 +528,13 @@ class BeamzSolver(Solver):
             cost_hint="free local compute (JAX; CPU works, GPU if available)",
         )
 
-    def plot_fields(self, axis: str = "z", savefig: str | None = None):
-        """``|E|²`` profile at the core-center z-plane (first excitation)."""
-        import matplotlib.pyplot as plt
+    def plot_fields(self, axis: str = "z", scale: str = "linear", savefig: str | None = None):
+        """``|E|²`` profile at the core-center z-plane (first excitation).
+
+        ``scale="db"`` renders a log view that reveals weak radiation; see
+        :func:`gds_fdtd.plotting.plot_field`.
+        """
+        from ..plotting import plot_field
 
         if axis != "z":
             raise JobValidationError("BeamzSolver v1 records the z-plane profile only")
@@ -540,23 +543,15 @@ class BeamzSolver(Solver):
             raise RuntimeError(
                 "no field data: include 'z' in spec.field_monitors and call run() first"
             )
-        mag2 = sum(np.abs(np.squeeze(v)) ** 2 for v in fields.values())
+        mag2 = sum(np.abs(np.squeeze(v)) ** 2 for v in fields.values())  # rows already y
         meta = self._field_z_meta
-        fig, ax = plt.subplots(figsize=(9, 5))
-        im = ax.imshow(
-            np.asarray(mag2),  # rows are already y (see reshape note in run())
-            origin="lower",
+        return plot_field(
+            np.asarray(mag2),
             extent=(0, meta["width_um"], 0, meta["height_um"]),
-            cmap=DEFAULT_CMAP,
-            aspect="equal",
+            scale=scale,
+            title=f"|E|² (z-plane), excitation {meta['source']}, center frequency",
+            savefig=savefig,
         )
-        fig.colorbar(im, ax=ax, label="|E|²")
-        ax.set_xlabel("x [µm]")
-        ax.set_ylabel("y [µm]")
-        ax.set_title(f"|E|² (z-plane) — excitation {meta['source']}, center frequency")
-        if savefig:
-            fig.savefig(savefig, dpi=150, bbox_inches="tight")
-        return fig, ax
 
     def run(self) -> SMatrix:
         """One FDTD run per excited port; full S-matrix via modal DFT extraction."""

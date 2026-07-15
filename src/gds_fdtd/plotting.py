@@ -575,6 +575,87 @@ def smatrix_summary(
     }
 
 
+def plot_field(
+    mag2: Any,
+    x: Any = None,
+    y: Any = None,
+    *,
+    ax: Any = None,
+    scale: str = "linear",
+    floor_db: float = -40.0,
+    cmap: Any = None,
+    colorbar: bool = True,
+    title: str | None = None,
+    extent: Any = None,
+    savefig: str | None = None,
+) -> tuple[Any, Any]:
+    """Plot a 2-D field-intensity map (``|E|²``) in linear or dB scale.
+
+    The one field renderer every solver's :meth:`plot_fields` routes through, so
+    a ``scale="db"`` log view is available consistently across engines.
+
+    Args:
+        mag2: 2-D array of ``|E|²``, oriented ``[row = y, col = x]`` (the
+            convention ``pcolormesh``/``imshow`` expect).
+        x, y: optional 1-D coordinate vectors (µm). When given, the field is
+            drawn on its **true grid** with ``pcolormesh`` — correct for the
+            non-uniform adaptive meshes tidy3d and Lumerical use. When omitted,
+            ``extent`` (``(x0, x1, y0, y1)``) sets a uniform axis via ``imshow``.
+        ax: existing matplotlib axes (optional).
+        scale: ``"linear"`` shows ``|E|²`` normalized to its peak; ``"db"`` shows
+            ``10·log10(|E|²/peak)`` clipped at ``floor_db``, which reveals the
+            weak radiation and crosstalk a linear scale washes out.
+        floor_db: lower limit (dB) for ``scale="db"``.
+        cmap: colormap; defaults to the package :data:`DEFAULT_CMAP`.
+        colorbar: draw the colorbar.
+        title: axes title.
+        extent: ``(x0, x1, y0, y1)`` used with ``imshow`` when ``x``/``y`` are
+            not given.
+        savefig: path to write the figure to (optional).
+
+    Returns:
+        (fig, ax)
+    """
+    import matplotlib.pyplot as plt
+
+    valid = ("linear", "db")
+    if scale not in valid:
+        raise ValueError(f"scale must be one of {valid}; got {scale!r}")
+
+    mag2 = np.asarray(mag2, dtype=float)
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 5))
+    else:
+        fig = ax.figure
+    cmap = cmap or DEFAULT_CMAP
+
+    peak = float(np.nanmax(mag2))
+    norm = mag2 / peak if peak > 0 else mag2
+    if scale == "db":
+        with np.errstate(divide="ignore", invalid="ignore"):
+            data = 10.0 * np.log10(np.clip(norm, 10 ** (floor_db / 10.0), 1.0))
+        vmin, vmax, clabel = floor_db, 0.0, "|E|² [dB]"
+    else:
+        data, vmin, vmax, clabel = norm, 0.0, 1.0, "|E|² (norm)"
+
+    if x is not None and y is not None:
+        im = ax.pcolormesh(
+            np.asarray(x), np.asarray(y), data, shading="nearest", cmap=cmap, vmin=vmin, vmax=vmax
+        )
+    else:
+        im = ax.imshow(data, origin="lower", extent=extent, cmap=cmap, vmin=vmin, vmax=vmax)
+    ax.set_aspect("equal")
+    if colorbar:
+        fig.colorbar(im, ax=ax, label=clabel)
+    ax.set_xlabel("x [µm]")
+    ax.set_ylabel("y [µm]")
+    if title:
+        ax.set_title(title)
+    if savefig:
+        fig.savefig(savefig, dpi=150, bbox_inches="tight")
+    return fig, ax
+
+
 def plot_mode(
     mode: Mode, field: str = "E", ax: Any = None, savefig: str | None = None
 ) -> tuple[Any, Any]:
