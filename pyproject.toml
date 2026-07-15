@@ -37,7 +37,7 @@ dependencies = [
   "shapely>=2.0",
   "PyYAML>=6.0",
   "pydantic>=2.7",
-  "pydantic-settings>=2.4"
+  "pydantic-settings>=2.14.2"
 ]
 
 # ──────────────── optional feature / tool sets ────────────────
