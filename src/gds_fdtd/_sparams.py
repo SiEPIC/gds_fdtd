@@ -337,30 +337,30 @@ class sparameters:
                 input_port_groups[group_key]["non_zero"].append(data)
 
         if verbose:
-            print(f"=== S-Parameter Excitation Analysis for {self.name} ===")
-            print(f"Total entries: {len(self.data)}")
-            print(f"Non-zero entries: {len(non_zero_entries)}")
-            print(f"Zero entries: {len(zero_entries)}")
+            logger.info(f"=== S-Parameter Excitation Analysis for {self.name} ===")
+            logger.info(f"Total entries: {len(self.data)}")
+            logger.info(f"Non-zero entries: {len(non_zero_entries)}")
+            logger.info(f"Zero entries: {len(zero_entries)}")
 
-            print("\nBy Input Port:")
+            logger.info("\nBy Input Port:")
             for input_port in sorted(input_port_groups.keys()):
                 zero_count = len(input_port_groups[input_port]["zero"])
                 non_zero_count = len(input_port_groups[input_port]["non_zero"])
                 total_count = zero_count + non_zero_count
 
-                print(
+                logger.info(
                     f"  {input_port}: {total_count} total ({non_zero_count} non-zero, {zero_count} zero)"
                 )
 
                 if zero_count > 0:
                     zero_idns = [d.idn for d in input_port_groups[input_port]["zero"]]
-                    print(
+                    logger.info(
                         f"    ⚠️  WARNING: {zero_count} zero entries found for input port {input_port}"
                     )
                     if zero_count <= 8:  # Show all if not too many
-                        print(f"         Zero IDNs: {sorted(zero_idns)}")
+                        logger.info(f"         Zero IDNs: {sorted(zero_idns)}")
                     else:  # Show sample if many
-                        print(f"         Sample zero IDNs: {sorted(zero_idns)[:8]}...")
+                        logger.info(f"         Sample zero IDNs: {sorted(zero_idns)[:8]}...")
 
         return {
             "zero_entries": zero_entries,
@@ -445,36 +445,36 @@ class sparameters:
         unexpected_non_zero = [idn for idn in actual_non_zero_idns if idn not in expected_idns]
 
         if verbose:
-            print(f"=== Excitation Validation for {self.name} ===")
-            print(
+            logger.info(f"=== Excitation Validation for {self.name} ===")
+            logger.info(
                 f"Expected excitations: {expected_excited_ports} with modes {expected_excited_modes}"
             )
-            print(f"Expected IDNs: {len(expected_idns)}")
-            print(f"Actual non-zero IDNs: {len(actual_non_zero_idns)}")
+            logger.info(f"Expected IDNs: {len(expected_idns)}")
+            logger.info(f"Actual non-zero IDNs: {len(actual_non_zero_idns)}")
 
-            print(f"\nExpected and found non-zero: {len(expected_and_found)}")
+            logger.info(f"\nExpected and found non-zero: {len(expected_and_found)}")
             if expected_and_found and len(expected_and_found) <= 16:
-                print(f"   {sorted(expected_and_found)}")
+                logger.info(f"   {sorted(expected_and_found)}")
             elif expected_and_found:
-                print(f"   Sample: {sorted(expected_and_found)[:8]}...")
+                logger.info(f"   Sample: {sorted(expected_and_found)[:8]}...")
 
-            print(f"\n❌ Expected non-zero but found zero: {len(expected_but_zero)}")
+            logger.info(f"\n❌ Expected non-zero but found zero: {len(expected_but_zero)}")
             if expected_but_zero and len(expected_but_zero) <= 16:
-                print(f"   {sorted(expected_but_zero)}")
+                logger.info(f"   {sorted(expected_but_zero)}")
             elif expected_but_zero:
-                print(f"   Sample: {sorted(expected_but_zero)[:8]}...")
+                logger.info(f"   Sample: {sorted(expected_but_zero)[:8]}...")
 
-            print(f"\n⚠️  Unexpected non-zero entries: {len(unexpected_non_zero)}")
+            logger.info(f"\n⚠️  Unexpected non-zero entries: {len(unexpected_non_zero)}")
             if unexpected_non_zero and len(unexpected_non_zero) <= 16:
-                print(f"   {sorted(unexpected_non_zero)}")
+                logger.info(f"   {sorted(unexpected_non_zero)}")
             elif unexpected_non_zero:
-                print(f"   Sample: {sorted(unexpected_non_zero)[:8]}...")
+                logger.info(f"   Sample: {sorted(unexpected_non_zero)[:8]}...")
 
             if unexpected_non_zero:
-                print("\n⚠️  WARNING: Found excitations at unexpected ports/modes!")
-                print("   This suggests the simulation included more inputs than expected.")
+                logger.info("\n⚠️  WARNING: Found excitations at unexpected ports/modes!")
+                logger.info("   This suggests the simulation included more inputs than expected.")
             else:
-                print("\nAll non-zero entries match expected excitations.")
+                logger.info("\nAll non-zero entries match expected excitations.")
 
         return {
             "expected_idns": expected_idns,
