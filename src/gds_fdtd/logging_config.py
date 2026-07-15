@@ -7,11 +7,11 @@ Provides centralized logging setup with file output to working directory.
 
 import json
 import logging
-from typing import Any
 import os
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 
 class JsonFormatter(logging.Formatter):
