@@ -277,9 +277,9 @@ def test_cli_convert_npz_to_touchstone_and_back(tmp_path):
 
 
 def test_cli_run_unavailable_engine(tmp_path):
-    from gds_fdtd.cli import main
-
     import json
+
+    from gds_fdtd.cli import main
 
     job = tmp_path / "job.json"
     job.write_text(
