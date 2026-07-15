@@ -1001,7 +1001,7 @@ requires-dist = [
     { name = "tidy3d", marker = "extra == 'engines'", specifier = ">=2.11,<3" },
     { name = "tidy3d", marker = "extra == 'tidy3d'", specifier = ">=2.11,<3" },
     { name = "twine", marker = "extra == 'dev'", specifier = ">=4.0.2" },
-    { name = "watchdog", marker = "extra == 'dev'", specifier = ">=3.0.0" },
+    { name = "watchdog", marker = "extra == 'dev'", specifier = ">=6.0.0" },
     { name = "wheel", marker = "extra == 'dev'", specifier = ">=0.42.0" },
 ]
 provides-extras = ["all", "beamz", "dev", "docs", "engines", "fuzz", "gdsfactory", "prefab", "siepic", "tidy3d"]
