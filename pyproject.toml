@@ -69,6 +69,7 @@ dev = [
   "ruff>=0.4.3",
   "codespell>=2.3",  # same spell check the CI prek hooks run
   "mypy>=1.10",
+  "hypothesis>=6.100",  # property-based tests for the numeric core (WS2)
   "h5py>=3.10",  # SMatrix HDF5 I/O tests (optional at runtime)
 ]
 
@@ -117,11 +118,12 @@ markers = [
 branch = true
 
 [tool.coverage.report]
-# Two honest numbers (v0.5 release sprint, 2026-07-08, measured in CI):
-#   base profile (no engine extras installed): 75.28% - engine adapters
-#     genuinely cannot execute here; this is the floor below.
-#   all-extras (the full package): 81.05% - the CI all-extras leg enforces
-#     >= 80 via --cov-fail-under=80, and codecov reports THIS number.
+# Two honest numbers (WS2 coverage arc, 2026-07-15, measured locally with
+# every extra installed; CI adds the no-lumapi probe path on top):
+#   base profile (no engine extras installed): the engine adapters genuinely
+#     cannot execute there; the floor below guards it.
+#   all-extras (the full package): 90.2% branch - the CI all-extras leg
+#     enforces >= 90 via --cov-fail-under=90, and codecov reports THIS number.
 # Ratchet upward only.
 fail_under = 75
 exclude_also = [

@@ -76,7 +76,7 @@ jobs:
         run: >
           uv run pytest -m "not physics and not gpu and not cloud and not licensed"
           --cov=gds_fdtd --cov-branch --cov-report=xml
-          ${{ matrix.profile == 'all-extras' && '--cov-fail-under=80' || '' }}
+          ${{ matrix.profile == 'all-extras' && '--cov-fail-under=90' || '' }}
           tests
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13' && matrix.profile == 'all-extras' # badge = the full package
