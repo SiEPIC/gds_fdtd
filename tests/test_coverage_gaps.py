@@ -279,18 +279,19 @@ def test_cli_convert_npz_to_touchstone_and_back(tmp_path):
 def test_cli_run_unavailable_engine(tmp_path):
     from gds_fdtd.cli import main
 
+    import json
+
     job = tmp_path / "job.json"
     job.write_text(
-        """
-        {
-          "gds_path": "%s",
-          "top_cell": "si_sin_escalator",
-          "technology_path": "%s",
-          "solver": "not_a_real_engine",
-          "spec": {"wavelength_points": 3}
-        }
-        """
-        % (TESTS_DIR / "si_sin_escalator.gds", TESTS_DIR / "tech_lumerical.yaml")
+        json.dumps(  # json.dumps escapes Windows path backslashes correctly
+            {
+                "gds_path": str(TESTS_DIR / "si_sin_escalator.gds"),
+                "top_cell": "si_sin_escalator",
+                "technology_path": str(TESTS_DIR / "tech_lumerical.yaml"),
+                "solver": "not_a_real_engine",
+                "spec": {"wavelength_points": 3},
+            }
+        )
     )
     assert main(["run", str(job), "--out", str(tmp_path)]) == 3  # EXIT_UNAVAILABLE
 
