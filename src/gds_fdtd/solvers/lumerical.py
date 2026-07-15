@@ -18,6 +18,7 @@ from __future__ import annotations
 import os
 import tempfile
 from pathlib import Path
+from typing import Any, cast
 
 from ..errors import JobValidationError, SolverError, SolverUnavailableError
 from ..smatrix import SMatrix
@@ -77,7 +78,7 @@ class LumericalSolver(Solver):
         cost_model="licensed",
     )
 
-    def __init__(self, *args, gpu: bool = False, **kwargs):
+    def __init__(self, *args: Any, gpu: bool = False, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.gpu = gpu
 
@@ -100,9 +101,12 @@ class LumericalSolver(Solver):
         problems += check_materials(self._tech_dict(), "lumerical")
         return problems
 
-    def _tech_dict(self) -> dict:
+    def _tech_dict(self) -> dict[str, Any]:
         t = self.technology
-        return t.to_solver_dict() if hasattr(t, "to_solver_dict") else t
+        if t is None:  # validate() reports this; keep the type honest
+            return {}
+        out = t.to_solver_dict() if hasattr(t, "to_solver_dict") else t
+        return cast("dict[str, Any]", out)
 
     def build(self) -> SetupArtifacts:
         """Export the GDS and generate the full .lsf setup script (offline)."""
@@ -137,7 +141,7 @@ class LumericalSolver(Solver):
         )
         return self._artifacts
 
-    def _lum_material(self, material: dict, hint: str) -> tuple[list[str], str]:
+    def _lum_material(self, material: dict[str, Any], hint: str) -> tuple[list[str], str]:
         """(.lsf lines defining the material, its name) for this material's
         selected source (see gds_fdtd.materials.select).
 
@@ -331,7 +335,9 @@ class LumericalSolver(Solver):
             cost_hint="local compute; requires a Lumerical FDTD license",
         )
 
-    def plot_fields(self, axis: str = "z", scale: str = "linear", savefig: str | None = None):
+    def plot_fields(
+        self, axis: str = "z", scale: str = "linear", savefig: str | None = None
+    ) -> tuple[Any, Any]:
         """Field profile from the first S-parameter sweep sub-project.
 
         Opens a (headless) lumapi session, loads <name>_sparams/sparams_1.fsp
@@ -388,14 +394,13 @@ class LumericalSolver(Solver):
             raise SolverUnavailableError(f"cannot run: {reason}")
         import lumapi
 
-        if self._artifacts is None:
-            self.build()
-        workdir = self._artifacts.summary["workdir"]
+        artifacts = self._artifacts if self._artifacts is not None else self.build()
+        workdir = artifacts.summary["workdir"]
 
         fdtd = lumapi.FDTD(hide=True)
         try:
             fdtd.cd(workdir)
-            fdtd.eval(self._artifacts.native)
+            fdtd.eval(artifacts.native)
 
             # device type: 2025 syntax first, 2024 fallback (finding F7)
             device = "GPU" if self.gpu else "CPU"
@@ -413,5 +418,4 @@ class LumericalSolver(Solver):
         from .._sparams import process_dat
 
         spar = process_dat(dat_path, verbose=False)
-        sm = spar.to_smatrix(name=self.component.name)
-        return sm
+        return cast(SMatrix, spar.to_smatrix(name=self.component.name))

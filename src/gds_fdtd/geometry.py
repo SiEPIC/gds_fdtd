@@ -107,7 +107,7 @@ class Port:
         width (float): Width of the port. Convention is in microns.
         direction (float): Direction of the port. Convention is in degrees. Directions supported are 0, 90, 180, 270.
         height (float): Height of the port, assigned during component initialization. Convention is in microns.
-        material (str): Material of the port, assigned during component initialization.
+        material: Material of the port (name or resolved mapping), assigned during component initialization.
         layer (list[int]): GDS layer information [layer_number, datatype], assigned during component initialization.
     """
 
@@ -223,7 +223,7 @@ class Structure:
         polygon: list[list[float]],
         z_base: float,
         z_span: float,
-        material: str,
+        material: object,
         sidewall_angle: float = 90.0,
         layer: list[int] | None = None,
         role: str = "device",

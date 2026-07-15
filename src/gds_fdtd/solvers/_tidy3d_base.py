@@ -241,13 +241,13 @@ class _TidyEngineBase:
         if self.field_monitors:
             self.logger.debug(f"Field monitors requested: {self.field_monitors}")
 
-    def _export_gds(self):
+    def _export_gds(self) -> None:
         """Export the component GDS to the working directory."""
         self._gds_filename = f"{self.component.name}.gds"
         self._gds_filepath = os.path.join(self.working_dir, self._gds_filename)
         self.component.export_gds(export_dir=self.working_dir, buffer=2 * self.buffer)
 
-    def _calculate_simulation_domain(self):
+    def _calculate_simulation_domain(self) -> None:
         """Calculate the simulation domain center and span from the component geometry."""
         # This is a placeholder implementation - you'll need to adjust based on your component structure
         # Assuming component has a bounding box method or similar geometry information

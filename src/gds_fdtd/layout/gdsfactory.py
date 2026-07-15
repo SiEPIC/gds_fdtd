@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import logging
 import re
+from typing import Any
 
 import numpy as np
 
@@ -44,7 +45,7 @@ def _snap_orientation(orientation: float, port_name: str) -> int:
     )
 
 
-def _port_layer_tuple(port) -> tuple[int, int]:
+def _port_layer_tuple(port: Any) -> tuple[int, int]:
     """GDS (layer, datatype) of a gf 9 port via its kdb.LayerInfo."""
     info = port.layer_info
     return (int(info.layer), int(info.datatype))
@@ -58,7 +59,7 @@ def _ensure_trailing_digits(name: str, fallback_index: int) -> str:
     return new
 
 
-def from_gdsfactory(c, tech, z_span: float = 4.0) -> Component:
+def from_gdsfactory(c: Any, tech: Any, z_span: float = 4.0) -> Component:
     """Convert a gdsfactory (>=9) Component into a gds_fdtd Component.
 
     Args:
@@ -150,7 +151,7 @@ def from_gdsfactory(c, tech, z_span: float = 4.0) -> Component:
     y_lo = bb.bottom - _side_margin(bb.bottom, 1, -1)
     y_hi = bb.top + _side_margin(bb.top, 1, +1)
     vertices = [[x_lo, y_lo], [x_hi, y_lo], [x_hi, y_hi], [x_lo, y_hi]]
-    z_by_layer: dict[tuple, float] = {}
+    z_by_layer: dict[tuple[int, ...], float] = {}
     for s in structures:
         z_by_layer.setdefault(tuple(s.layer), s.z_base + s.z_span / 2)
     z_center = float(np.average(list(z_by_layer.values())))
@@ -184,5 +185,5 @@ def from_gdsfactory(c, tech, z_span: float = 4.0) -> Component:
     # keep the source component around: engines with native gdsfactory
     # pipelines (beamz) pick it up automatically, so solver setup stays
     # identical across engines — get_solver(name)(component, tech, spec)
-    component.gf_component = c
+    component.gf_component = c  # type: ignore[attr-defined]  # dynamic engine hint (see beamz)
     return component

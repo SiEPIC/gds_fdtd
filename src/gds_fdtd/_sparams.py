@@ -11,6 +11,7 @@ of the public API — use ``gds_fdtd.smatrix.SMatrix``.
 import logging
 import os
 import re
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,7 +19,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def _number_of(value) -> int:
+def _number_of(value: int | str) -> int:
     """Derive a port/mode number from an int or a name with trailing digits.
 
     "opt1" -> 1, "port 12" -> 12, 3 -> 3. Trailing digits only — never digit
@@ -37,17 +38,17 @@ class s:
 
     def __init__(
         self,
-        f: list,
-        s_mag: list,
-        s_phase: list,
-        in_port: int = 1,
-        out_port: int = 1,
-        mode_label: int = 1,
-        in_modeid: int = 1,
-        out_modeid: int = 1,
-        data_type: int = 1,
+        f: list[float],
+        s_mag: list[float],
+        s_phase: list[float],
+        in_port: int | str = 1,
+        out_port: int | str = 1,
+        mode_label: int | str = 1,
+        in_modeid: int | str = 1,
+        out_modeid: int | str = 1,
+        data_type: int | str = 1,
         group_delay: float = 0.0,
-    ):
+    ) -> None:
         self.in_port = in_port
         self.out_port = out_port
         self.mode_label = mode_label
@@ -61,7 +62,7 @@ class s:
         return
 
     @property
-    def wavl(self):
+    def wavl(self) -> np.ndarray:
         c = 299792458
         return c / np.array(self.f)
 
@@ -82,18 +83,18 @@ class s:
         return _number_of(self.out_modeid)
 
     @property
-    def idn_ports(self):
+    def idn_ports(self) -> str:
         return f"{self.out_port_num}{self.in_port_num}"
 
     @property
-    def idn_modes(self):
+    def idn_modes(self) -> str:
         return f"{self.out_mode_num}{self.in_mode_num}"
 
     @property
-    def idn(self):
+    def idn(self) -> str:
         return f"{self.idn_ports}_{self.idn_modes}"
 
-    def plot(self):
+    def plot(self) -> tuple[Any, Any]:
         c = 299792458
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.set_xlabel("Wavelength [microns]")
@@ -108,7 +109,7 @@ class s:
 class port:
     """Component port abstraction class."""
 
-    def __init__(self, name, direction):
+    def __init__(self, name: str, direction: str) -> None:
         self.name = name
         self.direction = direction
 
@@ -123,11 +124,11 @@ class sparameters:
             name (_type_): _description_
         """
         self.name = name
-        self.ports = []
-        self.data = []
+        self.ports: list[port] = []
+        self.data: list[s] = []
         return
 
-    def add_port(self, port_name: str, port_direction: str):
+    def add_port(self, port_name: str, port_direction: str) -> None:
         """
         Add a port to the component s-parameters.
 
@@ -147,17 +148,17 @@ class sparameters:
 
     def add_data(
         self,
-        in_port: str,
-        out_port: str,
-        mode_label: int,
-        in_modeid: int,
-        out_modeid: int,
-        data_type: str,
+        in_port: int | str,
+        out_port: int | str,
+        mode_label: int | str,
+        in_modeid: int | str,
+        out_modeid: int | str,
+        data_type: int | str,
         group_delay: float,
-        f: list,
-        s_mag: list,
-        s_phase: list,
-    ):
+        f: list[float],
+        s_mag: list[float],
+        s_phase: list[float],
+    ) -> None:
         """
         Add an S-parameter dataset.
 
@@ -204,19 +205,20 @@ class sparameters:
         self.data.append(data)
 
     @property
-    def wavelength(self):
+    def wavelength(self) -> np.ndarray | None:
         c = 299792458
         # fetch wavelength from first available s parameter
         for d in self.data:
             return 1e6 * c / np.array(d.f)  # convert to microns
+        return None
 
     def S(
         self,
-        in_port: int = 1,
-        out_port: int = 1,
-        in_modeid: int = 1,
-        out_modeid: int = 1,
-    ) -> s:
+        in_port: int | str = 1,
+        out_port: int | str = 1,
+        in_modeid: int | str = 1,
+        out_modeid: int | str = 1,
+    ) -> s | None:
         """fetches the specified S parameter entry
 
         Args:
@@ -237,8 +239,9 @@ class sparameters:
             ):
                 return d
         logger.warning("Cannot find specified S-parameter entry.")
+        return None
 
-    def plot(self, plot_type: str = "log"):
+    def plot(self, plot_type: str = "log") -> None:
         valid_plots = ["log", "phase", "linear"]
         if plot_type not in valid_plots:
             logging.warning(
@@ -274,7 +277,7 @@ class sparameters:
         else:
             logging.error("No valid data to visualize")
 
-    def to_smatrix(self, name: str | None = None):
+    def to_smatrix(self, name: str | None = None) -> Any:
         """Convert to the canonical gds_fdtd.smatrix.SMatrix.
 
         Magnitude/phase entries become complex amplitudes; port names are
@@ -294,7 +297,7 @@ class sparameters:
             )
         return SMatrix.from_entries(entries, name=name or self.name)
 
-    def analyze_excitations(self, threshold: float = 1e-10, verbose: bool = True):
+    def analyze_excitations(self, threshold: float = 1e-10, verbose: bool = True) -> dict[str, Any]:
         """
         Analyze S-parameter data to identify zero vs non-zero entries.
 
@@ -313,13 +316,14 @@ class sparameters:
         """
         zero_entries = []
         non_zero_entries = []
-        input_port_groups = {}
+        input_port_groups: dict[str, dict[str, list[s]]] = {}
 
         # Categorize entries
         for data in self.data:
             # Group by input port
-            if data.in_port not in input_port_groups:
-                input_port_groups[data.in_port] = {"zero": [], "non_zero": []}
+            group_key = str(data.in_port)
+            if group_key not in input_port_groups:
+                input_port_groups[group_key] = {"zero": [], "non_zero": []}
 
             # Check if entry is effectively zero
             max_mag = max(abs(mag) for mag in data.s_mag) if data.s_mag else 0
@@ -327,10 +331,10 @@ class sparameters:
 
             if is_zero:
                 zero_entries.append(data)
-                input_port_groups[data.in_port]["zero"].append(data)
+                input_port_groups[group_key]["zero"].append(data)
             else:
                 non_zero_entries.append(data)
-                input_port_groups[data.in_port]["non_zero"].append(data)
+                input_port_groups[group_key]["non_zero"].append(data)
 
         if verbose:
             print(f"=== S-Parameter Excitation Analysis for {self.name} ===")
@@ -364,7 +368,9 @@ class sparameters:
             "input_port_summary": input_port_groups,
         }
 
-    def get_expected_excitations(self, excited_ports: list, excited_modes: list):
+    def get_expected_excitations(
+        self, excited_ports: list[int | str], excited_modes: list[int | str]
+    ) -> list[str]:
         """
         Get the expected S-parameter IDNs if only specific ports and modes were excited.
 
@@ -401,11 +407,11 @@ class sparameters:
 
     def validate_excitations(
         self,
-        expected_excited_ports: list,
-        expected_excited_modes: list,
+        expected_excited_ports: list[int | str],
+        expected_excited_modes: list[int | str],
         threshold: float = 1e-10,
         verbose: bool = True,
-    ):
+    ) -> dict[str, Any]:
         """
         Validate which ports and modes were actually excited vs expected.
 
@@ -480,7 +486,7 @@ class sparameters:
         }
 
 
-def process_dat(file_path: str, name: str | None = None, verbose: bool = True):
+def process_dat(file_path: str, name: str | None = None, verbose: bool = True) -> sparameters:
     """
     Process a .dat s-parameters file into a sparameters object.
 
@@ -538,15 +544,15 @@ def process_dat(file_path: str, name: str | None = None, verbose: bool = True):
                 # parse the data set
                 i += 1
                 num_points, _ = map(int, lines[i].strip().strip("()").split(","))
-                freq_data = []
+                freq_data: list[tuple[float, float, float]] = []
                 for _ in range(num_points):
                     i += 1
-                    f, s_mag, s_phase = map(float, lines[i].strip().split())
-                    freq_data.append((f, s_mag, s_phase))
+                    f_hz, mag_v, phase_v = map(float, lines[i].strip().split())
+                    freq_data.append((f_hz, mag_v, phase_v))
 
-                f = [i[0] for i in freq_data]  # first column in dat
-                s_mag = [i[1] for i in freq_data]  # second column in dat
-                s_phase = [i[2] for i in freq_data]  # third column in dat
+                freqs = [row[0] for row in freq_data]  # first column in dat
+                mags = [row[1] for row in freq_data]  # second column in dat
+                phases = [row[2] for row in freq_data]  # third column in dat
 
                 spar.add_data(
                     input_port,  # Input port (excitation)
@@ -556,9 +562,9 @@ def process_dat(file_path: str, name: str | None = None, verbose: bool = True):
                     int(output_modeid),  # Convert to integer
                     data_type,
                     0.0,  # Group delay set to 0.0 (not provided in this format)
-                    f,
-                    s_mag,
-                    s_phase,
+                    freqs,
+                    mags,
+                    phases,
                 )
 
             i += 1

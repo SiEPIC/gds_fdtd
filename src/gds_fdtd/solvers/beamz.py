@@ -30,6 +30,8 @@ its own compact-model reference example, which is the UBC SiEPIC crossing):
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any, cast
+
 import numpy as np
 
 from ..errors import JobValidationError, SolverError
@@ -41,6 +43,9 @@ from .base import (
     SolverCapabilities,
     register_solver,
 )
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from ..geometry import Component, Port
 
 UM = 1e-6
 C_M_S = 299792458.0
@@ -69,7 +74,9 @@ def probe_beamz() -> str | None:
         return f"beamz not importable: {e}"
 
 
-def _move_along(center, direction: str, distance: float):
+def _move_along(
+    center: tuple[float, float], direction: str, distance: float
+) -> tuple[float, float]:
     x, y = center
     return {
         "+x": (x + distance, y),
@@ -79,7 +86,9 @@ def _move_along(center, direction: str, distance: float):
     }[str(direction)]
 
 
-def _port_plane(port: dict, *, span: float, z_span: float, z_center: float, offset: float = 0.0):
+def _port_plane(
+    port: dict[str, Any], *, span: float, z_span: float, z_center: float, offset: float = 0.0
+) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
     """(start, end) corner points of a port-normal plane (beamz convention)."""
     cx, cy = _move_along(port["center"], port["direction"], offset)
     z0, z1 = float(z_center) - 0.5 * float(z_span), float(z_center) + 0.5 * float(z_span)
@@ -92,7 +101,7 @@ class _ShimPort:
     """Minimal port view that beamz's ``gdsf.load`` accepts (name/orientation/
     center/width), sourced from a gds_fdtd :class:`~gds_fdtd.geometry.Port`."""
 
-    def __init__(self, port):
+    def __init__(self, port: Port) -> None:
         self.name = port.name
         self.orientation = float(port.direction)
         self.center = (float(port.center[0]), float(port.center[1]))
@@ -110,24 +119,26 @@ class _ComponentImportShim:
     inputs. Coordinates are microns on both sides.
     """
 
-    def __init__(self, component, only_ports=None):
+    def __init__(self, component: Component, only_ports: set[str] | None = None) -> None:
         self._component = component
         self.name = component.name
         # optional whitelist of port names to expose — used so beamz's port
         # extension only runs on the ports that live on the layer being prepared
         self._only_ports = only_ports
 
-    def get_polygons_points(self, by: str = "tuple", **_kw) -> dict:
-        polys: dict[tuple[int, int], list] = {}
+    def get_polygons_points(
+        self, by: str = "tuple", **_kw: Any
+    ) -> dict[tuple[int, int], list[list[list[float]]]]:
+        polys: dict[tuple[int, int], list[list[list[float]]]] = {}
         for s in self._component.structures:
             if s.role != "device":
                 continue
-            key = tuple(s.layer)
+            key = (int(s.layer[0]), int(s.layer[1])) if s.layer else (0, 0)
             polys.setdefault(key, []).append([[float(x), float(y)] for x, y in s.polygon])
         return polys
 
     @property
-    def ports(self):
+    def ports(self) -> list[_ShimPort]:
         return [
             _ShimPort(p)
             for p in self._component.ports
@@ -152,12 +163,12 @@ class BeamzSolver(Solver):
 
     def __init__(
         self,
-        *args,
-        gf_component=None,
+        *args: Any,
+        gf_component: Any = None,
         n_core: float | None = None,
         n_clad: float | None = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
         # agnostic setup: components converted via layout.gdsfactory carry
         # their source component; the kwarg remains as an explicit override
@@ -175,13 +186,14 @@ class BeamzSolver(Solver):
 
     # ---------------- helpers ----------------
 
-    def _tech_dict(self) -> dict | None:
+    def _tech_dict(self) -> dict[str, Any] | None:
         t = self.technology
         if t is None:
             return None
-        return t.to_solver_dict() if hasattr(t, "to_solver_dict") else t
+        out = t.to_solver_dict() if hasattr(t, "to_solver_dict") else t
+        return cast("dict[str, Any]", out)
 
-    def _device_layers(self) -> list[dict]:
+    def _device_layers(self) -> list[dict[str, Any]]:
         """Every tech device layer actually present in the component, ordered by
         the tech's ``device`` list.
 
@@ -197,12 +209,14 @@ class BeamzSolver(Solver):
         present = {tuple(s.layer) for s in self.component.structures if s.role == "device"}
         return [d for d in tech["device"] if tuple(d["layer"]) in present]
 
-    def _device_layer(self) -> dict | None:
+    def _device_layer(self) -> dict[str, Any] | None:
         """The primary (first-present) device layer; see :meth:`_device_layers`."""
         layers = self._device_layers()
         return layers[0] if layers else None
 
-    def _resolve_index(self, material: dict, kwarg: float | None, label: str):
+    def _resolve_index(
+        self, material: dict[str, Any], kwarg: float | None, label: str
+    ) -> float | None:
         """kwarg override > any offline-resolvable material shape (neutral nk,
         rii @ center wavelength, tidy3d nk/medium — via grid.resolve_index)."""
         if kwarg is not None:
@@ -294,6 +308,7 @@ class BeamzSolver(Solver):
 
         s = self.spec
         d = self._device_layer()
+        assert d is not None  # validate() guarantees a device layer
         n_core, n_clad = self._indices()
         wl0 = s.wavelength_center_um * UM
         core_t = abs(d["z_span"]) * UM
@@ -374,14 +389,14 @@ class BeamzSolver(Solver):
         # origin, so derive the xy shift from a port matched by name to its
         # gds_fdtd Port (NOT beamz's centered world_center).
         _bname, _bp = next(iter(ports.items()))
-        _gp0 = {p.name: p for p in self.component.ports}.get(_bname)
+        _gp0 = {p.name: p for p in self.component.ports}[_bname]
         z_off = float(_bp["z_center"]) - float(_bp["world_z_center"])
         xy_off = (
             float(_bp["center"][0]) - float(_gp0.center[0]) * UM,
             float(_bp["center"][1]) - float(_gp0.center[1]) * UM,
         )
 
-        def _verts(poly, z_base):
+        def _verts(poly: list[list[float]], z_base: float) -> list[tuple[float, float, float]]:
             # beamz extrudes a polygon from 3-tuple (x, y, z_base) vertices by its
             # .depth (NOT from 2-tuple xy + a z kwarg); xy shifted to the design
             # frame. This matches how gdsf.prepare_component builds the primary core.
@@ -398,6 +413,7 @@ class BeamzSolver(Solver):
                 depth = abs(float(extra["z_span"])) * UM
                 z_lo = min(float(extra["z_base"]), float(extra["z_base"]) + float(extra["z_span"]))
                 z_hi = max(float(extra["z_base"]), float(extra["z_base"]) + float(extra["z_span"]))
+                assert n_extra is not None  # validate() resolves every device layer
                 mat = Material(permittivity=float(n_extra) ** 2)
                 footprints = [
                     st.polygon
@@ -517,18 +533,19 @@ class BeamzSolver(Solver):
         return self._artifacts
 
     def estimate(self) -> ResourceEstimate:
-        if self._artifacts is None:
-            self.build()
-        shape = self._artifacts.summary["grid_shape"]
+        artifacts = self._artifacts if self._artifacts is not None else self.build()
+        shape = artifacts.summary["grid_shape"]
         cells = int(np.prod(shape))
         return ResourceEstimate(
             grid_cells=cells,
             memory_gb=cells * 4 * 12 / 1e9,  # ~12 float32 field/eps arrays
-            n_simulations=self._artifacts.summary["n_simulations"],
+            n_simulations=artifacts.summary["n_simulations"],
             cost_hint="free local compute (JAX; CPU works, GPU if available)",
         )
 
-    def plot_fields(self, axis: str = "z", scale: str = "linear", savefig: str | None = None):
+    def plot_fields(
+        self, axis: str = "z", scale: str = "linear", savefig: str | None = None
+    ) -> tuple[Any, Any]:
         """``|E|²`` profile at the core-center z-plane (first excitation).
 
         ``scale="db"`` renders a log view that reveals weak radiation; see
@@ -555,12 +572,11 @@ class BeamzSolver(Solver):
 
     def run(self) -> SMatrix:
         """One FDTD run per excited port; full S-matrix via modal DFT extraction."""
-        if self._artifacts is None:
-            self.build()
+        artifacts = self._artifacts if self._artifacts is not None else self.build()
         import beamz
         from beamz import ModeMonitor, ModeSource, PortSpec, Simulation
 
-        nat = self._artifacts.native
+        nat = artifacts.native
         design, grid, ports, planes = nat["design"], nat["grid"], nat["ports"], nat["planes"]
         pulse, dx, dt, freqs = nat["pulse"], nat["dx"], nat["dt"], nat["freqs"]
 

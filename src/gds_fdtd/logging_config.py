@@ -7,6 +7,7 @@ Provides centralized logging setup with file output to working directory.
 
 import json
 import logging
+from typing import Any
 import os
 import sys
 from datetime import datetime
@@ -32,7 +33,7 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(payload)
 
 
-def setup_logging(working_dir: str = "./", component_name: str = "gds_fdtd"):
+def setup_logging(working_dir: str = "./", component_name: str = "gds_fdtd") -> logging.Logger:
     """
     Set up file + console logging for the ``gds_fdtd`` package logger ONLY.
 
@@ -94,7 +95,7 @@ def setup_logging(working_dir: str = "./", component_name: str = "gds_fdtd"):
     return package_logger
 
 
-def get_logger(name: str):
+def get_logger(name: str) -> logging.Logger:
     """
     Get a logger for a specific module.
 
@@ -107,7 +108,7 @@ def get_logger(name: str):
     return logging.getLogger(name)
 
 
-def log_separator(logger, title: str = ""):
+def log_separator(logger: logging.Logger, title: str = "") -> None:
     """
     Log a separator line for better log readability.
 
@@ -124,7 +125,7 @@ def log_separator(logger, title: str = ""):
         logger.info(separator)
 
 
-def log_dict(logger, data: dict, title: str = "Configuration"):
+def log_dict(logger: logging.Logger, data: dict[str, Any], title: str = "Configuration") -> None:
     """
     Log dictionary data in a formatted way.
 
@@ -138,7 +139,7 @@ def log_dict(logger, data: dict, title: str = "Configuration"):
         logger.info(f"  {key}: {value}")
 
 
-def log_simulation_start(logger, solver_type: str, component_name: str):
+def log_simulation_start(logger: logging.Logger, solver_type: str, component_name: str) -> None:
     """Log simulation start with details."""
     log_separator(logger, f"STARTING {solver_type.upper()} SIMULATION")
     logger.info(f"Component: {component_name}")
@@ -146,7 +147,7 @@ def log_simulation_start(logger, solver_type: str, component_name: str):
     logger.info(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 
-def log_simulation_complete(logger, solver_type: str):
+def log_simulation_complete(logger: logging.Logger, solver_type: str) -> None:
     """Log simulation completion."""
     log_separator(logger, f"{solver_type.upper()} SIMULATION COMPLETE")
     logger.info(f"Completion time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
