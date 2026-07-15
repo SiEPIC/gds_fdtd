@@ -992,7 +992,7 @@ requires-dist = [
     { name = "shapely", specifier = ">=2.0" },
     { name = "siepic", marker = "extra == 'all'", specifier = ">=0.5.25" },
     { name = "siepic", marker = "extra == 'siepic'", specifier = ">=0.5.25" },
-    { name = "sphinx", marker = "extra == 'docs'", specifier = ">=7.0" },
+    { name = "sphinx", marker = "extra == 'docs'", specifier = ">=9.0.4" },
     { name = "sphinx-copybutton", marker = "extra == 'docs'", specifier = ">=0.5.2" },
     { name = "sphinx-design", marker = "extra == 'docs'", specifier = ">=0.7.0" },
     { name = "sphinx-rtd-theme", marker = "extra == 'docs'", specifier = ">=1.2.0" },
