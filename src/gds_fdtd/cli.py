@@ -21,6 +21,10 @@ license config); a job file never contains secrets and is safe to ship.
 from __future__ import annotations
 
 import argparse
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from .execution import JobSpec
 import importlib
 import json
 import sys
@@ -32,7 +36,7 @@ EXIT_UNAVAILABLE = 3
 EXIT_BUDGET = 4
 
 
-def _emit(payload: dict, as_json: bool) -> None:
+def _emit(payload: dict[str, Any], as_json: bool) -> None:
     if as_json:
         print(json.dumps(payload, indent=2, default=repr))
     else:
@@ -40,7 +44,7 @@ def _emit(payload: dict, as_json: bool) -> None:
             print(f"{k}: {v}")
 
 
-def _load_job(path: str):
+def _load_job(path: str) -> JobSpec:
     from .execution import JobSpec
 
     return JobSpec.from_file(path)
@@ -56,7 +60,7 @@ def _check_available(name: str) -> str | None:
     return None if status == "ok" else status
 
 
-def cmd_solvers(args) -> int:
+def cmd_solvers(args: argparse.Namespace) -> int:
     from .solvers import available_solvers, get_solver
 
     rows = {}
@@ -82,7 +86,7 @@ def cmd_solvers(args) -> int:
     return EXIT_OK
 
 
-def cmd_validate(args) -> int:
+def cmd_validate(args: argparse.Namespace) -> int:
     job = _load_job(args.job)
     reason = _check_available(job.solver)
     if reason:
@@ -93,7 +97,7 @@ def cmd_validate(args) -> int:
     return EXIT_OK if not problems else EXIT_INVALID
 
 
-def cmd_build(args) -> int:
+def cmd_build(args: argparse.Namespace) -> int:
     job = _load_job(args.job)
     reason = _check_available(job.solver)
     if reason:
@@ -115,7 +119,7 @@ def cmd_build(args) -> int:
     return EXIT_OK
 
 
-def cmd_estimate(args) -> int:
+def cmd_estimate(args: argparse.Namespace) -> int:
     job = _load_job(args.job)
     reason = _check_available(job.solver)
     if reason:
@@ -134,7 +138,7 @@ def cmd_estimate(args) -> int:
     return EXIT_OK
 
 
-def cmd_run(args) -> int:
+def cmd_run(args: argparse.Namespace) -> int:
     from .execution import SubprocessBackend, run_job
 
     job = _load_job(args.job)
@@ -158,7 +162,7 @@ def cmd_run(args) -> int:
     return EXIT_OK
 
 
-def cmd_convert(args) -> int:
+def cmd_convert(args: argparse.Namespace) -> int:
     from .smatrix import SMatrix
 
     src = args.results
@@ -184,7 +188,7 @@ def cmd_convert(args) -> int:
     return EXIT_OK
 
 
-def cmd_convert_tech(args) -> int:
+def cmd_convert_tech(args: argparse.Namespace) -> int:
     """Migrate a v1 technology YAML to schema v2 (named materials)."""
     import yaml
 
@@ -193,7 +197,7 @@ def cmd_convert_tech(args) -> int:
     tech = Technology.from_yaml(args.tech)
 
     # dedupe identical material mappings into named entries
-    def v2_material(legacy: dict) -> dict:
+    def v2_material(legacy: dict[str, Any]) -> dict[str, Any]:
         out = {}
         for key, value in legacy.items():
             if key == "tidy3d_db":
@@ -204,7 +208,7 @@ def cmd_convert_tech(args) -> int:
                 out[key] = value
         return out
 
-    def suggest_name(mat: dict, taken: set[str]) -> str:
+    def suggest_name(mat: dict[str, Any], taken: set[str]) -> str:
         base = None
         lum = mat.get("lumerical")
         if isinstance(lum, str):
@@ -218,9 +222,9 @@ def cmd_convert_tech(args) -> int:
             name = f"{base}{i}"
         return name
 
-    named: dict[str, dict] = {}
+    named: dict[str, dict[str, Any]] = {}
 
-    def register(legacy: dict) -> str:
+    def register(legacy: dict[str, Any]) -> str:
         mat = v2_material(legacy)
         for name, existing in named.items():
             if existing == mat:
@@ -230,7 +234,7 @@ def cmd_convert_tech(args) -> int:
         return name
 
     legacy = tech.to_solver_dict()
-    doc: dict = {
+    doc: dict[str, Any] = {
         "name": legacy["name"],
         "schema_version": 2,
         "materials": named,  # filled by register() below

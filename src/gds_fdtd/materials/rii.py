@@ -28,9 +28,11 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
 import yaml
+from numpy.typing import ArrayLike
 
 from ..errors import TechnologyError
 
@@ -51,9 +53,9 @@ class RiiMaterial:
     page: str
     wavelength_um: np.ndarray  # ascending
     n: np.ndarray
-    k: np.ndarray = field(default=None)  # type: ignore[assignment]
+    k: np.ndarray = field(default=None)  # type: ignore[arg-type]  # filled in __post_init__
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.k is None:
             self.k = np.zeros_like(self.n)
 
@@ -61,7 +63,7 @@ class RiiMaterial:
     def wavelength_range_um(self) -> tuple[float, float]:
         return float(self.wavelength_um[0]), float(self.wavelength_um[-1])
 
-    def _check_range(self, wavelength_um) -> None:
+    def _check_range(self, wavelength_um: ArrayLike) -> None:
         w = np.atleast_1d(np.asarray(wavelength_um, dtype=float))
         lo, hi = self.wavelength_range_um
         if w.min() < lo or w.max() > hi:
@@ -70,25 +72,27 @@ class RiiMaterial:
                 f"range [{lo:.4g}, {hi:.4g}] um of {self.shelf}/{self.book}/{self.page}"
             )
 
-    def n_at(self, wavelength_um) -> np.ndarray | float:
+    def n_at(self, wavelength_um: ArrayLike) -> np.ndarray | float:
         """Interpolated refractive index n at the given wavelength(s) in um."""
         self._check_range(wavelength_um)
         out = np.interp(np.asarray(wavelength_um, dtype=float), self.wavelength_um, self.n)
         return float(out) if np.ndim(wavelength_um) == 0 else out
 
-    def k_at(self, wavelength_um) -> np.ndarray | float:
+    def k_at(self, wavelength_um: ArrayLike) -> np.ndarray | float:
         """Interpolated extinction coefficient k at the given wavelength(s) in um."""
         self._check_range(wavelength_um)
         out = np.interp(np.asarray(wavelength_um, dtype=float), self.wavelength_um, self.k)
         return float(out) if np.ndim(wavelength_um) == 0 else out
 
-    def nk_at(self, wavelength_um) -> complex | np.ndarray:
+    def nk_at(self, wavelength_um: ArrayLike) -> complex | np.ndarray:
         """Complex refractive index n + ik at the given wavelength(s) in um."""
         n = self.n_at(wavelength_um)
         k = self.k_at(wavelength_um)
         return n + 1j * k
 
-    def to_tidy3d_medium(self, wavelength_um=None, max_num_poles: int = 5):
+    def to_tidy3d_medium(
+        self, wavelength_um: ArrayLike | None = None, max_num_poles: int = 5
+    ) -> Any:
         """Fit these optical constants to a dispersive tidy3d medium.
 
         Returns a ``tidy3d`` pole-residue medium that carries the full complex,
@@ -114,7 +118,7 @@ class RiiMaterial:
         return medium
 
 
-def _parse_tabulated(block: dict, columns: int) -> tuple[np.ndarray, ...]:
+def _parse_tabulated(block: dict[str, Any], columns: int) -> tuple[np.ndarray, ...]:
     rows = [
         [float(x) for x in line.split()]
         for line in str(block["data"]).strip().splitlines()
@@ -138,7 +142,7 @@ def _sellmeier(coeffs: list[float], wavelength_um: np.ndarray, formula: int) -> 
             rhs = rhs + b * w2 / (w2 - c**2)
         else:  # formula 2: C is already squared in the database convention
             rhs = rhs + b * w2 / (w2 - c)
-    return np.sqrt(rhs)
+    return cast("np.ndarray", np.sqrt(rhs))
 
 
 def load_rii_material(
@@ -190,4 +194,11 @@ def load_rii_material(
     if wavelength is None or n is None:
         raise TechnologyError(f"{path}: no usable refractive-index data block found")
 
-    return RiiMaterial(shelf=shelf, book=book, page=page, wavelength_um=wavelength, n=n, k=k)
+    return RiiMaterial(
+        shelf=shelf,
+        book=book,
+        page=page,
+        wavelength_um=wavelength,
+        n=n,
+        k=k,  # type: ignore[arg-type]  # None -> zeros in __post_init__
+    )

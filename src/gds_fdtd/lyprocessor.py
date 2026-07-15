@@ -6,14 +6,15 @@ Layout processing module.
 """
 
 import logging
+from typing import Any
 
 import klayout.db as pya
 
 from .errors import LayoutError
-from .geometry import Port, Region, Structure
+from .geometry import Component, Port, Region, Structure
 
 
-def dilate(vertices, extension=1.0):
+def dilate(vertices: list[list[float]], extension: float = 1.0) -> list[list[float]]:
     """grow or shrink a rectangle defined as [[x1,y1],[x2,y2]]
 
     Args:
@@ -33,7 +34,9 @@ def dilate(vertices, extension=1.0):
     return [[x_min, y_min], [x_max, y_min], [x_max, y_max], [x_min, y_max]]
 
 
-def dilate_1d(vertices, extension=1, dim="y"):
+def dilate_1d(
+    vertices: list[list[float]], extension: float = 1, dim: str = "y"
+) -> list[list[float]]:
     """Extend a 2-point segment/rectangle outward along the given dimension(s).
 
     Args:
@@ -58,7 +61,9 @@ def dilate_1d(vertices, extension=1, dim="y"):
     raise ValueError("Dimension must be 'x' or 'y' or 'xy'")
 
 
-def apply_prefab(gds_in: str, gds_out: str, top_cell: str, model: str = "ANT_NanoSOI_ANF1_d9"):
+def apply_prefab(
+    gds_in: str, gds_out: str, top_cell: str, model: str = "ANT_NanoSOI_ANF1_d9"
+) -> str:
     """Run a PreFab lithography prediction and write the result to a NEW file.
 
     Args:
@@ -88,13 +93,13 @@ def apply_prefab(gds_in: str, gds_out: str, top_cell: str, model: str = "ANT_Nan
 
 def load_device(
     fname: str,
-    tech,
+    tech: Any,
     top_cell: str | None = None,
     z_span: float = 3.0,
     z_center: float | None = None,
     prefab_model: str | None = None,
     output_dir: str | None = None,
-):
+) -> Component:
     """Load a GDS device into a component, writing derived GDS files to output_dir.
 
     Writes ``<cell>_with_extensions.gds`` (the layout with port extension stubs)
@@ -182,11 +187,11 @@ def load_cell(fname: str, top_cell: str | None = None) -> tuple["pya.Cell", "pya
 
 def load_region(
     cell: pya.Cell,
-    layer: list[int, int] = [68, 0],
+    layer: list[int] = [68, 0],
     z_center: float = 0.0,
     z_span: float = 5.0,
     extension: float = 0.0,
-):
+) -> Region:
     """
     Get device bounds.
 
@@ -250,7 +255,15 @@ def load_region(
     return Region(vertices=polygons_vertices, z_center=z_center, z_span=z_span)
 
 
-def load_structure(cell, name, layer, z_base, z_span, material, sidewall_angle=90):
+def load_structure(
+    cell: pya.Cell,
+    name: str,
+    layer: list[int],
+    z_base: float,
+    z_span: float,
+    material: Any,
+    sidewall_angle: float = 90,
+) -> list[Structure]:
     """
     Extract polygons from a given cell on a given layer.
 
@@ -287,12 +300,12 @@ def load_structure(cell, name, layer, z_base, z_span, material, sidewall_angle=9
         for p in [p.to_simple_polygon() for p in polygons]
     ]
     structures = []
-    for idx, s in enumerate(polygons_vertices):
+    for idx, verts in enumerate(polygons_vertices):
         structure_name = f"{name}_{idx}"
         structures.append(
             Structure(
                 name=structure_name,
-                polygon=s,
+                polygon=verts,
                 z_base=z_base,
                 z_span=z_span,
                 material=material,
@@ -304,8 +317,15 @@ def load_structure(cell, name, layer, z_base, z_span, material, sidewall_angle=9
 
 
 def load_structure_from_bounds(
-    bounds, name, z_base, z_span, material, extension=0.0, layer=None, role="device"
-):
+    bounds: Region,
+    name: str,
+    z_base: float,
+    z_span: float,
+    material: Any,
+    extension: float = 0.0,
+    layer: list[int] | None = None,
+    role: str = "device",
+) -> Structure:
     """Load a structure from a region definition
 
     Args:
@@ -331,7 +351,7 @@ def load_structure_from_bounds(
     )
 
 
-def load_ports(cell: pya.Cell, layer: list[int, int] = [1, 10]):
+def load_ports(cell: pya.Cell, layer: list[int] = [1, 10]) -> list[Port]:
     """Load ports from cell.
 
     Args:
@@ -342,10 +362,10 @@ def load_ports(cell: pya.Cell, layer: list[int, int] = [1, 10]):
         list: List of extracted port objects.
     """
 
-    def get_direction(path):
+    def get_direction(path: Any) -> float:
         """Determine orientation of a pin path."""
         if path.points > 2:
-            return ValueError("Number of points in a pin path are > 2.")
+            raise LayoutError("Number of points in a pin path are > 2.")
         p = path.each_point()
         p1 = p.__next__()
         p2 = p.__next__()
@@ -359,8 +379,9 @@ def load_ports(cell: pya.Cell, layer: list[int, int] = [1, 10]):
                 return 180
             else:
                 return 0
+        raise LayoutError("Pin path is diagonal; port pins must be axis-aligned (0/90/180/270).")
 
-    def get_center(path, dbu):
+    def get_center(path: Any, dbu: float) -> tuple[float, float]:
         """Determine center of a pin path."""
         p = path.each_point()
         p1 = p.__next__()
@@ -374,15 +395,19 @@ def load_ports(cell: pya.Cell, layer: list[int, int] = [1, 10]):
             y = dbu * (p1.y + p2.y) / 2
         return x, y
 
-    def get_name(c, x, y, dbu):
+    def get_name(c: pya.Cell, x: float, y: float, dbu: float) -> str:
         s = c.begin_shapes_rec(cell.layout().layer(layer[0], layer[1]))
         while not (s.at_end()):
             if s.shape().is_text():
                 label_x = s.shape().text.x * dbu
                 label_y = s.shape().text.y * dbu
                 if label_x == x and label_y == y:
-                    return s.shape().text.string
+                    return str(s.shape().text.string)
             s.next()
+        raise LayoutError(
+            f"No port label found at ({x}, {y}) on layer {layer[0]}:{layer[1]} "
+            f"in cell {cell.name!r}; every pin path needs a text label."
+        )
 
     ports = []
     s = cell.begin_shapes_rec(cell.layout().layer(layer[0], layer[1]))
@@ -391,7 +416,7 @@ def load_ports(cell: pya.Cell, layer: list[int, int] = [1, 10]):
             width = s.shape().path_dwidth
             direction = get_direction(s.shape().path)
             # initialize Z center with none. Z center is identified in component init
-            center = list(get_center(s.shape().path, cell.layout().dbu)) + [None]
+            center: list[Any] = [*get_center(s.shape().path, cell.layout().dbu), None]
             name = get_name(cell, center[0], center[1], cell.layout().dbu)
             ports.append(
                 Port(

@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import os
 import tempfile
+from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
 
@@ -73,7 +75,7 @@ class Tidy3DSolver(Solver):
                 if hasattr(self.technology, "to_solver_dict")
                 else self.technology
             )
-            problems += check_materials(tech_dict, "tidy3d")
+            problems += check_materials(cast("dict[str, Any]", tech_dict), "tidy3d")
         return problems
 
     def build(self) -> SetupArtifacts:
@@ -117,7 +119,7 @@ class Tidy3DSolver(Solver):
         self._engine = engine
         self._artifacts = SetupArtifacts(
             native=engine.component_modeler,
-            files={"gds": engine._gds_filepath},
+            files={"gds": Path(engine._gds_filepath)},
             summary={
                 "n_ports": len(engine.smatrix_ports),
                 "n_modes": len(s.modes),
@@ -128,9 +130,8 @@ class Tidy3DSolver(Solver):
         return self._artifacts
 
     def estimate(self) -> ResourceEstimate:
-        if self._artifacts is None:
-            self.build()
-        modeler = self._artifacts.native
+        artifacts = self._artifacts if self._artifacts is not None else self.build()
+        modeler = artifacts.native
         sim = modeler.simulation
         cells = int(np.prod(sim.grid.num_cells))
         return ResourceEstimate(
@@ -141,14 +142,13 @@ class Tidy3DSolver(Solver):
 
     def run(self) -> SMatrix:
         """Run on the tidy3d cloud (SPENDS FlexCredits) and return the SMatrix."""
-        if self._artifacts is None:
-            self.build()
+        artifacts = self._artifacts if self._artifacts is not None else self.build()
         import tidy3d.web as web
 
         workdir = (
             str(self.workdir)
             if self.workdir is not None
-            else os.path.dirname(str(self._artifacts.files["gds"]))
+            else os.path.dirname(str(artifacts.files["gds"]))
         )
         # Route tidy3d's own download temp files into the workdir too. Its
         # compressed-download tempfile (s3utils.download_gz_file) uses the
@@ -158,7 +158,7 @@ class Tidy3DSolver(Solver):
         tempfile.tempdir = workdir
         try:
             modeler_data = web.run(
-                self._artifacts.native,
+                artifacts.native,
                 task_name=f"gdsfdtd_{self.component.name}",
                 path=os.path.join(workdir, f"{self.component.name}_modeler.hdf5"),
                 verbose=True,
@@ -169,7 +169,9 @@ class Tidy3DSolver(Solver):
         da = modeler_data.smatrix()
         return self._dataarray_to_smatrix(da)
 
-    def plot_fields(self, axis: str = "z", scale: str = "linear", savefig: str | None = None):
+    def plot_fields(
+        self, axis: str = "z", scale: str = "linear", savefig: str | None = None
+    ) -> tuple[Any, Any]:
         """Field profile from the first excitation's SimulationData.
 
         ``scale="db"`` gives a log view (see
@@ -182,7 +184,7 @@ class Tidy3DSolver(Solver):
 
     # ---------------- conversion ----------------
 
-    def _dataarray_to_smatrix(self, da) -> SMatrix:
+    def _dataarray_to_smatrix(self, da: Any) -> SMatrix:
         """ModalPortDataArray -> canonical SMatrix (1-based mode ids)."""
         freqs = np.asarray(da.coords["f"].values, dtype=float)
         entries = []
@@ -207,8 +209,8 @@ class Tidy3DSolver(Solver):
 
 
 def plot_tidy3d_fields(
-    modeler_data, axis: str = "z", scale: str = "linear", savefig: str | None = None
-):
+    modeler_data: Any, axis: str = "z", scale: str = "linear", savefig: str | None = None
+) -> tuple[Any, Any]:
     """Plot ``|E|²`` of the '{axis}_field' monitor from a ModalComponentModelerData.
 
     Used by Tidy3DSolver.plot_fields. Extracts the field onto its true grid and

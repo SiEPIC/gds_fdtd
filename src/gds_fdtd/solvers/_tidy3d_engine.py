@@ -7,6 +7,8 @@ geometry/port/domain setup lives in the sibling ``_tidy3d_base`` module.
 Not a public module.
 """
 
+from typing import Any
+
 import numpy as np
 import tidy3d as td
 from tidy3d.plugins.smatrix import ModalComponentModeler, Port
@@ -15,10 +17,16 @@ from gds_fdtd.errors import JobValidationError
 from gds_fdtd.solvers._tidy3d_base import _TidyEngineBase
 
 
+def _req(v: float | None) -> float:
+    """Narrow an optional numeric attribute the setup flow guarantees is set."""
+    assert v is not None
+    return v
+
+
 class _TidyEngine(_TidyEngineBase):
     """Tidy3D ComponentModeler scene builder + runner (internal engine)."""
 
-    def __init__(self, *args, visualize: bool = True, **kwargs):
+    def __init__(self, *args: Any, visualize: bool = True, **kwargs: Any) -> None:
         """Initialize the Tidy3D solver by calling the parent constructor."""
         super().__init__(*args, **kwargs)
         self.visualize = visualize
@@ -76,7 +84,7 @@ class _TidyEngine(_TidyEngineBase):
             f"  • ComponentModeler will auto-generate task names for {self.component.name}"
         )
 
-    def _create_base_simulation(self):
+    def _create_base_simulation(self) -> td.Simulation:
         """Create base simulation without sources/monitors for ComponentModeler."""
         device = self.component
 
@@ -143,7 +151,7 @@ class _TidyEngine(_TidyEngineBase):
             axis_boundaries.append(td.Boundary(minus=b, plus=b))
         return td.BoundarySpec(x=axis_boundaries[0], y=axis_boundaries[1], z=axis_boundaries[2])
 
-    def _create_smatrix_ports(self):
+    def _create_smatrix_ports(self) -> list[Port]:
         """Create Tidy3D Port objects for S-matrix calculation with multi-modal support."""
         ports = []
 
@@ -172,7 +180,7 @@ class _TidyEngine(_TidyEngineBase):
 
         return ports
 
-    def _background_polygon(self):
+    def _background_polygon(self) -> list[tuple[float, float]]:
         """Rectangle flush with the port extensions, CENTERED ON THE COMPONENT.
 
         Previously this square was centered at the origin (sized via
@@ -191,7 +199,7 @@ class _TidyEngine(_TidyEngineBase):
         ]
 
     @staticmethod
-    def _is_background(structure) -> bool:
+    def _is_background(structure: Any) -> bool:
         """Background = substrate/superstrate, by ROLE, with a
         name-sniffing fallback only for td.Structure objects in tests."""
         role = getattr(structure, "role", None)
@@ -202,7 +210,7 @@ class _TidyEngine(_TidyEngineBase):
         # "Subtrate" typo present in components built by older versions
         return "substrate" in n or "superstrate" in n or "subtrate" in n
 
-    def _medium(self, material, name: str = "material"):
+    def _medium(self, material: Any, name: str = "material") -> Any:
         """Build the tidy3d medium for one material, honoring its source
         selection (see gds_fdtd.materials.select): the engine's own database
         model (``eda``), a dispersive refractiveindex.info fit (``rii``), or a
@@ -233,7 +241,7 @@ class _TidyEngine(_TidyEngineBase):
             return td.Medium.from_nk(n=float(n), k=float(k), freq=td.C_0 / self.lda0)
         return td.Medium(permittivity=float(n) ** 2)
 
-    def _to_td_structure(self, s):
+    def _to_td_structure(self, s: Any) -> td.Structure:
         """Convert one geometry.Structure into a td.Structure."""
         if s.z_span < 0:
             bounds = (s.z_base + s.z_span, s.z_base)
@@ -253,7 +261,7 @@ class _TidyEngine(_TidyEngineBase):
             name=s.name,
         )
 
-    def _create_structures(self):
+    def _create_structures(self) -> list[td.Structure]:
         """Create Tidy3D structure objects from the component."""
         device = self.component
 
@@ -266,8 +274,8 @@ class _TidyEngine(_TidyEngineBase):
                     geometry=td.PolySlab(
                         vertices=p.polygon_extension(buffer=2 * self.buffer),
                         slab_bounds=(
-                            p.center[2] - p.height / 2,
-                            p.center[2] + p.height / 2,
+                            p.center[2] - _req(p.height) / 2,
+                            p.center[2] + _req(p.height) / 2,
                         ),
                         axis=2,
                         sidewall_angle=(90 - device.structures[0].sidewall_angle) * (np.pi / 180),
@@ -278,12 +286,14 @@ class _TidyEngine(_TidyEngineBase):
             )
         return structures
 
-    def _create_field_monitor(self, device, freqs=2e14, axis="z", z_center=None):
+    def _create_field_monitor(
+        self, device: Any, freqs: Any = 2e14, axis: str = "z", z_center: float | None = None
+    ) -> td.FieldMonitor:
         """Create a field monitor for the specified axis."""
         # identify a device field z_center if None
         if z_center is None:
             # per-LAYER average (matching the old per-list semantics)
-            z_by_layer = {}
+            z_by_layer: dict[tuple[int, ...], float] = {}
             for s in device.structures:
                 if s.role == "device":
                     z_by_layer.setdefault(tuple(s.layer), s.z_base + s.z_span / 2)

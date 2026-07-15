@@ -82,8 +82,9 @@ class JobSpec(BaseModel):
 
         tech = Technology.from_yaml(str(self.technology_path))
         cell, layout = load_cell(str(self.gds_path), top_cell=self.top_cell)
-        component = load_component_from_tech(cell=cell, tech=tech)  # type: ignore[no-untyped-call]
-        component._layout_keepalive = layout  # klayout object must outlive the cell
+        component = load_component_from_tech(cell=cell, tech=tech)
+        # klayout object must outlive the cell (dynamic keepalive attribute)
+        component._layout_keepalive = layout  # type: ignore[attr-defined]
         return component, tech
 
     def make_solver(self, workdir: str | Path | None = None) -> Solver:

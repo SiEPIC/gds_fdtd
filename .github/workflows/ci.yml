@@ -23,7 +23,7 @@ jobs:
       - uses: j178/prek-action@0bb87d7f00b0c99306c8bcb8b8beba1eb581c037 # v1
 
   typecheck:
-    name: typecheck (strict core + advisory rest)
+    name: typecheck (mypy --strict, whole package)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -35,16 +35,8 @@ jobs:
           cache-dependency-glob: "uv.lock"
           python-version: "3.13"
       - run: uv sync --locked --extra dev
-      - name: mypy --strict on the typed core (REQUIRED)
-        run: >
-          uv run mypy --strict
-          src/gds_fdtd/geometry.py src/gds_fdtd/technology.py src/gds_fdtd/smatrix.py
-          src/gds_fdtd/spec.py src/gds_fdtd/execution/ src/gds_fdtd/caching.py
-          src/gds_fdtd/extraction.py src/gds_fdtd/modes.py src/gds_fdtd/validation.py
-          src/gds_fdtd/convergence.py src/gds_fdtd/grid.py src/gds_fdtd/plotting.py
-          src/gds_fdtd/solvers/base.py
-      - name: mypy on the whole package (advisory while legacy errors burn down)
-        run: uv run mypy src/gds_fdtd || true
+      - name: mypy --strict on the whole package (REQUIRED)
+        run: uv run mypy --strict src/gds_fdtd
 
   test:
     name: test (py${{ matrix.python-version }}, ${{ matrix.os }}, ${{ matrix.profile }})

@@ -6,12 +6,12 @@ Simulation processing module.
 """
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from .errors import TechnologyError
-from .geometry import Component
+from .geometry import Component, Structure
 
 if TYPE_CHECKING:
     pass
@@ -25,7 +25,7 @@ from .lyprocessor import (
 logger = logging.getLogger(__name__)
 
 
-def get_material(device: dict):
+def get_material(device: dict[str, Any]) -> dict[str, Any]:
     """
     Load material properties for different solvers.
 
@@ -79,7 +79,7 @@ def get_material(device: dict):
     return material
 
 
-def _load_tidy3d_material(material_spec: dict):
+def _load_tidy3d_material(material_spec: dict[str, Any]) -> Any:
     """
     Load Tidy3D material from specification.
 
@@ -142,12 +142,14 @@ def _load_tidy3d_material(material_spec: dict):
     return td.material_library["cSi"]["Li1993_293K"]
 
 
-def load_component_from_tech(cell, tech, z_span=4, z_center=None):
+def load_component_from_tech(
+    cell: Any, tech: Any, z_span: float = 4, z_center: float | None = None
+) -> Component:
     # Accept either a Technology model or an already-materialized legacy dict.
     tech_dict = tech.to_solver_dict() if hasattr(tech, "to_solver_dict") else tech
 
     # load the structures in the device
-    device_wg = []
+    device_wg: list[list[Structure]] = []
     for idx, d in enumerate(tech_dict["device"]):
         device_wg.append(
             load_structure(
@@ -161,15 +163,15 @@ def load_component_from_tech(cell, tech, z_span=4, z_center=None):
         )
     # Removing empty lists due to no structures existing in an input layer,
     # then flatten: Component.structures is a flat list with roles
-    device_wg = [s for dev in device_wg if dev for s in dev]
+    device_structs: list[Structure] = [s for dev in device_wg if dev for s in dev]
 
     # get z_center based on structures center (minimize symmetry failures);
     # averaged PER LAYER (matching the old per-list semantics), not per polygon
     if not z_center:
-        z_by_layer: dict[tuple, float] = {}
-        for s in device_wg:
-            z_by_layer.setdefault(tuple(s.layer), s.z_base + s.z_span / 2)
-        z_center = np.average(list(z_by_layer.values()))
+        z_by_layer: dict[tuple[int, ...], float] = {}
+        for s in device_structs:
+            z_by_layer.setdefault(tuple(s.layer or []), s.z_base + s.z_span / 2)
+        z_center = float(np.average(list(z_by_layer.values())))
 
     # load all the ports in the device and (optional) initialize each to have a center
     ports = load_ports(cell, layer=tech_dict["pinrec"][0]["layer"])
@@ -202,13 +204,13 @@ def load_component_from_tech(cell, tech, z_span=4, z_center=None):
     # create the device by loading the structures (flat, role-tagged)
     return Component(
         name=cell.name,
-        structures=[device_sub, device_super, *device_wg],
+        structures=[device_sub, device_super, *device_structs],
         ports=ports,
         bounds=bounds,
     )
 
 
-def from_gdsfactory(c, tech: dict, z_span: float = 4.0) -> "Component":
+def from_gdsfactory(c: Any, tech: dict[str, Any], z_span: float = 4.0) -> "Component":
     """Convert a gdsfactory Component to a gds_fdtd Component.
 
     This is a thin delegate to gds_fdtd.layout.gdsfactory, which is
