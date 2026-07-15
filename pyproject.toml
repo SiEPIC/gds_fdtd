@@ -51,7 +51,7 @@ gdsfactory  = ["gdsfactory>=9.5.7,<10"]
 beamz       = ["beamz>=0.4.3"]                 # open-source JAX FDTD engine
 prefab      = ["prefab>=1.2.0"]
 siepic      = ["SiEPIC>=0.5.25"]
-fuzz        = ["atheris>=3.0"]                 # run fuzz/ targets locally (CI uses ClusterFuzzLite)
+fuzz        = ["atheris>=3.1.0"]                 # run fuzz/ targets locally (CI uses ClusterFuzzLite)
 
 # convenience bundles (self-referential; Lumerical needs no extra, it uses your local lumapi)
 engines     = ["gds_fdtd[tidy3d,beamz]"]                             # every pip-installable FDTD engine
