@@ -74,7 +74,7 @@ dev = [
 ]
 
 docs = [
-  "sphinx>=7.0",
+  "sphinx>=9.0.4",
   "sphinx-rtd-theme>=1.2.0",
   "docutils<0.23",
   "sphinx-toggleprompt>=0.1.0",
