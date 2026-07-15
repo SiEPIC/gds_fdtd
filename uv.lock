@@ -962,7 +962,7 @@ tidy3d = [
 
 [package.metadata]
 requires-dist = [
-    { name = "atheris", marker = "extra == 'fuzz'", specifier = ">=3.0" },
+    { name = "atheris", marker = "extra == 'fuzz'", specifier = ">=3.1.0" },
     { name = "beamz", marker = "extra == 'all'", specifier = ">=0.4.3" },
     { name = "beamz", marker = "extra == 'beamz'", specifier = ">=0.4.3" },
     { name = "beamz", marker = "extra == 'engines'", specifier = ">=0.4.3" },
