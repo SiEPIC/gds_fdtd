@@ -967,7 +967,7 @@ requires-dist = [
     { name = "beamz", marker = "extra == 'beamz'", specifier = ">=0.4.3" },
     { name = "beamz", marker = "extra == 'engines'", specifier = ">=0.4.3" },
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.0.0" },
-    { name = "codespell", marker = "extra == 'dev'", specifier = ">=2.3" },
+    { name = "codespell", marker = "extra == 'dev'", specifier = ">=2.4.2" },
     { name = "coverage", marker = "extra == 'dev'" },
     { name = "docutils", marker = "extra == 'docs'", specifier = "<0.23" },
     { name = "furo", marker = "extra == 'docs'", specifier = ">=2024.8.6" },
