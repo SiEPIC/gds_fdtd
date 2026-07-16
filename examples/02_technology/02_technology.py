@@ -52,7 +52,9 @@ WL = np.linspace(1.5, 1.6, 11)  # telecom band
 # ## 1 · The stack
 #
 # The technology places each material in `z` with its index. Here: a silicon
-# core on oxide, oxide cladding.
+# core on oxide, oxide cladding. The substrate material in this file pins
+# `source: rii`, so every engine models the buried oxide from the same
+# refractiveindex.info page — `02b` walks through that mechanism.
 
 # %%
 plot_tech_stack(tech, wavelength_um=1.55)

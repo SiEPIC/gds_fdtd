@@ -159,16 +159,60 @@ plt.show()
 # You rarely call these by hand. In the tech file, give a material an `rii:`
 # reference and (optionally) `source: rii`, and **every** engine builds its
 # material from that model automatically — tidy3d a dispersive medium, Lumerical
-# a sampled material, beamz a constant:
+# a sampled material, beamz a constant.
+#
+# The shared `examples/tech.yaml` does this live: its **substrate** carries all
+# three sources and pins `source: rii`, so the buried oxide comes from the
+# Malitson (1965) Sellmeier page no matter which engine runs the job:
 #
 # ```yaml
 # materials:
-#   Si:
-#     nk: 3.476
-#     rii: {shelf: main, book: Si, page: Salzberg}
-#     source: rii        # force the rii model on every engine (omit for eda→rii→nk)
+#   SiO2_rii:
+#     nk: 1.444                          # neutral constant fallback
+#     tidy3d: 1.444                      # eda source, tidy3d flavor
+#     lumerical: SiO2 (Glass) - Palik    # eda source, Lumerical flavor
+#     rii: {shelf: main, book: SiO2, page: Malitson}
+#     source: rii        # <- overrides the eda→rii→nk precedence on EVERY engine
+#
+# substrate: {z_base: 0.0, z_span: -2, material: SiO2_rii}
 # ```
 #
+# `select_source` is the function every engine calls to make this choice — ask
+# it directly what each one would do:
+
+# %%
+from gds_fdtd.materials.select import select_source  # noqa: E402
+from gds_fdtd.technology import Technology  # noqa: E402
+
+tech = Technology.from_yaml(_find("examples/tech.yaml"))
+d = tech.to_solver_dict()
+substrate = d["substrate"][0]["material"]
+superstrate = d["superstrate"][0]["material"]
+
+print(f"{'material':12s}  {'tidy3d':10s}  {'lumerical':10s}  {'beamz':10s}")
+for label, mat in [("substrate", substrate), ("superstrate", superstrate)]:
+    picks = [select_source(mat, eng, name=label) for eng in ("tidy3d", "lumerical", "beamz")]
+    print(f"{label:12s}  {picks[0]:10s}  {picks[1]:10s}  {picks[2]:10s}")
+
+# %% [markdown]
+# The superstrate (no `source:` pin) shows the default precedence: engines with
+# a vendor database use it (`eda`), beamz falls through to `nk`. The pinned
+# substrate answers `rii` everywhere. On tidy3d that buys real dispersion —
+# the medium built from the tech file is a Sellmeier fit, not a constant:
+
+# %%
+import os  # noqa: E402
+
+os.environ["GDS_FDTD_RII_DB"] = str(RII_DB)  # engines that build the substrate need the DB
+
+sio2 = tech.substrate.material.rii.load()  # the named material, resolved onto the layer
+medium = sio2.to_tidy3d_medium(wavelength_um=np.linspace(1.5, 1.6, 11))
+wl = np.array([1.50, 1.55, 1.60])
+n_fit = np.sqrt(medium.eps_model(td.C_0 / wl)).real
+for w, n_r in zip(wl, n_fit, strict=True):
+    print(f"λ={w:.2f} µm   rii n={sio2.n_at(w):.6f}   tidy3d medium n={n_r:.6f}")
+
+# %% [markdown]
 # The selection rule (per material, per engine) is **eda → rii → nk**, with
 # `source:` as an explicit override and a clear error if nothing applies — see
 # `docs/technology.rst` → *Material sources*.
@@ -177,5 +221,6 @@ plt.show()
 #
 # A refractiveindex.info page is a portable, engine-independent source of truth:
 # its full `n(λ) + i·k(λ)` flows into tidy3d (a dispersion fit) and Lumerical (a
-# sampled material) intact, and into beamz as a single-wavelength constant. Pick
-# your material once, run it anywhere.
+# sampled material) intact, and into beamz as a single-wavelength constant. Pin
+# it with `source: rii` — as the shipped tech file does for its substrate — and
+# every engine models that material from the same measured page.

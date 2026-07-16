@@ -15,11 +15,13 @@
 #   * a clear error (e.g. a lumerical-only material run on tidy3d).
 # beamz has no vendor DB, so it uses rii or nk. You need not specify all three.
 #
-# Example forcing refractiveindex.info everywhere (needs GDS_FDTD_RII_DB set):
-#   Si:
-#     nk: 3.476
-#     rii: {shelf: main, book: Si, page: Salzberg}
-#     source: rii
+# The substrate below demonstrates the pinning: it carries all three sources
+# and forces `source: rii`, so EVERY engine models the buried oxide from the
+# same refractiveindex.info page (tidy3d fits a dispersive medium to it;
+# Lumerical and beamz sample it at the band). Engines that build the substrate
+# need the DB on disk - point GDS_FDTD_RII_DB at a database copy, e.g. the
+# mini-DB shipped with these examples (examples/02_technology/rii_db).
+# 02b_rii_to_engines walks through exactly this material.
 #
 # Pick the engine at run time - the technology never changes:
 #   solver = get_solver("tidy3d" | "lumerical" | "beamz")(component, tech, spec)
@@ -43,8 +45,14 @@ technology:
       nk: 1.444
       tidy3d: 1.444
       lumerical: SiO2 (Glass) - Palik
+    SiO2_rii:            # fused silica pinned to the Malitson (1965) Sellmeier
+      nk: 1.444          # model: `source: rii` overrides the eda->rii->nk
+      tidy3d: 1.444      # precedence, so all three engines use the SAME
+      lumerical: SiO2 (Glass) - Palik   # dispersive rii page (needs GDS_FDTD_RII_DB)
+      rii: {shelf: main, book: SiO2, page: Malitson}
+      source: rii
 
-  substrate: {z_base: 0.0, z_span: -2, material: SiO2}
+  substrate: {z_base: 0.0, z_span: -2, material: SiO2_rii}
   superstrate: {z_base: 0.0, z_span: 3, material: SiO2}
 
   pinrec:
