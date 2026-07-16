@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- `from_gdsfactory` now merges abutting polygons per device layer before
+  extrusion (same KLayout merge pipeline as the GDS loader), so hierarchical
+  components no longer open wedge-shaped gaps at internal junctions under
+  angled sidewalls (#1, #58).
+
+### Changed
+- The reference `examples/tech.yaml` now demonstrates material-source pinning
+  live: the substrate material (`SiO2_rii`) carries eda + rii + nk sources and
+  sets `source: rii`, so every engine models the buried oxide from the same
+  refractiveindex.info page. `02b_rii_to_engines` walks through the selection
+  with `select_source`, and the technology docs mirror the shipped file.
+
 ## [0.6.0] - 2026-07-15 (breaking)
 
 ### Removed (BREAKING)

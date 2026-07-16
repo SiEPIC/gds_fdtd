@@ -35,8 +35,14 @@ in ``z``:
           nk: 1.444
           tidy3d: 1.444
           lumerical: SiO2 (Glass) - Palik
+        SiO2_rii:                          # silica pinned to a measured model:
+          nk: 1.444                        # `source: rii` makes EVERY engine
+          tidy3d: 1.444                    # build it from the same
+          lumerical: SiO2 (Glass) - Palik  # refractiveindex.info page
+          rii: {shelf: main, book: SiO2, page: Malitson}
+          source: rii
 
-      substrate:   {z_base: 0.0, z_span: -2, material: SiO2}
+      substrate:   {z_base: 0.0, z_span: -2, material: SiO2_rii}
       superstrate: {z_base: 0.0, z_span: 3,  material: SiO2}
       pinrec: [{layer: [1, 10]}]           # port pins
       devrec: [{layer: [68, 0]}]           # device region (simulation bounds)
@@ -122,6 +128,14 @@ it uses ``rii`` (if present) or ``nk``.
         rii: {shelf: main, book: Si, page: Salzberg}   # refractiveindex.info
         source: rii     # OPTIONAL: force every engine to use the rii model
                         # (omit -> tidy3d/Lumerical use their model, beamz uses rii)
+
+The reference ``examples/tech.yaml`` demonstrates the pinning live: its
+substrate material (``SiO2_rii``) carries all three sources and sets
+``source: rii``, so the buried oxide comes from the Malitson (1965) Sellmeier
+page on every engine. Engines that build a pinned material read the database
+from disk — set ``GDS_FDTD_RII_DB`` (the examples ship a mini-DB under
+``examples/02_technology/rii_db``). :doc:`_notebooks/02b_rii_to_engines` walks
+through the selection with :func:`~gds_fdtd.materials.select.select_source`.
 
 How each engine applies the chosen source:
 
