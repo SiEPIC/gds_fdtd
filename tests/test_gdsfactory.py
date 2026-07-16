@@ -111,3 +111,42 @@ def test_legacy_simprocessor_delegate(tech):
 
     comp = legacy(gf.components.straight(length=10), tech)
     assert {p.name for p in comp.ports} == {"o1", "o2"}
+
+
+def test_abutting_reference_polygons_merge_into_one_body(tech):
+    """Issue #1: a hierarchical component (one polygon per placed reference)
+    must extrude as ONE body per connected region — separate abutting polygons
+    each taper from their own footprint under a sidewall angle, opening
+    wedge-shaped gaps at every internal junction."""
+    import shapely
+
+    c = gf.Component()
+    s1 = c.add_ref(gf.components.straight(length=3))
+    b = c.add_ref(gf.components.bend_euler(radius=5))
+    b.connect("o1", s1.ports["o2"])
+    s2 = c.add_ref(gf.components.straight(length=3))
+    s2.connect("o1", b.ports["o2"])
+    c.add_port("o1", port=s1.ports["o1"])
+    c.add_port("o2", port=s2.ports["o2"])
+
+    comp = from_gdsfactory(c, tech)
+    devices = [s for s in comp.structures if s.role == "device"]
+    assert len(devices) == 1, [d.name for d in devices]  # 3 abutting refs -> 1 body
+    merged = shapely.Polygon(devices[0].polygon)
+    assert merged.is_valid
+    # area is preserved by the union (straights 2 x 3x0.5 + the bend body)
+    assert merged.area > 2 * 3 * 0.5
+
+
+def test_disjoint_polygons_stay_separate(tech):
+    """The merge must not fuse bodies that do not touch."""
+    c = gf.Component()
+    s1 = c.add_ref(gf.components.straight(length=2))
+    s2 = c.add_ref(gf.components.straight(length=2))
+    s2.move((0, 5))  # far apart
+    c.add_port("o1", port=s1.ports["o1"])
+    c.add_port("o2", port=s2.ports["o2"])
+
+    comp = from_gdsfactory(c, tech)
+    devices = [s for s in comp.structures if s.role == "device"]
+    assert len(devices) == 2
