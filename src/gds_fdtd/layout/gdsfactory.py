@@ -59,6 +59,35 @@ def _ensure_trailing_digits(name: str, fallback_index: int) -> str:
     return new
 
 
+_MERGE_DBU_UM = 0.001  # 1 nm merge grid, matching the usual GDS dbu
+
+
+def _merge_layer_polygons(polygons: list[Any]) -> list[list[list[float]]]:
+    """Union the polygons of one layer into merged simple polygons (um floats).
+
+    Abutting polygons (a hierarchical gdsfactory component returns one polygon
+    per placed reference) must extrude as ONE body: with a sidewall angle each
+    polygon tapers from its own footprint, so every internal junction opens a
+    wedge-shaped gap in the sloped faces (issue #1). The KLayout GDS loader
+    already merges per layer (``pya.Region.merge()``); this applies the same
+    proven pipeline — including hole handling via ``to_simple_polygon`` — to
+    the gdsfactory frontend. Coordinates snap to a 1 nm grid, the standard
+    GDS dbu.
+    """
+    import pya
+
+    region = pya.Region()
+    for pts in polygons:
+        arr = np.asarray(pts, dtype=float) / _MERGE_DBU_UM
+        region.insert(pya.Polygon([pya.Point(int(round(x)), int(round(y))) for x, y in arr]))
+    region.merge()
+    merged: list[list[list[float]]] = []
+    for poly in region.each_merged():
+        simple = poly.to_simple_polygon()
+        merged.append([[pt.x * _MERGE_DBU_UM, pt.y * _MERGE_DBU_UM] for pt in simple.each_point()])
+    return merged
+
+
 def from_gdsfactory(c: Any, tech: Any, z_span: float = 4.0) -> Component:
     """Convert a gdsfactory (>=9) Component into a gds_fdtd Component.
 
@@ -80,7 +109,9 @@ def from_gdsfactory(c: Any, tech: Any, z_span: float = 4.0) -> Component:
     tech_dict = tech.to_solver_dict() if hasattr(tech, "to_solver_dict") else tech
     device_layers = {tuple(d["layer"]): d for d in tech_dict["device"]}
 
-    # ---- structures: one per polygon per tech-declared device layer ----
+    # ---- structures: one per MERGED polygon per tech-declared device layer ----
+    # (abutting per-reference polygons union into one body so angled sidewalls
+    # cannot open gaps at internal junctions — issue #1)
     structures: list[Structure] = []
     polygons_by_layer = c.get_polygons_points(by="tuple")
     for layer_tuple, polygons in polygons_by_layer.items():
@@ -88,12 +119,11 @@ def from_gdsfactory(c: Any, tech: Any, z_span: float = 4.0) -> Component:
         if d is None:
             logger.info("layer %s present in component but not in technology; skipped", layer_tuple)
             continue
-        for i, pts in enumerate(polygons):
-            arr = np.asarray(pts, dtype=float)
+        for i, pts in enumerate(_merge_layer_polygons(polygons)):
             structures.append(
                 Structure(
                     name=f"poly_{layer_tuple[0]}_{layer_tuple[1]}_{i}",
-                    polygon=arr.tolist(),
+                    polygon=pts,
                     z_base=d["z_base"],
                     z_span=d["z_span"],
                     material=get_material(d),
