@@ -77,19 +77,21 @@ plt.show()
 # %% [markdown]
 # ## 1 · One spec: a fine spectrum, a frugal field monitor
 #
-# Resolving a stopband needs a dense wavelength grid — 101 points across
-# 1.50–1.60 µm here. Recording the **field** at all 101 points would multiply
-# the download for nothing, so the monitor is told to keep five wavelengths:
-# two guesses inside the expected stopband and neighbors outside it. The
-# z-plane is pinned to the middle of the silicon core:
+# Resolving a 3-nm stopband needs a dense wavelength grid — **501 points**
+# (0.2 nm spacing) across 1.50–1.60 µm here. Recording the **field** at all
+# 501 points would multiply the download for nothing, so the monitor keeps
+# seven wavelengths: a tight 0.3-nm comb centered on the Bragg wavelength
+# (1.5430 µm, measured from a first coarse pass on the same mesh) plus two
+# far-out-of-band companions. The z-plane is pinned to the middle of the
+# silicon core:
 
 # %%
 spec = SimulationSpec(
-    wavelength_start=1.5, wavelength_end=1.6, wavelength_points=101,
+    wavelength_start=1.5, wavelength_end=1.6, wavelength_points=501,
     mesh=10, z_min=-1.0, z_max=1.0,
     field_monitors=("z",),
     field_monitor_positions={"z": 0.11},
-    field_monitor_wavelengths=(1.51, 1.545, 1.55, 1.555, 1.59),
+    field_monitor_wavelengths=(1.5424, 1.5427, 1.5430, 1.5433, 1.5436, 1.51, 1.59),
 )
 solver = get_solver("tidy3d")(comp, technology=tech, spec=spec)
 plot_monitor_planes(solver)
@@ -98,7 +100,7 @@ plt.show()
 # %% [markdown]
 # ## 2 · The spectrum
 #
-# The run executed on tidy3d (2 excitations, ~0.4 FC; artifacts in
+# The run executed on tidy3d (2 excitations, ~0.5 FC; artifacts in
 # `recorded/`, see `PROVENANCE.md`). Transmission collapses inside the
 # stopband while reflection rises to ~0 dB — a distributed mirror:
 
@@ -135,14 +137,15 @@ if below.any():
     print(f"stopband center ≈ {in_band:.4f} um; width (S21 < -10 dB) ≈ {bw_nm:.1f} nm")
 
 # %% [markdown]
-# ## 3 · The same monitor, in and out of the stopband
+# ## 3 · The same monitor, exactly on the Bragg wavelength
 #
-# The recorded field file carries all five wavelengths; picking the one nearest
-# the measured stopband center against a far-out-of-band neighbor shows the
-# mirror at work. In-band, the field decays *into* the grating — the input
-# side carries a standing-wave ripple where the injected and reflected waves
-# interfere, and almost nothing reaches the output. Out-of-band, the envelope
-# runs flat through all 95 µm:
+# The recorded field file carries the comb; the plot picks the recorded
+# wavelength nearest the spectrum's own minimum — within the 0.2 nm resolution
+# of the sweep, that is *the* Bragg wavelength — against the farthest
+# out-of-band companion. In-band, the field decays *into* the grating — the
+# input side carries a standing-wave ripple where the injected and reflected
+# waves interfere, and almost nothing reaches the output. Out-of-band, the
+# envelope runs flat through all 95 µm:
 
 # %%
 fz = np.load(REC / "bragg_field_z.npz")
@@ -191,8 +194,9 @@ print(f"power balance: min {balance.min():.3f}, max {balance.max():.3f}")
 #
 # - `bragg_te1550` from `devices.gds`, straight from GDS to a tidy3d run with
 #   the shared technology file — nothing device-specific in the setup.
-# - One simulation produced the full 101-point spectrum **and** the field at
-#   five chosen wavelengths (`spec.field_monitor_wavelengths`), pinned to the
+# - One simulation produced the full 501-point spectrum **and** the field at
+#   seven chosen wavelengths (`spec.field_monitor_wavelengths`) — a 0.3-nm
+#   comb on the Bragg wavelength plus out-of-band companions — pinned to the
 #   silicon core (`spec.field_monitor_positions`).
 # - The spectrum finds the stopband; the field pictures show *why*: in-band
 #   the grating is a mirror (decay + standing wave), out-of-band it is just a
