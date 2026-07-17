@@ -20,9 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Two examples: `05b_field_monitors` (the placement machinery on the Si→SiN
   escalator, whose side view shows the light climbing from the Si core into
   the SiN core) and `11_bragg_grating` (a 95 µm SiEPIC Bragg grating from
-  `devices.gds` on tidy3d: the 101-point stopband spectrum, and one field
-  monitor showing reflection in-band vs transmission out-of-band from a
-  single run). Both ship recorded artifacts with provenance.
+  `devices.gds` on tidy3d: a 501-point stopband spectrum, and one field
+  monitor recording a 0.3-nm comb centered exactly on the measured Bragg
+  wavelength — reflection in-band vs transmission out-of-band from a single
+  run). Both ship recorded artifacts with provenance.
 
 ### Fixed
 - The `filterwarnings = ["error::DeprecationWarning:gds_fdtd.*"]` guard sat
