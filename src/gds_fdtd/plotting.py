@@ -587,6 +587,7 @@ def plot_field(
     colorbar: bool = True,
     title: str | None = None,
     extent: Any = None,
+    outline: Any = None,
     savefig: str | None = None,
 ) -> tuple[Any, Any]:
     """Plot a 2-D field-intensity map (``|E|²``) in linear or dB scale.
@@ -611,6 +612,9 @@ def plot_field(
         title: axes title.
         extent: ``(x0, x1, y0, y1)`` used with ``imshow`` when ``x``/``y`` are
             not given.
+        outline: optional geometry overlay — a list of Nx2 polygons in the
+            plot's coordinates, drawn as thin dashed contours (see
+            :func:`component_outlines`).
         savefig: path to write the figure to (optional).
 
     Returns:
@@ -645,6 +649,12 @@ def plot_field(
     else:
         im = ax.imshow(data, origin="lower", extent=extent, cmap=cmap, vmin=vmin, vmax=vmax)
     ax.set_aspect("equal")
+    if outline is not None:
+        for poly in outline:
+            pts = np.asarray(poly, dtype=float)
+            if len(pts) >= 2:
+                closed = np.vstack([pts, pts[:1]])
+                ax.plot(closed[:, 0], closed[:, 1], "--", color="w", lw=0.7, alpha=0.8)
     if colorbar:
         fig.colorbar(im, ax=ax, label=clabel)
     ax.set_xlabel("x [µm]")
@@ -700,3 +710,123 @@ def plot_mode(
     if savefig:
         fig.savefig(savefig, dpi=150, bbox_inches="tight")
     return fig, ax
+
+
+def component_outlines(component: Any, axis: str = "z") -> list[Any]:
+    """Device-geometry outlines for overlay on a field plot (see ``plot_field``).
+
+    For a z-normal view the outlines are the device polygons themselves (x-y).
+    For x/y-normal side views each device structure contributes its bounding
+    rectangle in the plane — in-plane extent × [z_base, z_base + z_span] — which
+    marks where each layer sits in the cross-section.
+
+    Args:
+        component: a :class:`~gds_fdtd.geometry.Component`.
+        axis: the monitor normal — "z" (top view), "y" (x-z side view) or
+            "x" (y-z side view).
+
+    Returns:
+        list of Nx2 point arrays in the plot's coordinates.
+    """
+    outlines: list[Any] = []
+    for s in component.structures:
+        if s.role != "device":
+            continue
+        pts = np.asarray(s.polygon, dtype=float)
+        if axis == "z":
+            outlines.append(pts)
+            continue
+        i = 0 if axis == "y" else 1  # in-plane horizontal coordinate
+        lo, hi = float(pts[:, i].min()), float(pts[:, i].max())
+        z0, z1 = sorted((s.z_base, s.z_base + s.z_span))
+        outlines.append(np.array([[lo, z0], [hi, z0], [hi, z1], [lo, z1]]))
+    return outlines
+
+
+def plot_monitor_planes(solver: Any, savefig: str | None = None) -> tuple[Any, Any]:
+    """Show where a solver's field-monitor planes sit in the simulation domain.
+
+    Two panels: a top view (x-y: device polygons, domain box, x/y monitor
+    planes as lines) and a side view (x-z: device layer bands, domain z-window,
+    z/x monitor planes). Each plane is labelled with its coordinate and whether
+    it is the engine default or a ``spec.field_monitor_positions`` override.
+    Offline and engine-agnostic — works on any constructed solver, before
+    anything runs.
+
+    Returns:
+        (fig, (ax_top, ax_side))
+    """
+    import matplotlib.pyplot as plt
+
+    comp, spec = solver.component, solver.spec
+    center, span = solver.domain()
+
+    # engine-default plane positions (matching the tidy3d adapter)
+    z_by_layer: dict[tuple[int, ...], float] = {}
+    for s in comp.structures:
+        if s.role == "device" and s.layer:
+            z_by_layer.setdefault(tuple(s.layer), s.z_base + s.z_span / 2)
+    z_default = float(np.average(list(z_by_layer.values()))) if z_by_layer else 0.0
+    defaults = {"x": comp.bounds.x_center, "y": comp.bounds.y_center, "z": z_default}
+
+    positions = dict(getattr(spec, "field_monitor_positions", {}) or {})
+
+    def _pos(axis: str) -> tuple[float, str]:
+        if axis in positions:
+            return float(positions[axis]), "custom"
+        return float(defaults[axis]), "default"
+
+    fig, (ax_top, ax_side) = plt.subplots(
+        2, 1, figsize=(8, 7), gridspec_kw={"height_ratios": [2.2, 1]}
+    )
+
+    # ---- top view (x-y) ----
+    for s in comp.structures:
+        if s.role == "device":
+            pts = np.asarray(s.polygon, dtype=float)
+            ax_top.fill(pts[:, 0], pts[:, 1], color="0.75", ec="0.4", lw=0.5, zorder=1)
+    x0, x1 = center[0] - span[0] / 2, center[0] + span[0] / 2
+    y0, y1 = center[1] - span[1] / 2, center[1] + span[1] / 2
+    ax_top.plot([x0, x1, x1, x0, x0], [y0, y0, y1, y1, y0], "-", color="0.3", lw=1)
+    colors = {"x": "tab:red", "y": "tab:blue", "z": "tab:green"}
+    for axis in spec.field_monitors:
+        p, kind = _pos(axis)
+        label = f"{axis}_field @ {axis}={p:.2f} µm ({kind})"
+        if axis == "x":
+            ax_top.axvline(p, color=colors["x"], ls="--", lw=1.4, label=label)
+        elif axis == "y":
+            ax_top.axhline(p, color=colors["y"], ls="--", lw=1.4, label=label)
+        else:
+            ax_top.plot([], [], color=colors["z"], ls="--", label=label + " — see side view")
+    ax_top.set_aspect("equal")
+    ax_top.set_xlabel("x [µm]")
+    ax_top.set_ylabel("y [µm]")
+    ax_top.set_title(f"monitor planes — top view (domain {span[0]:.1f} × {span[1]:.1f} µm)")
+    ax_top.legend(fontsize="small", loc="upper right")
+
+    # ---- side view (x-z) ----
+    ax_side.axhspan(spec.z_min, spec.z_max, color="0.95", zorder=0)
+    for s in comp.structures:
+        if s.role != "device":
+            continue
+        pts = np.asarray(s.polygon, dtype=float)
+        z_lo, z_hi = sorted((s.z_base, s.z_base + s.z_span))
+        ax_side.fill_between(
+            [pts[:, 0].min(), pts[:, 0].max()], z_lo, z_hi, color="0.7", ec="0.4", lw=0.5
+        )
+    for axis in spec.field_monitors:
+        p, kind = _pos(axis)
+        if axis == "z":
+            ax_side.axhline(p, color=colors["z"], ls="--", lw=1.4)
+        elif axis == "x":
+            ax_side.axvline(p, color=colors["x"], ls="--", lw=1.4)
+    ax_side.set_xlim(x0, x1)
+    ax_side.set_ylim(spec.z_min - 0.2, spec.z_max + 0.2)
+    ax_side.set_xlabel("x [µm]")
+    ax_side.set_ylabel("z [µm]")
+    ax_side.set_title("side view (x-z): layer bands and the z / x planes")
+
+    fig.tight_layout()
+    if savefig:
+        fig.savefig(savefig, dpi=150, bbox_inches="tight")
+    return fig, (ax_top, ax_side)

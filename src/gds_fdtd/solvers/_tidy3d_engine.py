@@ -99,9 +99,15 @@ class _TidyEngine(_TidyEngineBase):
         # Add field monitor if requested
         monitors = []
         if self.field_monitors:
+            # monitors record the chosen wavelengths, else the full spectrum
+            monitor_wl = self.spec.field_monitor_wavelengths
+            monitor_freqs = [td.C_0 / w for w in monitor_wl] if monitor_wl else self.freqs
             for field_monitor_axis in self.field_monitors:
                 field_monitor = self._create_field_monitor(
-                    device, freqs=self.freqs, axis=field_monitor_axis
+                    device,
+                    freqs=monitor_freqs,
+                    axis=field_monitor_axis,
+                    position=self.spec.field_monitor_positions.get(field_monitor_axis),
                 )
                 monitors.append(field_monitor)
                 self.logger.debug(f"Created Tidy3D field monitor: {field_monitor.name}")
@@ -290,9 +296,19 @@ class _TidyEngine(_TidyEngineBase):
         return structures
 
     def _create_field_monitor(
-        self, device: Any, freqs: Any = 2e14, axis: str = "z", z_center: float | None = None
+        self,
+        device: Any,
+        freqs: Any = 2e14,
+        axis: str = "z",
+        z_center: float | None = None,
+        position: float | None = None,
     ) -> td.FieldMonitor:
-        """Create a field monitor for the specified axis."""
+        """Create a field monitor for the specified axis.
+
+        ``position`` places the plane at an absolute coordinate [um] along its
+        normal axis (spec.field_monitor_positions); otherwise the plane sits at
+        the domain center in x/y and the device layers' average mid-plane in z.
+        """
         # identify a device field z_center if None
         if z_center is None:
             # per-LAYER average (matching the old per-list semantics)
@@ -304,13 +320,13 @@ class _TidyEngine(_TidyEngineBase):
         # center the monitor on the component, not the origin (bug B9)
         cx, cy = device.bounds.x_center, device.bounds.y_center
         if axis == "z":
-            center = [cx, cy, z_center]
+            center = [cx, cy, position if position is not None else z_center]
             size = [td.inf, td.inf, 0]
         elif axis == "y":
-            center = [cx, cy, z_center]
+            center = [cx, position if position is not None else cy, z_center]
             size = [td.inf, 0, td.inf]
         elif axis == "x":
-            center = [cx, cy, z_center]
+            center = [position if position is not None else cx, cy, z_center]
             size = [0, td.inf, td.inf]
         else:
             raise JobValidationError(

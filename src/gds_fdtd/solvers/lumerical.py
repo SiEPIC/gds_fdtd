@@ -291,10 +291,16 @@ class LumericalSolver(Solver):
         # ---- field monitors ----
         for axis in s.field_monitors:
             normal = {"x": "2D X-normal", "y": "2D Y-normal", "z": "2D Z-normal"}[axis]
+            # the plane sits at the domain center unless the spec pins its
+            # normal coordinate (spec.field_monitor_positions, um)
+            pos = {"x": center[0], "y": center[1], "z": center[2]}
+            override = s.field_monitor_positions.get(axis)
+            if override is not None:
+                pos[axis] = float(override)
             L += [
                 f'addprofile; set("name", "profile_{axis}"); set("monitor type", {_q(normal)});',
-                f'set("x", {center[0] * um}); set("y", {center[1] * um}); '
-                f'set("z", {center[2] * um});',
+                f'set("x", {pos["x"] * um}); set("y", {pos["y"] * um}); '
+                f'set("z", {pos["z"] * um});',
             ]
             if axis != "x":
                 L.append(f'set("x span", {span[0] * um});')
