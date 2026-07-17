@@ -155,39 +155,41 @@ def load_cell(fname: str, top_cell: str | None = None) -> tuple["pya.Cell", "pya
 
     Args:
         fname (str): Path to the GDS file.
-        top_cell (str, optional): Name of the top cell. If None, the function will attempt to find a single top cell. Defaults to None.
+        top_cell (str, optional): Name of the top cell. If None, the function
+            will attempt to find a single top cell. Defaults to None.
 
     Returns:
         pya.Cell: A cell object containing the name, layout, and top cell.
 
     Raises:
-        ValueError: If more than one top cell is found and top_cell is not specified, or if the specified top cell is not found.
+        LayoutError: If more than one top cell is found and top_cell is not
+            specified, or if the specified top cell is not found.
     """
     ly = pya.Layout()
     ly.read(fname)
 
     if top_cell is None:
         if len(ly.top_cells()) > 1:
-            err_msg = "More than one top cell found, ensure only 1 top cell exists. Otherwise, specify the cell using the top_cell argument."
+            err_msg = (
+                "More than one top cell found, ensure only 1 top cell exists. "
+                "Otherwise, specify the cell using the top_cell argument."
+            )
             logging.error(err_msg)
             raise LayoutError(err_msg)
-        else:
-            cell = ly.top_cell()
-            name = cell.name
+        cell = ly.top_cell()
     else:
         cell = ly.cell(top_cell)
         if cell is None:
             err_msg = f"Top cell with name {top_cell} not found."
             logging.error(err_msg)
             raise LayoutError(err_msg)
-        name = cell.name
 
     return cell, ly
 
 
 def load_region(
     cell: pya.Cell,
-    layer: list[int] = [68, 0],
+    layer: list[int] | None = None,
     z_center: float = 0.0,
     z_span: float = 5.0,
     extension: float = 0.0,
@@ -200,14 +202,15 @@ def load_region(
         layer (list[int, int]): Layer to detect the devrec object from. Defaults to [68, 0].
         z_center (float): Z-center of the layout in microns. Defaults to 0.
         z_span (float): Z-span of the layout in microns. Defaults to 5.
-        extension (float): Amount of extended region to retrieve beyond the specified region. Defaults to 1.3.
+        extension (float): Amount of extended region to retrieve beyond the
+            specified region. Defaults to 1.3.
 
     Returns:
         region: Region object type.
     """
 
     dbu = cell.layout().dbu
-    layer_spec = list(layer)
+    layer_spec = list(layer) if layer is not None else [68, 0]
     layer_idx = cell.layout().layer(layer_spec[0], layer_spec[1])
 
     # Collect every box/polygon DevRec shape on the layer (previously only the
@@ -334,8 +337,10 @@ def load_structure_from_bounds(
         z_base (float): Z base of structure.
         z_span (float): Z span (thickness) of structure, can be negative for downward growth.
         material (tidy3d.Medium): Material of structure
-        extension (float, optional): Growth (or shrinkage), in um, of structure definition relative to bounds. Defaults to 2 um.
-        layer (list[int], optional): GDS layer specification as [layer_number, datatype]. Defaults to [1, 0].
+        extension (float, optional): Growth (or shrinkage), in um, of structure
+            definition relative to bounds. Defaults to 2 um.
+        layer (list[int], optional): GDS layer specification as
+            [layer_number, datatype]. Defaults to [1, 0].
 
     Returns:
         Structure: Structure generated from input region.
@@ -351,7 +356,7 @@ def load_structure_from_bounds(
     )
 
 
-def load_ports(cell: pya.Cell, layer: list[int] = [1, 10]) -> list[Port]:
+def load_ports(cell: pya.Cell, layer: list[int] | None = None) -> list[Port]:
     """Load ports from cell.
 
     Args:
@@ -361,6 +366,8 @@ def load_ports(cell: pya.Cell, layer: list[int] = [1, 10]) -> list[Port]:
     Returns:
         list: List of extracted port objects.
     """
+    if layer is None:
+        layer = [1, 10]
 
     def get_direction(path: Any) -> float:
         """Determine orientation of a pin path."""
@@ -369,16 +376,10 @@ def load_ports(cell: pya.Cell, layer: list[int] = [1, 10]) -> list[Port]:
         p = path.each_point()
         p1 = p.__next__()
         p2 = p.__next__()
-        if p1.x == p2.x:
-            if p1.y > p2.y:  # north/south
-                return 270
-            else:
-                return 90
-        elif p1.y == p2.y:  # east/west
-            if p1.x > p2.x:
-                return 180
-            else:
-                return 0
+        if p1.x == p2.x:  # north/south
+            return 270 if p1.y > p2.y else 90
+        if p1.y == p2.y:  # east/west
+            return 180 if p1.x > p2.x else 0
         raise LayoutError("Pin path is diagonal; port pins must be axis-aligned (0/90/180/270).")
 
     def get_center(path: Any, dbu: float) -> tuple[float, float]:

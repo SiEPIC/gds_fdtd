@@ -11,9 +11,9 @@ asserted every PR by `test_three_engine_agreement`).
 
 | engine | last verified | version | evidence |
 |---|---|---|---|
-| tidy3d (cloud) | 2026-07-08 | 2.11.2 | crossing 4-port×2-mode matrix on the UNIFIED tech (0.292 FC); live mesh-convergence sweep; budget-gated cloud smoke; recorded artifact in `tests/recorded/` replayed every PR |
-| Lumerical FDTD | 2026-07-07 | 2025 R2 (v252) | escalator full matrix on local license; agrees with tidy3d within **0.081 dB** (worst pair, `compare_smatrices`); recorded artifact replayed every PR |
-| beamz | 2026-07-08 | 0.4.3 | gdsfactory straight, fully agnostic setup (indices auto-resolved from the unified tech): thru ≈0 dB, S11 −31…−41 dB; F9 (reference-monitor mis-normalization) found and fixed earlier |
+| tidy3d (cloud) | 2026-07-13 | 2.11.2 | crossing 4-port×2-mode matrix re-recorded at 51 wavelength points, TE+TM (~0.54 FC; `examples/01`/`04` recorded); S-bend convergence + injected-mode overlay (`examples/06`); PBS + PSR polarization matrices (`examples/10b` via `10_cookbook/recorded`); budget-gated cloud smoke; artifacts replayed every PR |
+| Lumerical FDTD | 2026-07-13 | 2025 R2 (v252) | PBS + PSR full polarization matrices on local license (PSR: 10.9 h); S-bend convergence + injected-mode overlay within **0.03 dB** of tidy3d (`examples/06`); escalator full matrix; artifacts replayed every PR |
+| beamz | 2026-07-15 | 0.4.3 | slow-marked real end-to-end straight run executes in the CI all-extras leg on every PR (thru > −0.5 dB, reflections < −15 dB, reciprocity); beamz examples (`00`/`03`/`06`/`08`/`10`) executed 2026-07-14 |
 
 Refresh procedure: `cloud-smoke` workflow (tidy3d, budget-gated, human
 approval), `lumerical-nightly` workflow (self-hosted lane, see

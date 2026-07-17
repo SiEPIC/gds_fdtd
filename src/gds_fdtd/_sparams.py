@@ -349,13 +349,14 @@ class sparameters:
                 total_count = zero_count + non_zero_count
 
                 logger.info(
-                    f"  {input_port}: {total_count} total ({non_zero_count} non-zero, {zero_count} zero)"
+                    f"  {input_port}: {total_count} total "
+                    f"({non_zero_count} non-zero, {zero_count} zero)"
                 )
 
                 if zero_count > 0:
                     zero_idns = [d.idn for d in input_port_groups[input_port]["zero"]]
                     logger.info(
-                        f"    ⚠️  WARNING: {zero_count} zero entries found for input port {input_port}"
+                        f"    WARNING: {zero_count} zero entries found for input port {input_port}"
                     )
                     if zero_count <= 8:  # Show all if not too many
                         logger.info(f"         Zero IDNs: {sorted(zero_idns)}")
@@ -447,7 +448,8 @@ class sparameters:
         if verbose:
             logger.info(f"=== Excitation Validation for {self.name} ===")
             logger.info(
-                f"Expected excitations: {expected_excited_ports} with modes {expected_excited_modes}"
+                f"Expected excitations: {expected_excited_ports} "
+                f"with modes {expected_excited_modes}"
             )
             logger.info(f"Expected IDNs: {len(expected_idns)}")
             logger.info(f"Actual non-zero IDNs: {len(actual_non_zero_idns)}")
@@ -523,8 +525,9 @@ def process_dat(file_path: str, name: str | None = None, verbose: bool = True) -
                     logger.debug(f"Found port: name={port_name} , direction={port_direction}")
                 spar.add_port(port_name, port_direction)
             elif data_match:
-                # parse an S-parameter dataset header
-                # Format: ("output_port", "output_mode_name", output_mode_id, "input_port", input_mode_id, "data_type")
+                # parse an S-parameter dataset header. Format:
+                # ("output_port", "output_mode_name", output_mode_id,
+                #  "input_port", input_mode_id, "data_type")
                 (
                     output_port,  # Port where measurement is taken
                     output_mode_name,  # Mode name at output port (e.g., "mode 1")
@@ -536,9 +539,10 @@ def process_dat(file_path: str, name: str | None = None, verbose: bool = True) -
 
                 if verbose:
                     logger.debug(
-                        f"Found S-param dataset: output_port={output_port}, output_mode_name={output_mode_name}, "
-                        f"output_modeid={output_modeid}, input_port={input_port}, input_modeid={input_modeid}, "
-                        f"data_type={data_type}"
+                        f"Found S-param dataset: output_port={output_port}, "
+                        f"output_mode_name={output_mode_name}, "
+                        f"output_modeid={output_modeid}, input_port={input_port}, "
+                        f"input_modeid={input_modeid}, data_type={data_type}"
                     )
 
                 # parse the data set

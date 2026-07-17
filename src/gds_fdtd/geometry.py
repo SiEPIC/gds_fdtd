@@ -105,10 +105,14 @@ class Port:
         name (str): Name of the port, typically containing a numeric identifier.
         center (list[float]): 3D coordinates of the port center [x, y, z]. Convention is in microns.
         width (float): Width of the port. Convention is in microns.
-        direction (float): Direction of the port. Convention is in degrees. Directions supported are 0, 90, 180, 270.
-        height (float): Height of the port, assigned during component initialization. Convention is in microns.
-        material: Material of the port (name or resolved mapping), assigned during component initialization.
-        layer (list[int]): GDS layer information [layer_number, datatype], assigned during component initialization.
+        direction (float): Direction of the port in degrees; supported values
+            are 0, 90, 180, 270.
+        height (float): Height of the port in microns, assigned during
+            component initialization.
+        material: Material of the port (name or resolved mapping), assigned
+            during component initialization.
+        layer (list[int]): GDS layer information [layer_number, datatype],
+            assigned during component initialization.
     """
 
     def __init__(
@@ -233,17 +237,19 @@ class Structure:
 
         Args:
             name (str): Unique identifier for the structure.
-            polygon (list[list[float]]): 2D polygon defining the structure's horizontal cross-section,
-                                               formatted as [[x1,y1], [x2,y2], ...].
+            polygon (list[list[float]]): 2D polygon defining the structure's
+                horizontal cross-section, formatted as [[x1,y1], [x2,y2], ...].
             z_base (float): Base z-coordinate in microns where the structure begins.
             z_span (float): Vertical height/thickness of the structure in microns.
             material (str): Material identifier for the structure.
-            sidewall_angle (float, optional): Angle of the sidewalls in degrees, where 90.0 means vertical walls.
-                                             Defaults to 90.0.
-            layer (list[int], optional): GDS layer specification as [layer_number, datatype]. Defaults to [1, 0].
+            sidewall_angle (float, optional): Angle of the sidewalls in degrees,
+                where 90.0 means vertical walls. Defaults to 90.0.
+            layer (list[int], optional): GDS layer specification as
+                [layer_number, datatype]. Defaults to [1, 0].
         """
         self.name = name
-        self.polygon = polygon  # polygon should be in the form of list of list of 2 pts, i.e. [[0,0],[0,1],[1,1]]
+        # polygon is a list of 2-point lists, i.e. [[0,0],[0,1],[1,1]]
+        self.polygon = polygon
         self.z_base = z_base
         self.z_span = z_span
         self.material = material
@@ -456,7 +462,9 @@ class Component:
         Args:
             export_dir: Directory to export the GDS file to. Defaults to current working directory.
             dbu: Database unit in microns. Defaults to 0.001 (1 nm).
-            layer: GDS layer specification as [layer_number, datatype]. Used as fallback for port extensions if port has no layer info. Defaults to [1, 0].
+            layer: GDS layer specification as [layer_number, datatype]. Used as
+                fallback for port extensions if a port has no layer info.
+                Defaults to [1, 0].
             buffer: Buffer distance to extend ports beyond their bounds in microns. Defaults to 1.0.
         """
         import os
@@ -497,7 +505,7 @@ class Component:
         # Export port extensions if buffer > 0 (using each port's layer information)
         if buffer > 0.0:
             for port in self.ports:
-                # Use port's layer information if available, otherwise fallback to the layer parameter
+                # the port's own layer wins; the layer parameter is the fallback
                 port_layer = port.layer if port.layer is not None else layer
 
                 # Get or create the layer for this port extension

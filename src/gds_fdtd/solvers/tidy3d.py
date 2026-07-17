@@ -30,7 +30,7 @@ from .base import (
 def probe_tidy3d() -> str | None:
     """None if tidy3d is importable, else the reason it isn't."""
     try:
-        import tidy3d  # noqa: F401
+        import tidy3d  # noqa: F401  (availability probe)
 
         return None
     except Exception as e:  # pragma: no cover - env dependent

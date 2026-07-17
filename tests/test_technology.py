@@ -96,7 +96,8 @@ def test_future_schema_version_rejected(tmp_path):
 
 def test_rii_material_loads_offline_and_matches_silicon(tmp_path):
     body = BASE.format(
-        device="{layer: [1, 0], z_base: 0.0, z_span: 0.22, material: {rii: {shelf: main, book: Si, page: Li-293}}}"
+        device="{layer: [1, 0], z_base: 0.0, z_span: 0.22, "
+        "material: {rii: {shelf: main, book: Si, page: Li-293}}}"
     )
     tech = Technology.from_yaml(_tech_yaml(tmp_path, body))
     rii_ref = tech.device[0].material.rii

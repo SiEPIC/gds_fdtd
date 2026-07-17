@@ -8,12 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- The `filterwarnings = ["error::DeprecationWarning:gds_fdtd.*"]` guard sat
+  under `[tool.coverage.report]`, where pytest never read it — moved to
+  `[tool.pytest.ini_options]`, so in-package deprecation warnings fail tests
+  again as intended.
 - `from_gdsfactory` now merges abutting polygons per device layer before
   extrusion (same KLayout merge pipeline as the GDS loader), so hierarchical
   components no longer open wedge-shaped gaps at internal junctions under
   angled sidewalls (#1, #58).
 
 ### Changed
+- Repo cleanup: the modernization arc's temporary ruff ignore list
+  (`E501`/`B006`/`E722`/`B904`/`F841`/`UP031`) was worked off and removed —
+  the remaining violations were fixed (mutable default arguments in
+  `lyprocessor`, a swallowed exception chain in `simprocessor`, a dead
+  variable, 36 long lines wrapped) and the lint config now carries no ignores.
+  Unused dev dependencies (`twine`, `watchdog`, `wheel`) were dropped, stale
+  docs figures deleted, and `HANDOFF.md`/`ROADMAP.md`/`SOLVER_STATUS.md`
+  refreshed to the post-release state.
 - The reference `examples/tech.yaml` now demonstrates material-source pinning
   live: the substrate material (`SiO2_rii`) carries eda + rii + nk sources and
   sets `source: rii`, so every engine models the buried oxide from the same

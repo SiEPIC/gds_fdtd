@@ -5,7 +5,10 @@ should be able to read this, understand the current state, and pick up work
 without losing context. Keep it current; move granular tracking to GitHub
 Issues as items are picked up.
 
-## Where we are — v0.6.0 (ready to tag)
+## Where we are — v0.6.0 (released 2026-07-15)
+
+`v0.6.0` is tagged with a signed GitHub release (Sigstore bundles + SBOM).
+The PyPI upload is the one step still blocked — see the owner actions below.
 
 Solver-agnostic FDTD: one `Component` + one technology file + one
 `SimulationSpec`, any engine (tidy3d / Lumerical / beamz) behind
@@ -125,7 +128,9 @@ Not committed; a palette to choose from. Roughly ordered by impact.
 - [ ] **PyPI trusted publisher** (project `gds_fdtd`, owner `SiEPIC`,
       workflow `release.yml`, env `pypi`) — in progress with Lukas; until it
       lands, tagged releases produce signed GitHub artifacts but the PyPI
-      publish step cannot run.
+      publish step cannot run (re-verified 2026-07-17: `invalid-publisher`,
+      PyPI still serves 0.4.0). Once registered, re-run the failed publish job
+      of the v0.6.0 Release run.
 - [ ] **OpenSSF Best Practices badge** — register at bestpractices.dev.
 - [ ] **`cloud-tests` environment** with a required reviewer (guards the
       budget-gated tidy3d smoke).
