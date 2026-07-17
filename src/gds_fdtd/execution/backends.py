@@ -93,7 +93,13 @@ class SubprocessBackend:
             cmd += ["--import", mod]
         cmd += ["run", str(job_path), "--out", str(out)]
         log = open(out / "job.log", "w")
-        proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
+        try:
+            proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
+        except Exception:
+            # the handle intentionally stays open while the child runs
+            # (closed in _finalize) - but nobody closes it if launch fails
+            log.close()
+            raise
         logger.info("submitted job as pid %d -> %s", proc.pid, out)
         handle = JobHandle(id=str(proc.pid), out_dir=out)
         handle._state.update(
