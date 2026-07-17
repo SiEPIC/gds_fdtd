@@ -299,8 +299,7 @@ class LumericalSolver(Solver):
                 pos[axis] = float(override)
             L += [
                 f'addprofile; set("name", "profile_{axis}"); set("monitor type", {_q(normal)});',
-                f'set("x", {pos["x"] * um}); set("y", {pos["y"] * um}); '
-                f'set("z", {pos["z"] * um});',
+                f'set("x", {pos["x"] * um}); set("y", {pos["y"] * um}); set("z", {pos["z"] * um});',
             ]
             if axis != "x":
                 L.append(f'set("x span", {span[0] * um});')

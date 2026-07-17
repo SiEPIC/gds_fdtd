@@ -59,7 +59,7 @@ comp = load_component_from_tech(cell=cell, tech=tech)
 print(f"{comp.name}: {comp.bounds.x_span:.1f} x {comp.bounds.y_span:.1f} um, "
       f"ports {[p.name for p in comp.ports]}")
 
-fig, ax = plot_component(comp)
+plot_component(comp)
 plt.show()
 
 # %% [markdown]
