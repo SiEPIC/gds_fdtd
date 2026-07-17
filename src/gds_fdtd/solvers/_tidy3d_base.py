@@ -129,6 +129,8 @@ class _TidyEngineBase:
         mode_freq_pts: int = 3,
         run_time_factor: float = 3,
         field_monitors: list[str] | None = None,
+        field_monitor_positions: dict[str, float] | None = None,
+        field_monitor_wavelengths: list[float] | None = None,
         working_dir: str = "./",
     ):
         """
@@ -192,6 +194,8 @@ class _TidyEngineBase:
             mode_freq_pts=mode_freq_pts,
             run_time_factor=run_time_factor,
             field_monitors=tuple(field_monitors) if field_monitors is not None else ("z",),
+            field_monitor_positions=dict(field_monitor_positions or {}),
+            field_monitor_wavelengths=tuple(field_monitor_wavelengths or ()),
         )
         self.wavelength_start = self.spec.wavelength_start
         self.wavelength_end = self.spec.wavelength_end
@@ -208,6 +212,8 @@ class _TidyEngineBase:
         self.mode_freq_pts = self.spec.mode_freq_pts
         self.run_time_factor = self.spec.run_time_factor
         self.field_monitors = list(self.spec.field_monitors)
+        self.field_monitor_positions = dict(self.spec.field_monitor_positions)
+        self.field_monitor_wavelengths = list(self.spec.field_monitor_wavelengths)
         self.working_dir = working_dir
 
         # Create component-specific working directory under the base working directory
@@ -360,6 +366,8 @@ class _TidyEngineBase:
                 mode_freq_pts=self.mode_freq_pts,
                 run_time_factor=self.run_time_factor,
                 field_monitors=tuple(self.field_monitors),
+                field_monitor_positions=dict(self.field_monitor_positions),
+                field_monitor_wavelengths=tuple(self.field_monitor_wavelengths),
             )
         except Exception as e:
             self.logger.error(str(e))

@@ -114,6 +114,8 @@ class Tidy3DSolver(Solver):
             mode_freq_pts=s.mode_freq_pts,
             run_time_factor=s.run_time_factor,
             field_monitors=list(s.field_monitors),
+            field_monitor_positions=dict(s.field_monitor_positions),
+            field_monitor_wavelengths=list(s.field_monitor_wavelengths),
             working_dir=workdir,
         )
         self._engine = engine
@@ -170,17 +172,36 @@ class Tidy3DSolver(Solver):
         return self._dataarray_to_smatrix(da)
 
     def plot_fields(
-        self, axis: str = "z", scale: str = "linear", savefig: str | None = None
+        self,
+        axis: str = "z",
+        scale: str = "linear",
+        savefig: str | None = None,
+        wavelength_um: float | None = None,
+        task: str | int | None = None,
+        outline: bool = True,
     ) -> tuple[Any, Any]:
-        """Field profile from the first excitation's SimulationData.
+        """Field profile from one excitation's SimulationData.
 
-        ``scale="db"`` gives a log view (see
-        :func:`gds_fdtd.plotting.plot_field`).
+        ``scale="db"`` gives a log view, ``wavelength_um`` picks the recorded
+        frequency nearest that wavelength, ``task`` selects the excitation (an
+        index or a port-name substring), and ``outline=True`` overlays the
+        device geometry (see :func:`gds_fdtd.plotting.plot_field`).
         """
         data = getattr(self, "_modeler_data", None)
         if data is None:
             raise SolverError("run() has not completed; no field data available")
-        return plot_tidy3d_fields(data, axis=axis, scale=scale, savefig=savefig)
+        from ..plotting import component_outlines
+
+        lines = component_outlines(self.component, axis=axis) if outline else None
+        return plot_tidy3d_fields(
+            data,
+            axis=axis,
+            scale=scale,
+            savefig=savefig,
+            wavelength_um=wavelength_um,
+            task=task,
+            outline=lines,
+        )
 
     # ---------------- conversion ----------------
 
@@ -209,13 +230,28 @@ class Tidy3DSolver(Solver):
 
 
 def plot_tidy3d_fields(
-    modeler_data: Any, axis: str = "z", scale: str = "linear", savefig: str | None = None
+    modeler_data: Any,
+    axis: str = "z",
+    scale: str = "linear",
+    savefig: str | None = None,
+    wavelength_um: float | None = None,
+    task: str | int | None = None,
+    outline: Any = None,
 ) -> tuple[Any, Any]:
     """Plot ``|E|²`` of the '{axis}_field' monitor from a ModalComponentModelerData.
 
     Used by Tidy3DSolver.plot_fields. Extracts the field onto its true grid and
     renders via :func:`gds_fdtd.plotting.plot_field`, so ``scale="db"`` gives a
     log view. Drawn on the engine's own (non-uniform) mesh coordinates.
+
+    Args:
+        wavelength_um: pick the recorded frequency nearest this wavelength
+            (the monitor stores every simulated point, or the ones chosen via
+            ``spec.field_monitor_wavelengths``). None takes the band center.
+        task: which excitation to show — an index, or a substring of the task
+            name (e.g. a port name like ``"o1"``). None takes the first.
+        outline: geometry outlines (list of Nx2 polygons in plot coordinates)
+            passed through to :func:`~gds_fdtd.plotting.plot_field`.
     """
     from ..plotting import plot_field
 
@@ -227,12 +263,27 @@ def plot_tidy3d_fields(
     )
     if not items:
         raise SolverError("modeler data contains no per-task simulation data")
-    task_name, sim_data = items[0]
+    if task is None:
+        task_name, sim_data = items[0]
+    elif isinstance(task, int):
+        task_name, sim_data = items[task]
+    else:
+        matches = [(n, d) for n, d in items if task in str(n)]
+        if not matches:
+            raise SolverError(
+                f"no excitation task matching {task!r}; tasks: {[str(n) for n, _ in items]}"
+            )
+        task_name, sim_data = matches[0]
     monitor_name = f"{axis}_field"
     fd = sim_data[monitor_name]
-    # the monitor is broadband: select the center frequency for a 2D plot
+    # the monitor is broadband: pick the requested wavelength, else band center
+    c_um_s = 2.99792458e14  # speed of light [um/s] (tidy3d works in um units)
     freqs = np.asarray(fd.Ex.coords["f"].values)
-    f0 = float(freqs[len(freqs) // 2])
+    if wavelength_um is not None:
+        f0 = float(freqs[np.argmin(np.abs(freqs - c_um_s / wavelength_um))])
+    else:
+        f0 = float(freqs[len(freqs) // 2])
+    lda_um = c_um_s / f0
     mag2 = sum(
         np.abs(np.asarray(getattr(fd, c).sel(f=f0).values).squeeze()) ** 2
         for c in ("Ex", "Ey", "Ez")
@@ -245,6 +296,7 @@ def plot_tidy3d_fields(
         x=h,
         y=v,
         scale=scale,
-        title=f"|E|² ({monitor_name}), excitation {task_name}",
+        title=f"|E|² ({monitor_name}) at {lda_um:.4f} um, excitation {task_name}",
+        outline=outline,
         savefig=savefig,
     )

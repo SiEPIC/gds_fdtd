@@ -39,6 +39,22 @@ class SimulationSpec(BaseModel):
     mode_freq_pts: int = Field(3, ge=1)
     run_time_factor: float = Field(3.0, gt=0)
     field_monitors: tuple[Literal["x", "y", "z"], ...] = ("z",)
+    field_monitor_positions: dict[Literal["x", "y", "z"], float] = Field(
+        default_factory=dict,
+        description=(
+            "absolute coordinate [um] of each monitor plane along its normal "
+            "axis; a missing axis uses the engine default (domain center in "
+            "x/y, the device layers' average mid-plane in z)"
+        ),
+    )
+    field_monitor_wavelengths: tuple[float, ...] = Field(
+        (),
+        description=(
+            "wavelengths [um] the field monitors record at; empty records the "
+            "full simulated spectrum (tidy3d; other engines record their "
+            "native single-frequency profile)"
+        ),
+    )
 
     @field_validator("boundary", mode="before")
     @classmethod
@@ -71,6 +87,13 @@ class SimulationSpec(BaseModel):
             raise ValueError(f"modes must be a non-empty list of positive 1-based ids; got {v}")
         return tuple(int(m) for m in v)
 
+    @field_validator("field_monitor_wavelengths")
+    @classmethod
+    def _monitor_wavelengths_positive(cls, v: tuple[float, ...]) -> tuple[float, ...]:
+        if any(w <= 0 for w in v):
+            raise ValueError(f"field_monitor_wavelengths must be positive [um]; got {v}")
+        return tuple(float(w) for w in v)
+
     @model_validator(mode="after")
     def _cross_checks(self) -> SimulationSpec:
         if self.wavelength_start >= self.wavelength_end:
@@ -80,6 +103,13 @@ class SimulationSpec(BaseModel):
             )
         if self.z_min >= self.z_max:
             raise ValueError(f"z_min ({self.z_min}) must be < z_max ({self.z_max})")
+        for w in self.field_monitor_wavelengths:
+            if not (self.wavelength_start <= w <= self.wavelength_end):
+                raise ValueError(
+                    f"field_monitor_wavelength {w} um is outside the simulated "
+                    f"band [{self.wavelength_start}, {self.wavelength_end}] um - "
+                    f"the source carries no energy there"
+                )
         return self
 
     # ---------------- convenience ----------------
