@@ -27,12 +27,14 @@ preview the whole simulation before `run()` ever touches an engine.
 | **03** | `03_first_simulation` | The full flow end-to-end: geometry → permittivity → build → run → S-params → fields | beamz · free |
 | **04** | `04_reading_results` | `SMatrix`: insertion loss, crosstalk, phase, reciprocity/passivity, Touchstone/HDF5/npz I/O | recorded · free, offline |
 | **05** | `05_fields_and_modes` | Waveguide mode profiles, effective indices, permittivity cross-sections | local mode solver · free |
+| **05b** | `05_fields_and_modes` | Field monitors: axes (top/side views), pinned positions, recorded wavelengths, and `plot_monitor_planes` — the escalator's side view shows light climbing from Si into SiN | recorded (tidy3d) · free |
 | **06** | `06_convergence_and_caching` | Mesh convergence, `run_cached` (repeat runs free), and cross-engine validation on a device where *converged ≠ correct* | beamz + recorded · free |
 | **07** | `07_choosing_an_engine` | The identical job on beamz / tidy3d / Lumerical, and how they agree | recorded (3 engines) · free, offline |
 | **08** | `08_frontends` | Any EDA in, any engine out: gdsfactory / SiEPIC / raw-GDS frontends, then the full **frontend × engine matrix** (3 devices × beamz/tidy3d/Lumerical) | offline + recorded · free |
 | **09** | `09_cli_and_jobs` | The `gds-fdtd` CLI and serializable `JobSpec` for remote/batch compute | offline · free |
 | **10** | `10_cookbook` | Reference devices with known-good S-params — the **Si→SiN escalator**, a multi-layer device the free engine handles, cross-checked against recorded tidy3d/Lumerical | beamz + recorded · free |
 | **10b** | `10b_polarization` | Polarization devices from gdsfactory: TE0/TM0 modes, a directional-coupler **PBS**, and the **polarization splitter-rotator** (incl. why it needs air cladding) — multi-mode S-params + per-polarization fields | recorded (Lumerical) · free |
+| **11** | `11_bragg_grating` | A 95 µm SiEPIC **Bragg grating** from `devices.gds`: the stopband spectrum, and the same field monitor showing reflection in-band and transmission out-of-band, from one run | recorded (tidy3d) · free |
 
 **Everything here reproduces for free.** No cloud account, license, or GPU is
 required to run any notebook — the live runs use [beamz](https://github.com/beamzorg/beamz)

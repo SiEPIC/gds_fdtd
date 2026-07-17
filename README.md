@@ -63,12 +63,14 @@ S-parameters"* — paired `.py` (jupytext) + executed `.ipynb`. See
 | 03 | `03_first_simulation/` | the full flow end-to-end: geometry → permittivity → build → run → S-params → fields | beamz (free) |
 | 04 | `04_reading_results/` | `SMatrix`: insertion loss, crosstalk, phase, reciprocity/passivity, Touchstone/HDF5/npz I/O | none |
 | 05 | `05_fields_and_modes/` | waveguide mode profiles, effective indices, permittivity cross-sections | tidy3d-local (free) |
+| 05b | `05_fields_and_modes/` | field monitors: axes, pinned positions, recorded wavelengths, `plot_monitor_planes`; the escalator side view | recorded (tidy3d) |
 | 06 | `06_convergence_and_caching/` | mesh-convergence sweeps, `run_cached` (repeat runs free), and cross-engine validation where *converged ≠ correct* | beamz + recorded |
 | 07 | `07_choosing_an_engine/` | the identical job on beamz / tidy3d / Lumerical, and how they agree | all three |
 | 08 | `08_frontends/` | any EDA in, any engine out: gdsfactory / SiEPIC / raw-GDS frontends, then the frontend × engine matrix | mixed |
 | 09 | `09_cli_and_jobs/` | the `gds-fdtd` CLI and serializable `JobSpec` for remote/batch compute | none |
 | 10 | `10_cookbook/` | reference devices with known-good S-params — the **Si→SiN escalator** on the free engine, cross-checked against recorded tidy3d/Lumerical | beamz + recorded |
 | 10b | `10_cookbook/` | polarization splitter and splitter-rotator from gdsfactory: TE/TM modes, multi-mode S-params, per-polarization fields | recorded (2 engines) |
+| 11 | `11_bragg_grating/` | a 95 µm Bragg grating: stopband spectrum + the field reflecting in-band and passing out-of-band | recorded (tidy3d) |
 
 ## Installation
 
