@@ -92,6 +92,7 @@ Reading, plotting, converging, and cross-validating results. See
    :recursive:
 
    gds_fdtd.plotting
+   gds_fdtd.viewer3d
    gds_fdtd.convergence
    gds_fdtd.validation
    gds_fdtd.caching

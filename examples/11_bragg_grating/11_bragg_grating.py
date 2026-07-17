@@ -98,6 +98,16 @@ plot_monitor_planes(solver)
 plt.show()
 
 # %% [markdown]
+# The whole problem in 3D — 95 µm of corrugated silicon in its oxide, the
+# port cones, the pinned monitor plane, and the domain box (orbit / zoom /
+# click):
+
+# %%
+from gds_fdtd.viewer3d import show_3d  # noqa: E402
+
+show_3d(solver, height=440)
+
+# %% [markdown]
 # ## 2 · The spectrum
 #
 # The run executed on tidy3d (2 excitations, ~0.5 FC; artifacts in

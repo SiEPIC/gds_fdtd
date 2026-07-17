@@ -103,6 +103,16 @@ plt.show()
 # The z-plane label switched from *(default)* at 0.30 µm to *(custom)* at
 # 0.11 µm, inside the Si band of the side view.
 #
+# The same solver renders as an interactive 3D scene — the two cores, the
+# translucent cladding, the port cones, the wireframe domain, and both
+# monitor planes, orbitable and clickable:
+
+# %%
+from gds_fdtd.viewer3d import show_3d  # noqa: E402
+
+show_3d(solver, height=460)
+
+# %% [markdown]
 # ## 3 · The side view: light climbing the stack
 #
 # This spec ran on tidy3d (~0.05 FC; artifacts in `recorded/`, see

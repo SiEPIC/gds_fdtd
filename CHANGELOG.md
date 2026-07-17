@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Interactive 3D viewer (`gds_fdtd.viewer3d`): `show_3d(solver_or_component)`
+  renders the extruded layer stack (per-layer colors, translucent
+  substrate/superstrate), port cones, field-monitor planes, and the simulation
+  domain as an orbitable three.js scene with click-to-inspect (name, material,
+  z-extent) and legend toggles. The output is plain HTML, so committed
+  notebooks stay light and the docs gallery serves the same interactive view;
+  `save_3d` writes a standalone page and `render_static` draws the scene with
+  matplotlib for JavaScript-free contexts. Embedded live in examples 01, 05b,
+  and 11, and shown on the README.
 - Field monitors are steerable and visible: `SimulationSpec.field_monitor_positions`
   pins any monitor plane at an absolute coordinate along its normal axis, and
   `SimulationSpec.field_monitor_wavelengths` restricts what the monitors record

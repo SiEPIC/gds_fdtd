@@ -83,6 +83,23 @@ the Si→SiN escalator, and :doc:`_notebooks/11_bragg_grating` uses the
 wavelength selection to watch one device reflect in-band and transmit
 out-of-band from a single run.
 
+The whole setup also renders as an **interactive 3D scene** — the extruded
+layer stack with per-layer colors, the port cones, the monitor planes, and
+the domain box; orbit, zoom, click an object for its material and z-extent,
+and toggle groups from the legend:
+
+.. code-block:: python
+
+    from gds_fdtd.viewer3d import show_3d, save_3d, render_static
+
+    show_3d(solver)                     # notebooks AND these docs (three.js)
+    save_3d(solver, "device_3d.html")   # standalone shareable page
+    render_static(solver)               # matplotlib, for JS-free contexts
+
+The 3D views embedded in :doc:`_notebooks/01_layout_to_component`,
+:doc:`_notebooks/05b_field_monitors`, and :doc:`_notebooks/11_bragg_grating`
+are live — try them.
+
 3. Validate, build, estimate, all free
 ---------------------------------------
 

@@ -28,6 +28,21 @@ smatrix = solver.run()
 
 *All images are real solver output.*
 
+## See your problem before you run it
+
+Every solver setup renders as an interactive 3D scene — the layer stack with
+per-layer colors, port cones, field-monitor planes, and the domain box.
+Orbit, zoom, click an object for its material and z-extent, toggle groups
+from the legend. **[Play with it live in the docs](https://siepic.github.io/gds_fdtd/_notebooks/05b_field_monitors.html)**
+(also embedded in examples 01 and 11):
+
+![Si→SiN escalator in the 3D viewer: two cores, monitor planes, domain box](docs/images/escalator_3d.png)
+
+```python
+from gds_fdtd.viewer3d import show_3d
+show_3d(solver)   # notebooks + docs; save_3d(...) writes a shareable page
+```
+
 ## Features
 
 - **Bring your own engine:** implement four methods and any FDTD engine plugs in with full S-matrix export, physics checks, caching, CLI, and a free conformance test suite — **[the guide: docs/adding_a_solver.md](docs/adding_a_solver.md)**.
@@ -36,6 +51,7 @@ smatrix = solver.run()
 - **Validated technology files:** the layer stack is a pydantic-validated YAML (bad files fail with the offending key named). Materials can carry per-solver entries or a neutral [refractiveindex.info](https://refractiveindex.info) reference (`rii: {shelf, book, page}`), resolved offline from a local database copy.
 - **Canonical S-matrix:** one `SMatrix` type with NaN-aware partial matrices, reciprocity/passivity/power-balance checks, and I/O to Lumerical INTERCONNECT `.dat`, Touchstone `.sNp` (scikit-rf compatible), HDF5/npz, plus plotting.
 - **Cross-validated engines** (see [SOLVER_STATUS.md](SOLVER_STATUS.md) for per-engine last-verified dates): the tidy3d (>= 2.11, cloud) and Lumerical (2024/2025, local) adapters were validated live against each other on identical geometry — within **0.0033 dB**, with the free [beamz](https://github.com/beamzorg/beamz) engine (JAX, CPU/GPU) inside 0.052 dB of both; the agreement is locked into CI via recorded artifacts.
+- **Interactive 3D viewer:** `show_3d(solver)` renders the extruded layer stack, ports, field-monitor planes, and simulation domain as an orbitable, clickable three.js scene — in notebooks and in the [documentation gallery](https://siepic.github.io/gds_fdtd/_notebooks/05b_field_monitors.html) alike; `render_static` draws the same scene without JavaScript.
 - **Multimode/dual-polarization** simulations on the engines that support them (tidy3d, Lumerical).
 - **Serializable jobs + CLI:** every simulation is a JSON `JobSpec`; `gds-fdtd validate|build|estimate|run|convert|solvers` drives it from the shell, and `SubprocessBackend` runs sweeps crash-isolated and in parallel. Secrets stay in the environment — job files are safe to ship to a cluster or cloud runner ([docs/remote_compute.md](docs/remote_compute.md)).
 - **Convergence sweeps, caching, cross-solver validation:** `convergence.sweep()` steps any `SimulationSpec` field and recommends the converged value; `run_cached()` hashes the full job (geometry + technology + spec + engine version) so repeat runs are free; `validation.validate_across()` quantifies worst-case |ΔS| between engines on the same job.
