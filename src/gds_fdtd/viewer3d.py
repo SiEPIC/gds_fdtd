@@ -452,6 +452,16 @@ def render_static(
         ax.set_xlim(x0, x1)
         ax.set_ylim(y0, y1)
         ax.set_zlim(z0 - 0.3, z1 + 0.3)
+    else:
+        # add_collection3d does not feed autoscale, so without a domain box
+        # the limits must come from the structures themselves
+        structs = [o for o in scene["objects"] if o["kind"] == "structure"]
+        if structs:
+            xy = np.vstack([np.asarray(o["contour"]) for o in structs])
+            zs = [z for o in structs for z in (o["z0"], o["z1"])]
+            ax.set_xlim(float(xy[:, 0].min()), float(xy[:, 0].max()))
+            ax.set_ylim(float(xy[:, 1].min()), float(xy[:, 1].max()))
+            ax.set_zlim(min(zs) - 0.3, max(zs) + 0.3)
 
     ax.set_xlabel("x [µm]")
     ax.set_ylabel("y [µm]")
