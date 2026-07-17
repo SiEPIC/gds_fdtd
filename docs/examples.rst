@@ -40,6 +40,9 @@ format) under ``examples/``; see ``examples/README.md`` for how to run them.
    * - 05
      - :doc:`_notebooks/05_fields_and_modes`
      - Waveguide mode profiles, effective indices, and permittivity cross-sections.
+   * - 05b
+     - :doc:`_notebooks/05b_field_monitors`
+     - Field monitors: axes, pinned positions, recorded wavelengths, and ``plot_monitor_planes`` — with the Si→SiN escalator's side view.
    * - 06
      - :doc:`_notebooks/06_convergence_and_caching`
      - Mesh-convergence sweeps, ``run_cached`` (repeat runs free), and cross-engine validation where *converged ≠ correct*.
@@ -58,6 +61,9 @@ format) under ``examples/``; see ``examples/README.md`` for how to run them.
    * - 10b
      - :doc:`_notebooks/10b_polarization`
      - Polarization splitter and splitter-rotator from gdsfactory: TE/TM modes, multi-mode S-params, and per-polarization fields on two engines.
+   * - 11
+     - :doc:`_notebooks/11_bragg_grating`
+     - A 95 µm SiEPIC Bragg grating on tidy3d: the stopband spectrum, and the same field monitor in-band (reflected) vs out-of-band (transmitted).
 
 .. toctree::
    :hidden:
@@ -71,9 +77,11 @@ format) under ``examples/``; see ``examples/README.md`` for how to run them.
    _notebooks/03_first_simulation
    _notebooks/04_reading_results
    _notebooks/05_fields_and_modes
+   _notebooks/05b_field_monitors
    _notebooks/06_convergence_and_caching
    _notebooks/07_choosing_an_engine
    _notebooks/08_frontends
    _notebooks/09_cli_and_jobs
    _notebooks/10_cookbook
    _notebooks/10b_polarization
+   _notebooks/11_bragg_grating

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Field monitors are steerable and visible: `SimulationSpec.field_monitor_positions`
+  pins any monitor plane at an absolute coordinate along its normal axis, and
+  `SimulationSpec.field_monitor_wavelengths` restricts what the monitors record
+  (tidy3d), decoupling field-download size from S-parameter spectral density.
+  `plot_monitor_planes(solver)` draws the domain, the layer stack, and every
+  monitor plane (labelled default/custom) offline before anything runs;
+  `plot_field` gained an `outline=` geometry overlay via the new
+  `component_outlines()`, and tidy3d's `plot_fields` selects the excitation
+  (`task=`) and the recorded wavelength (`wavelength_um=`).
+- Two examples: `05b_field_monitors` (the placement machinery on the Si→SiN
+  escalator, whose side view shows the light climbing from the Si core into
+  the SiN core) and `11_bragg_grating` (a 95 µm SiEPIC Bragg grating from
+  `devices.gds` on tidy3d: the 101-point stopband spectrum, and one field
+  monitor showing reflection in-band vs transmission out-of-band from a
+  single run). Both ship recorded artifacts with provenance.
+
 ### Fixed
 - The `filterwarnings = ["error::DeprecationWarning:gds_fdtd.*"]` guard sat
   under `[tool.coverage.report]`, where pytest never read it — moved to

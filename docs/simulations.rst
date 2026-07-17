@@ -59,6 +59,30 @@ in degrees, frequencies in Hz, package-wide):
 
 Bad values fail loudly at construction with the offending field named.
 
+Field monitors are steerable: one plane per axis in ``field_monitors``
+(``"z"`` top view, ``"y"``/``"x"`` side views), each sitting at the domain
+center (x/y) or the device layers' average mid-plane (z) unless
+``field_monitor_positions`` pins it to an absolute coordinate. On tidy3d,
+``field_monitor_wavelengths`` restricts what the monitors record, so a dense
+S-parameter spectrum does not force an equally dense field download. See
+where every plane sits before running anything:
+
+.. code-block:: python
+
+    spec = SimulationSpec(
+        field_monitors=("y", "z"),
+        field_monitor_positions={"z": 0.11},      # pin to the Si-core mid-plane
+        field_monitor_wavelengths=(1.545, 1.59),  # record just these [um]
+    )
+
+    from gds_fdtd.plotting import plot_monitor_planes
+    plot_monitor_planes(solver)   # offline: domain, layers, every plane labelled
+
+:doc:`_notebooks/05b_field_monitors` walks through the placement machinery on
+the Si→SiN escalator, and :doc:`_notebooks/11_bragg_grating` uses the
+wavelength selection to watch one device reflect in-band and transmit
+out-of-band from a single run.
+
 3. Validate, build, estimate, all free
 ---------------------------------------
 
