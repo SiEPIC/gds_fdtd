@@ -93,6 +93,21 @@ print(f"\nbounds: x [{b.x_min:.2f}, {b.x_max:.2f}]  y [{b.y_min:.2f}, {b.y_max:.
 plot_component(component, spec=SimulationSpec(buffer=1.0))
 plt.show()
 
+# %% [markdown]
+# ## 5 · The same component in 3D
+#
+# `show_3d` renders the extruded stack interactively — drag to orbit, scroll
+# to zoom, click any object for its name, material, and z-extent; the legend
+# toggles layers, ports, and the translucent substrate/superstrate. It works
+# in the notebook and in this documentation page alike (the static fallback
+# for JavaScript-free contexts is `viewer3d.render_static`).
+
+# %%
+from gds_fdtd.viewer3d import show_3d  # noqa: E402
+
+show_3d(component, height=420)
+
+# %%
 del layout  # release the KLayout objects
 
 # %% [markdown]
