@@ -1,9 +1,9 @@
 """
 gds_fdtd simulation toolbox.
 
-BeamzSolver: the beamz (>= 0.4) adapter on the Phase-3 Solver contract. beamz is an open-source JAX FDTD engine
-(Apache-2.0, pip-installable, CPU or GPU) — the first zero-cost engine in the
-registry.
+BeamzSolver: the beamz (>= 0.4) adapter on the Phase-3 Solver contract. beamz
+is an open-source JAX FDTD engine (Apache-2.0, pip-installable, CPU or GPU) —
+the first zero-cost engine in the registry.
 
 Design decisions (rule 8 — everything below verified against beamz 0.4.3 and
 its own compact-model reference example, which is the UBC SiEPIC crossing):
@@ -67,7 +67,7 @@ _RUN_AFTER_SOURCES_UOC = 90.0
 
 def probe_beamz() -> str | None:
     try:
-        import beamz  # noqa: F401
+        import beamz  # noqa: F401  (availability probe)
 
         return None
     except Exception as e:  # pragma: no cover - env dependent
@@ -735,7 +735,7 @@ class BeamzSolver(Solver):
             )
             # beamz returns {"s_matrix": {...}, "diagnostics": ...} with
             # diagnostics enabled, and the bare matrix dict without
-            s_map = result["s_matrix"] if "s_matrix" in result else result
+            s_map = result.get("s_matrix", result)
             f_asc = np.asarray(freqs, dtype=float)
             order = np.argsort(f_asc)
             for out_name in port_names:

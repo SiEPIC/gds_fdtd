@@ -35,7 +35,7 @@ def probe_lumapi() -> str | None:
     """None if lumapi is importable, else the reason (checks LUMERICAL_API_PATH
     and common install locations)."""
     try:
-        import lumapi  # noqa: F401
+        import lumapi  # noqa: F401  (availability probe)
 
         return None
     except ImportError:
@@ -50,7 +50,7 @@ def probe_lumapi() -> str | None:
         if os.path.exists(os.path.join(c, "lumapi.py")):
             sys.path.append(c)
             try:
-                import lumapi  # noqa: F401
+                import lumapi  # noqa: F401  (availability probe)
 
                 return None
             except ImportError as e:  # pragma: no cover - env dependent
@@ -293,7 +293,8 @@ class LumericalSolver(Solver):
             normal = {"x": "2D X-normal", "y": "2D Y-normal", "z": "2D Z-normal"}[axis]
             L += [
                 f'addprofile; set("name", "profile_{axis}"); set("monitor type", {_q(normal)});',
-                f'set("x", {center[0] * um}); set("y", {center[1] * um}); set("z", {center[2] * um});',
+                f'set("x", {center[0] * um}); set("y", {center[1] * um}); '
+                f'set("z", {center[2] * um});',
             ]
             if axis != "x":
                 L.append(f'set("x span", {span[0] * um});')

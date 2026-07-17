@@ -92,7 +92,7 @@ class SubprocessBackend:
         for mod in self.extra_imports:
             cmd += ["--import", mod]
         cmd += ["run", str(job_path), "--out", str(out)]
-        log = open(out / "job.log", "w")  # noqa: SIM115 - lifetime tied to process
+        log = open(out / "job.log", "w")
         proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
         logger.info("submitted job as pid %d -> %s", proc.pid, out)
         handle = JobHandle(id=str(proc.pid), out_dir=out)

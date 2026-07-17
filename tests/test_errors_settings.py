@@ -102,7 +102,7 @@ def test_run_cached_uses_settings_default(monkeypatch, tmp_path):
         from gds_fdtd.lyprocessor import load_cell
         from gds_fdtd.simprocessor import load_component_from_tech
         from gds_fdtd.technology import Technology
-        from tests.test_convergence import TESTS_DIR, CannedSolver  # noqa: F401
+        from tests.test_convergence import TESTS_DIR, CannedSolver
 
         tech = Technology.from_yaml(str(TESTS_DIR / "tech_lumerical.yaml"))
         cell, layout = load_cell(str(TESTS_DIR / "si_sin_escalator.gds"))

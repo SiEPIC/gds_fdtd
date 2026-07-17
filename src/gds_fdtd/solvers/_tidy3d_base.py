@@ -102,7 +102,8 @@ class _TidyEngineBase:
         mode_freq_pts (int): Number of frequency points for mode calculation.
         run_time_factor (float): Multiplier for simulation runtime.
         field_monitors (list of str): List of field monitoring directions.
-        working_dir (str): Base directory where a component-specific subdirectory will be created for FDTD project files.
+        working_dir (str): Base directory where a component-specific
+            subdirectory will be created for FDTD project files.
         component_working_dir (str): Same as working_dir, the component-specific directory path.
         tidy_ports (list of _TidyPort): List of converted FDTD port objects.
 
@@ -152,7 +153,8 @@ class _TidyEngineBase:
             mode_freq_pts (int): Number of frequency points for mode calculation.
             run_time_factor (float): Factor to adjust simulation runtime.
             field_monitors (list of fdtd_field_monitor): Field monitors.
-            working_dir (str): Base directory where a component-specific subdirectory will be created for FDTD project files.
+            working_dir (str): Base directory where a component-specific
+                subdirectory will be created for FDTD project files.
         """
         self.component = component
         self.tech = tech
@@ -249,8 +251,7 @@ class _TidyEngineBase:
 
     def _calculate_simulation_domain(self) -> None:
         """Calculate the simulation domain center and span from the component geometry."""
-        # This is a placeholder implementation - you'll need to adjust based on your component structure
-        # Assuming component has a bounding box method or similar geometry information
+        # derives the domain from the component's bounding box + z extents
         try:
             c = self.component
             self.center = [
@@ -281,7 +282,8 @@ class _TidyEngineBase:
         Ports are sorted by their index (extracted from port names) to ensure consistent ordering.
 
         Returns:
-            list[_TidyPort]: List of _TidyPort objects with standardized attributes, sorted by port index.
+            list[_TidyPort]: List of _TidyPort objects with standardized
+            attributes, sorted by port index.
         """
         ports = []
 
@@ -311,7 +313,8 @@ class _TidyEngineBase:
 
             else:
                 raise JobValidationError(
-                    f"Port direction {p.direction}° not supported. Supported directions: 0°, 90°, 180°, 270°"
+                    f"Port direction {p.direction}° not supported. "
+                    f"Supported directions: 0°, 90°, 180°, 270°"
                 )
 
             # Create standardized _TidyPort object
@@ -377,8 +380,7 @@ class _TidyEngineBase:
         """
         c = 299792458  # speed of light in m/s
         v = c / max_group_index  # velocity of pulse in the medium
-        time_span = self.run_time_factor * max_dimension / v
-        return time_span
+        return self.run_time_factor * max_dimension / v
 
     def _print_simulation_summary(self) -> None:
         """Print and log a summary of the simulation configuration."""
@@ -393,7 +395,9 @@ class _TidyEngineBase:
             "Wavelength range": f"{self.wavelength_start} - {self.wavelength_end} μm",
             "Wavelength points": self.wavelength_points,
             "Simulation domain": f"{self.span[0]:.1f} × {self.span[1]:.1f} × {self.span[2]:.1f} μm",
-            "Domain center": f"({self.center[0]:.1f}, {self.center[1]:.1f}, {self.center[2]:.1f}) μm",
+            "Domain center": (
+                f"({self.center[0]:.1f}, {self.center[1]:.1f}, {self.center[2]:.1f}) μm"
+            ),
             "Mesh resolution": f"{self.mesh} cells/wavelength",
             "Run time factor": self.run_time_factor,
             "Total ports": len(self.tidy_ports),
@@ -421,7 +425,8 @@ class _TidyEngineBase:
             f"  Simulation domain: {self.span[0]:.1f} × {self.span[1]:.1f} × {self.span[2]:.1f} μm"
         )
         self.logger.info(
-            f"  Domain center: ({self.center[0]:.1f}, {self.center[1]:.1f}, {self.center[2]:.1f}) μm"
+            f"  Domain center: ({self.center[0]:.1f}, {self.center[1]:.1f}, "
+            f"{self.center[2]:.1f}) μm"
         )
         self.logger.info(f"  Mesh resolution: {self.mesh} cells/wavelength")
         self.logger.info(f"  Run time factor: {self.run_time_factor}")

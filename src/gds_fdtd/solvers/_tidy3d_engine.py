@@ -51,7 +51,8 @@ class _TidyEngine(_TidyEngineBase):
         self.lda0 = (self.wavelength_end + self.wavelength_start) / 2
         self.freq0 = td.C_0 / self.lda0
         self.logger.debug(
-            f"Frequency calculation: {len(self.freqs)} points from {self.freqs[0]:.2e} to {self.freqs[-1]:.2e} Hz"
+            f"Frequency calculation: {len(self.freqs)} points "
+            f"from {self.freqs[0]:.2e} to {self.freqs[-1]:.2e} Hz"
         )
 
         # Create base simulation and ports for S-matrix calculation
@@ -72,12 +73,16 @@ class _TidyEngine(_TidyEngineBase):
         # Print setup summary
         self._print_simulation_summary()
         total_mode_combinations = len(self.smatrix_ports) * len(self.modes)
-        setup_info = f"Tidy3D solver setup complete with ComponentModeler: {len(self.smatrix_ports)} ports × {len(self.modes)} modes = {total_mode_combinations} mode combinations"
-        self.logger.info(setup_info)
+        self.logger.info(
+            f"Tidy3D solver setup complete with ComponentModeler: "
+            f"{len(self.smatrix_ports)} ports × {len(self.modes)} modes "
+            f"= {total_mode_combinations} mode combinations"
+        )
 
         self.logger.info("Tidy3D solver setup complete with ComponentModeler:")
         self.logger.info(
-            f"  • {len(self.smatrix_ports)} ports × {len(self.modes)} modes = {total_mode_combinations} mode combinations"
+            f"  • {len(self.smatrix_ports)} ports × {len(self.modes)} modes "
+            f"= {total_mode_combinations} mode combinations"
         )
         self.logger.info("  • Multi-modal S-matrix calculation ready")
         self.logger.info(
@@ -114,7 +119,7 @@ class _TidyEngine(_TidyEngineBase):
         boundary_spec = self._create_boundary_spec()
 
         # Create base simulation (no sources - ComponentModeler adds them)
-        base_sim = td.Simulation(
+        return td.Simulation(
             size=sim_size,
             grid_spec=td.GridSpec.auto(min_steps_per_wvl=self.mesh, wavelength=self.lda0),
             structures=structures,
@@ -125,8 +130,6 @@ class _TidyEngine(_TidyEngineBase):
             center=(self.center[0], self.center[1], self.center[2]),
             symmetry=tuple(self.symmetry),
         )
-
-        return base_sim
 
     def _create_boundary_spec(self) -> "td.BoundarySpec":
         """Map the solver's boundary strings to a tidy3d BoundarySpec.

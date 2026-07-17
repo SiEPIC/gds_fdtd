@@ -138,7 +138,8 @@ def _assert_close(actual, expected, path=""):
 def test_golden_geometry(fixture_id, gds, top_cell, tech):
     golden_file = GOLDEN_DIR / f"{fixture_id}.json"
     assert golden_file.exists(), (
-        f"golden file {golden_file} missing — generate with: python tests/test_golden.py --regenerate"
+        f"golden file {golden_file} missing — "
+        f"generate with: python tests/test_golden.py --regenerate"
     )
     expected = json.loads(golden_file.read_text())
     actual = component_to_dict(build_component(gds, top_cell, tech))

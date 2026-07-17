@@ -100,7 +100,7 @@ def from_gdsfactory(c: Any, tech: Any, z_span: float = 4.0) -> Component:
         Component: flat, role-tagged structures + ports + bounds.
     """
     try:
-        import gdsfactory  # noqa: F401
+        import gdsfactory  # noqa: F401  (availability probe)
     except ImportError as e:
         raise ImportError(
             "gdsfactory is not installed. Install with: pip install gds_fdtd[gdsfactory]"

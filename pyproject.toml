@@ -59,10 +59,7 @@ all         = ["gds_fdtd[tidy3d,beamz,gdsfactory,prefab,siepic]"]    # every eng
 
 dev = [
   "pip>=23.3",
-  "wheel>=0.42.0",
-  "build>=1.0.0",
-  "twine>=4.0.2",
-  "watchdog>=6.0.0",
+  "build>=1.0.0",  # `just build` (sdist+wheel); releases publish via CI trusted publishing
   "pytest>=8.1",
   "pytest-cov>=5.0",
   "coverage",
@@ -106,6 +103,9 @@ packages = ["src/gds_fdtd"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
+filterwarnings = [
+  "error::DeprecationWarning:gds_fdtd.*",
+]
 markers = [
   "physics: runs a real solver engine locally (beamz) - slow but free",
   "gpu: requires a CUDA GPU",
@@ -129,9 +129,6 @@ fail_under = 75
 exclude_also = [
   "pragma: no cover - requires (license|cloud|gpu)",
 ]
-filterwarnings = [
-  "error::DeprecationWarning:gds_fdtd.*",
-]
 
 [tool.codespell]
 # TE/TM = transverse electric/magnetic (photonics); OD/TE show up in SVG path data
@@ -147,20 +144,9 @@ target-version = "py311"
 extend-exclude = ["examples"]
 
 [tool.ruff.lint]
+# no ignores: the modernization arc's temporary ignore list (E501/B006/E722/
+# B904/F841/UP031) was worked off; keep it empty so new debt can't hide.
 select = ["E", "F", "W", "I", "UP", "B", "A", "C4"]
-# Temporary ignores — tracked in ROADMAP.md; remove each in its owning cleanup.
-# Do NOT silently fix these in unrelated PRs; remove each ignore in its owning WP.
-ignore = [
-  "E501",  # long comments/strings; wrapped progressively as files are touched in Phase 1/2
-  "B006",  # mutable default arguments — fixed properly in WP1.2 (bug B17)
-  "E722",  # bare except in solver_lumerical — hardened in WP3.2
-  "B904",  # raise-without-from — exception hierarchy lands in WP7.6
-  "F841",  # unused vars incl. catalogued bugs B8/B11/B13 — fixed in Phase 1, not here
-  "UP031", # %-formatting in .dat writer — rewritten in WP2.4b (numeric behavior risk)
-]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/*" = ["B011", "A003"]
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]

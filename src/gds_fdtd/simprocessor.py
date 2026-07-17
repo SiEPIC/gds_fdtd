@@ -91,10 +91,10 @@ def _load_tidy3d_material(material_spec: dict[str, Any]) -> Any:
     """
     try:
         import tidy3d as td
-    except ImportError:
+    except ImportError as err:
         raise ImportError(
             "tidy3d is required for Tidy3D material loading. Install with: pip install tidy3d"
-        )
+        ) from err
 
     # Handle simple refractive index specification
     if "nk" in material_spec:
@@ -102,7 +102,7 @@ def _load_tidy3d_material(material_spec: dict[str, Any]) -> Any:
         if isinstance(n_value, (int, float)):
             # Simple real refractive index
             return td.Medium(permittivity=n_value**2)
-        elif isinstance(n_value, list) and len(n_value) == 2:
+        if isinstance(n_value, list) and len(n_value) == 2:
             # Complex refractive index [n, k]: td.Medium's permittivity must be
             # REAL — a lossy constant needs the n/k constructor (telecom band)
             n, k = n_value
@@ -120,9 +120,12 @@ def _load_tidy3d_material(material_spec: dict[str, Any]) -> Any:
                 return td.material_library[material_name][variant]
             except KeyError:
                 logger.warning(f"Material {material_name}[{variant}] not found in Tidy3D library")
-                logger.warning(
-                    f"Available variants for {material_name}: {list(td.material_library[material_name].keys()) if material_name in td.material_library else 'Material not found'}"
+                variants = (
+                    list(td.material_library[material_name].keys())
+                    if material_name in td.material_library
+                    else "Material not found"
                 )
+                logger.warning(f"Available variants for {material_name}: {variants}")
                 # Fallback to silicon with warning
                 return td.material_library["cSi"]["Li1993_293K"]
         elif isinstance(model_spec, str):
