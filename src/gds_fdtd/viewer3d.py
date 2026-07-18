@@ -29,8 +29,10 @@ if TYPE_CHECKING:
     from .spec import SimulationSpec
 
 #: pinned three.js build served from the jsDelivr CDN (docs + notebooks are
-#: online contexts; offline users get render_static)
-_THREE_VERSION = "0.160.0"
+#: online contexts; offline users get render_static). 0.137.x is the last
+#: line shipping the classic (non-module) examples/js OrbitControls that
+#: notebook webviews can run — see the loader comment in the template.
+_THREE_VERSION = "0.137.5"
 
 # object palette: layers cycle through the RdBu-family chips used across the
 # package; infrastructure keeps the plot_monitor_planes color language.
@@ -151,6 +153,35 @@ def build_scene(obj: Any) -> dict[str, Any]:
         center, span = obj.domain()
         scene["domain"] = {"center": [float(c) for c in center], "span": [float(s) for s in span]}
         objects += _monitor_objects(component, spec, center, span)
+        # the tech's substrate/superstrate slabs usually reach beyond the
+        # simulated z-window; clamp them to the domain so the scene stays tight
+        z_lo, z_hi = center[2] - span[2] / 2, center[2] + span[2] / 2
+        for o in objects:
+            if o.get("group") == "background":
+                o["z0"], o["z1"] = max(o["z0"], z_lo), min(o["z1"], z_hi)
+
+    # camera framing, computed here where the data is (in chip coordinates;
+    # the template applies its z exaggeration and axis flip)
+    if "domain" in scene:
+        frame_center = scene["domain"]["center"]
+        frame_span = scene["domain"]["span"]
+    else:
+        xy = np.vstack(
+            [np.asarray(o["contour"]) for o in objects if o["kind"] == "structure"]
+            or [np.zeros((1, 2))]
+        )
+        zs = [z for o in objects if o["kind"] == "structure" for z in (o["z0"], o["z1"])] or [0.0]
+        frame_center = [
+            float((xy[:, 0].min() + xy[:, 0].max()) / 2),
+            float((xy[:, 1].min() + xy[:, 1].max()) / 2),
+            float((min(zs) + max(zs)) / 2),
+        ]
+        frame_span = [
+            float(xy[:, 0].max() - xy[:, 0].min()),
+            float(xy[:, 1].max() - xy[:, 1].min()),
+            float(max(zs) - min(zs)),
+        ]
+    scene["frame"] = {"center": frame_center, "span": frame_span}
     return scene
 
 
@@ -166,16 +197,53 @@ click an object</div>
 color:#dde3ea;font-size:12px;background:rgba(16,20,24,.75);padding:6px 10px;\
 border-radius:6px"></div>
 </div>
-<script type="module">
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@__THREE__/build/three.module.js";
-import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@__THREE__/examples/jsm/controls/OrbitControls.js";
+<script>
+(function () {
+"use strict";
+// Classic (non-module) scripts: notebook webviews (VSCode, JupyterLab) do not
+// reliably run ES-module CDN imports, and import maps are one-per-page so
+// multiple embeds would collide. The UMD builds work everywhere; the loader
+// is guarded so several viewers on one page fetch three.js once.
+var BASE = "https://cdn.jsdelivr.net/npm/three@__THREE__/";
+var SCENE = __SCENE_JSON__;
+var host = document.getElementById("__ID__");
+var info = document.getElementById("__ID___info");
+var legendBox = document.getElementById("__ID___legend");
 
-const SCENE = __SCENE_JSON__;
-const host = document.getElementById("__ID__");
-const info = document.getElementById("__ID___info");
-const legendBox = document.getElementById("__ID___legend");
+function fail(msg) {
+  info.textContent = "3D viewer: " + msg +
+    " — use viewer3d.render_static for a static view.";
+}
+function load(src, cb) {
+  var s = document.createElement("script");
+  s.src = src;
+  s.onload = cb;
+  s.onerror = function () { fail("could not load three.js from the CDN (offline?)"); };
+  document.head.appendChild(s);
+}
+function ensureThree(cb) {
+  if (window.THREE && window.THREE.OrbitControls) return cb();
+  if (window.__gdsfdtd3d_loading) { window.__gdsfdtd3d_loading.push(cb); return; }
+  window.__gdsfdtd3d_loading = [cb];
+  load(BASE + "build/three.min.js", function () {
+    load(BASE + "examples/js/controls/OrbitControls.js", function () {
+      var queue = window.__gdsfdtd3d_loading; window.__gdsfdtd3d_loading = null;
+      queue.forEach(function (f) { f(); });
+    });
+  });
+}
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+ensureThree(function () {
+var THREE = window.THREE;
+var OrbitControls = THREE.OrbitControls;
+
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+} catch (e) {
+  fail("WebGL is unavailable in this environment");
+  return;
+}
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(host.clientWidth, host.clientHeight);
 renderer.setClearColor(0x101418);
@@ -202,9 +270,6 @@ function inGroup(name) {
   return groups[name];
 }
 
-let bbox = new THREE.Box3();
-function track(mesh) { bbox.expandByObject(mesh); }
-
 for (const o of SCENE.objects) {
   if (o.kind === "structure") {
     const shape = new THREE.Shape(o.contour.map(p => new THREE.Vector2(p[0], p[1])));
@@ -219,7 +284,7 @@ for (const o of SCENE.objects) {
     mesh.position.z = o.z0 * Z_SCALE;
     mesh.userData = o;
     inGroup(o.group).add(mesh);
-    if (o.opacity >= 1) { pickables.push(mesh); track(mesh); }
+    if (o.opacity >= 1) pickables.push(mesh);
   } else if (o.kind === "port") {
     const geo = new THREE.ConeGeometry(0.35 * o.width, 0.9 * o.width, 20);
     const mat = new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.4 });
@@ -232,7 +297,7 @@ for (const o of SCENE.objects) {
                       o.center[2] * Z_SCALE);
     mesh.userData = o;
     inGroup("ports").add(mesh);
-    pickables.push(mesh); track(mesh);
+    pickables.push(mesh);
   }
 }
 
@@ -246,7 +311,6 @@ if (SCENE.domain) {
   edges.userData = { name: "simulation domain",
     info: `domain ${d.span[0].toFixed(1)} × ${d.span[1].toFixed(1)} × ${d.span[2].toFixed(2)} µm` };
   inGroup("domain").add(edges);
-  track(edges);
 
   for (const o of SCENE.objects.filter(o => o.kind === "monitor")) {
     let w, h;
@@ -268,13 +332,16 @@ if (SCENE.domain) {
   }
 }
 
-// frame the scene
-const c = new THREE.Vector3(); bbox.getCenter(c);
-const size = new THREE.Vector3(); bbox.getSize(size);
-const radius = Math.max(size.x, size.y, size.z, 1);
-camera.position.set(c.x + radius * 0.9, c.y + radius * 1.1, c.z + radius * 0.8);
+// frame the scene from the Python-computed bounds. Chip coordinates map to
+// world as (x, y, z) -> (x, z * Z_SCALE, -y) through the root rotation.
+const F = SCENE.frame;
+const target = new THREE.Vector3(F.center[0], F.center[2] * Z_SCALE, -F.center[1]);
+const radius = Math.max(F.span[0], F.span[1], F.span[2] * Z_SCALE, 1);
+camera.position.set(target.x + 0.55 * radius,
+                    target.y + 0.55 * radius,
+                    target.z + 0.85 * radius);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(c.x, c.z, -c.y);  // account for root rotation
+controls.target.copy(target);
 controls.enableDamping = true;
 
 // legend with visibility toggles
@@ -320,6 +387,8 @@ new ResizeObserver(() => {
   camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix();
   renderer.setSize(host.clientWidth, host.clientHeight);
 }).observe(host);
+});
+})();
 </script>
 """
 
@@ -340,10 +409,11 @@ def show_3d(obj: Any, height: int = 520) -> Any:
     """Display the interactive 3D scene in a notebook (and in the docs gallery).
 
     Accepts a solver (geometry + ports + monitor planes + domain) or a bare
-    component (geometry + ports). The output is a plain HTML snippet, so the
-    committed notebook stays lightweight and myst-nb renders it interactive
-    on the documentation site. Requires internet for the three.js CDN; use
-    :func:`render_static` where JavaScript cannot run.
+    component (geometry + ports). The output is a plain HTML snippet rendered
+    directly into the cell output — the same classic-script pattern plotly and
+    bokeh use, which is what notebook webviews (VSCode, JupyterLab) and the
+    myst-nb documentation gallery all execute reliably. Requires internet for
+    the three.js CDN; use :func:`render_static` where JavaScript cannot run.
     """
     from typing import cast
 
@@ -353,13 +423,7 @@ def show_3d(obj: Any, height: int = 520) -> Any:
     # gate holds regardless of which release is installed
     html_cls = cast("Any", _display).HTML
 
-    # srcdoc-iframe isolates the viewer from the notebook's own DOM/CSS
-    html = scene_html(build_scene(obj), height=height)
-    escaped = html.replace("&", "&amp;").replace('"', "&quot;")
-    return html_cls(
-        f'<iframe srcdoc="{escaped}" style="width:100%;height:{height + 20}px;'
-        f'border:none" loading="lazy" title="gds_fdtd 3D viewer"></iframe>'
-    )
+    return html_cls(scene_html(build_scene(obj), height=height))
 
 
 def save_3d(obj: Any, path: str, height: int = 640, title: str | None = None) -> str:

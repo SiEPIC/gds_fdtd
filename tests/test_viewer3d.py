@@ -58,6 +58,12 @@ def test_scene_from_solver_carries_everything(escalator_solver):
     ports = [o for o in scene["objects"] if o["kind"] == "port"]
     assert len(ports) == len(escalator_solver.component.ports)
     assert all("direction" in p and p["width"] > 0 for p in ports)
+    # the background slabs are clamped inside the simulated z-window
+    z_lo = scene["domain"]["center"][2] - scene["domain"]["span"][2] / 2
+    z_hi = scene["domain"]["center"][2] + scene["domain"]["span"][2] / 2
+    assert all(o["z0"] >= z_lo - 1e-9 and o["z1"] <= z_hi + 1e-9 for o in bg)
+    # the camera frame follows the domain
+    assert scene["frame"]["span"] == pytest.approx(scene["domain"]["span"])
 
 
 def test_scene_from_bare_component_has_no_domain(escalator_solver):
@@ -69,10 +75,13 @@ def test_scene_from_bare_component_has_no_domain(escalator_solver):
 def test_scene_html_embeds_scene_and_viewer(escalator_solver):
     scene = build_scene(escalator_solver)
     html = scene_html(scene, height=430)
+    # classic (non-module) scripts only: notebook webviews do not run
+    # ES-module CDN imports, and bare "three" specifiers need import maps
     assert "three@0." in html and "OrbitControls" in html
+    assert 'type="module"' not in html
     assert "height:430px" in html
     # the scene JSON survives the template substitution intact
-    start = html.index("const SCENE = ") + len("const SCENE = ")
+    start = html.index("var SCENE = ") + len("var SCENE = ")
     end = html.index(";\n", start)
     assert json.loads(html[start:end]) == scene
 
@@ -84,14 +93,15 @@ def test_save_3d_writes_standalone_page(escalator_solver, tmp_path):
     assert "si_sin_escalator" in text
 
 
-def test_show_3d_wraps_in_iframe(escalator_solver):
+def test_show_3d_emits_direct_html(escalator_solver):
     pytest.importorskip("IPython")
     out = show_3d(escalator_solver, height=300)
     html = out.data
-    assert html.startswith("<iframe srcdoc=")
-    assert "height:320px" in html  # height + 20 chrome
-    # the srcdoc content is escaped: no raw double quotes from the inner html
-    assert "&quot;" in html
+    # rendered straight into the cell output (the plotly/bokeh pattern) —
+    # a nested srcdoc iframe does not execute in every notebook webview
+    assert html.startswith('<div id="gdsfdtd3d_')
+    assert "<iframe" not in html
+    assert "height:300px" in html
 
 
 def test_render_static_solver_and_component(escalator_solver, tmp_path):
