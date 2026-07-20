@@ -36,7 +36,7 @@ Orbit, zoom, click an object for its material and z-extent, toggle groups
 from the legend. **[Play with it live in the docs](https://siepic.github.io/gds_fdtd/_notebooks/05b_field_monitors.html)**
 (also embedded in examples 01 and 11):
 
-![Si→SiN escalator in the 3D viewer: two cores, monitor planes, domain box](docs/images/escalator_3d.png)
+![Y-branch 3 dB splitter in the 3D viewer: two cores, monitor planes, domain box](docs/images/ybranch_3d.png)
 
 ```python
 from gds_fdtd.viewer3d import show_3d
