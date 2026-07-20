@@ -16,7 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   notebooks stay light and the docs gallery serves the same interactive view;
   `save_3d` writes a standalone page and `render_static` draws the scene with
   matplotlib for JavaScript-free contexts. Embedded live in examples 01, 05b,
-  and 11, and shown on the README.
+  and 11, and shown on the README. Each port shows its mode source/monitor
+  plane at the spec's real `width_ports × depth_ports` (bordered, with a
+  floating name + dimensions label) and its extension stub through the domain
+  edge; the embed is an `<iframe srcdoc>` with classic scripts, verified
+  against JupyterLab-, VSCode-, and docs-style renderers. The 2D views match:
+  `plot_component` draws the mode planes (dimensions in the legend, which now
+  sits outside the axes where it no longer hides top ports),
+  `port_plane_outlines()` adds them to field-map overlays, and
+  `component_outlines(buffer=)` outlines the extension stubs.
 - Field monitors are steerable and visible: `SimulationSpec.field_monitor_positions`
   pins any monitor plane at an absolute coordinate along its normal axis, and
   `SimulationSpec.field_monitor_wavelengths` restricts what the monitors record

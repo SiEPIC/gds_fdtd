@@ -42,7 +42,9 @@ _PORT_COLOR = "#67001f"
 _MONITOR_COLORS = {"x": "#d62728", "y": "#1f77b4", "z": "#2ca02c"}
 
 
-def _structure_objects(component: Component) -> tuple[list[dict[str, Any]], dict[str, str]]:
+def _structure_objects(
+    component: Component,
+) -> tuple[list[dict[str, Any]], dict[str, str], dict[tuple[int, ...], str]]:
     """Device + background structures as contour-extrusion scene objects."""
     objects: list[dict[str, Any]] = []
     layer_colors: dict[tuple[int, ...], str] = {}
@@ -81,7 +83,69 @@ def _structure_objects(component: Component) -> tuple[list[dict[str, Any]], dict
                 "opacity": opacity,
             }
         )
-    return objects, legend
+    return objects, legend, layer_colors
+
+
+def _port_plane_objects(component: Component, spec: SimulationSpec) -> list[dict[str, Any]]:
+    """The mode source/monitor plane of each port, at its real dimensions."""
+    objects = []
+    w, d = float(spec.width_ports), float(spec.depth_ports)
+    for p in component.ports:
+        z = float(p.center[2]) if len(p.center) > 2 and p.center[2] is not None else 0.11
+        objects.append(
+            {
+                "kind": "portplane",
+                "group": "ports",
+                "name": f"{p.name}_plane",
+                "info": (
+                    f"port {p.name} mode plane · {w:g} × {d:g} µm · "
+                    f"({p.center[0]:g}, {p.center[1]:g}, {z:g}) µm, normal {p.direction:g}°"
+                ),
+                "center": [float(p.center[0]), float(p.center[1]), z],
+                "direction": float(p.direction),
+                "width": w,
+                "depth": d,
+                "color": _PORT_COLOR,
+            }
+        )
+    return objects
+
+
+def _port_extension_objects(
+    component: Component, spec: SimulationSpec, layer_colors: dict[tuple[int, ...], str]
+) -> list[dict[str, Any]]:
+    """The port-extension stubs the solvers extrude through the PML."""
+    objects = []
+    buffer = 2 * float(spec.buffer)
+    for p in component.ports:
+        try:
+            contour = np.asarray(p.polygon_extension(buffer=buffer), dtype=float)
+        except Exception:  # a port without geometry info cannot extend
+            continue
+        if contour.ndim != 2 or len(contour) < 3:
+            continue
+        h = getattr(p, "height", None)
+        height = float(h) if h else 0.22
+        z = float(p.center[2]) if len(p.center) > 2 and p.center[2] is not None else 0.11
+        la = getattr(p, "layer", None)
+        key = tuple(la) if la else ()
+        objects.append(
+            {
+                "kind": "structure",
+                "group": "port extensions",
+                "name": f"{p.name}_extension",
+                "info": (
+                    f"port {p.name} extension stub · +{buffer:g} µm through the "
+                    f"domain edge · z {z - height / 2:g}..{z + height / 2:g} µm"
+                ),
+                "contour": [[float(x), float(y)] for x, y in contour],
+                "z0": z - height / 2,
+                "z1": z + height / 2,
+                "color": layer_colors.get(key, _PORT_COLOR),
+                "opacity": 0.45,
+            }
+        )
+    return objects
 
 
 def _port_objects(component: Component) -> list[dict[str, Any]]:
@@ -145,7 +209,7 @@ def build_scene(obj: Any) -> dict[str, Any]:
     component = obj.component if hasattr(obj, "component") else obj
     spec = getattr(obj, "spec", None)
 
-    objects, legend = _structure_objects(component)
+    objects, legend, layer_colors = _structure_objects(component)
     objects += _port_objects(component)
 
     scene: dict[str, Any] = {"name": component.name, "objects": objects, "legend": legend}
@@ -153,6 +217,8 @@ def build_scene(obj: Any) -> dict[str, Any]:
         center, span = obj.domain()
         scene["domain"] = {"center": [float(c) for c in center], "span": [float(s) for s in span]}
         objects += _monitor_objects(component, spec, center, span)
+        objects += _port_plane_objects(component, spec)
+        objects += _port_extension_objects(component, spec, layer_colors)
         # the tech's substrate/superstrate slabs usually reach beyond the
         # simulated z-window; clamp them to the domain so the scene stays tight
         z_lo, z_hi = center[2] - span[2] / 2, center[2] + span[2] / 2
@@ -191,8 +257,7 @@ background:#101418;border-radius:8px;overflow:hidden;\
 font-family:system-ui,sans-serif">
   <div id="__ID___info" style="position:absolute;left:10px;top:10px;z-index:2;\
 color:#dde3ea;font-size:12px;background:rgba(16,20,24,.75);padding:6px 10px;\
-border-radius:6px;max-width:65%">__NAME__ — drag to orbit · scroll to zoom · \
-click an object</div>
+border-radius:6px;max-width:65%">__NAME__ — loading 3D viewer…</div>
   <div id="__ID___legend" style="position:absolute;right:10px;top:10px;z-index:2;\
 color:#dde3ea;font-size:12px;background:rgba(16,20,24,.75);padding:6px 10px;\
 border-radius:6px"></div>
@@ -206,14 +271,55 @@ border-radius:6px"></div>
 // is guarded so several viewers on one page fetch three.js once.
 var BASE = "https://cdn.jsdelivr.net/npm/three@__THREE__/";
 var SCENE = __SCENE_JSON__;
-var host = document.getElementById("__ID__");
-var info = document.getElementById("__ID___info");
-var legendBox = document.getElementById("__ID___legend");
 
+// Notebook renderers mount cell outputs in surprising places: VSCode-style
+// webviews may put them behind shadow roots, where document.getElementById
+// cannot see our divs. Try the root this script itself lives in first
+// (document.currentScript, captured synchronously), then the document, then
+// walk every open shadow root; retry briefly in case the output attaches
+// after this script runs.
+var CS = document.currentScript;
+function findEl(id) {
+  if (CS && CS.getRootNode) {
+    var r = CS.getRootNode();
+    if (r && r.querySelector) {
+      var near = r.querySelector("#" + id);
+      if (near) return near;
+    }
+  }
+  var el = document.getElementById(id);
+  if (el) return el;
+  function walk(root) {
+    var all = root.querySelectorAll("*");
+    for (var i = 0; i < all.length; i++) {
+      var sr = all[i].shadowRoot;
+      if (sr) {
+        var hit = sr.querySelector("#" + id) || walk(sr);
+        if (hit) return hit;
+      }
+    }
+    return null;
+  }
+  return walk(document);
+}
+
+function start(attempt) {
+var host = findEl("__ID__");
+var info = findEl("__ID___info");
+var legendBox = findEl("__ID___legend");
+if (!host || !info || !legendBox) {
+  if (attempt < 25) setTimeout(function () { start(attempt + 1); }, 120);
+  return;
+}
+
+// boot stages are written into the panel: a failure names itself instead of
+// leaving a silent black rectangle
+function stage(msg) { info.textContent = "__NAME__ — " + msg; }
 function fail(msg) {
   info.textContent = "3D viewer: " + msg +
     " — use viewer3d.render_static for a static view.";
 }
+stage("container found; loading three.js…");
 function load(src, cb) {
   var s = document.createElement("script");
   s.src = src;
@@ -234,6 +340,8 @@ function ensureThree(cb) {
 }
 
 ensureThree(function () {
+try {
+stage("three.js ready; building the scene…");
 var THREE = window.THREE;
 var OrbitControls = THREE.OrbitControls;
 
@@ -270,6 +378,33 @@ function inGroup(name) {
   return groups[name];
 }
 
+// scene scale, needed while building (label sizes, camera later)
+const F = SCENE.frame;
+const radius = Math.max(F.span[0], F.span[1], F.span[2] * Z_SCALE, 1);
+
+// text label as a camera-facing sprite (canvas texture; no DOM/HTML sinks)
+function makeLabel(txt) {
+  const c = document.createElement("canvas");
+  let ctx = c.getContext("2d");
+  const fs = 42;
+  ctx.font = fs + "px system-ui, sans-serif";
+  c.width = Math.ceil(ctx.measureText(txt).width) + 26;
+  c.height = fs + 22;
+  ctx = c.getContext("2d");
+  ctx.font = fs + "px system-ui, sans-serif";
+  ctx.fillStyle = "rgba(16,20,24,0.72)";
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillStyle = "#ffd9d9";
+  ctx.textBaseline = "middle";
+  ctx.fillText(txt, 13, c.height / 2);
+  const tex = new THREE.CanvasTexture(c);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial(
+    { map: tex, transparent: true, depthTest: false }));
+  const h = 0.055 * radius;  // readable at any device size
+  sp.scale.set(h * c.width / c.height, h, 1);
+  return sp;
+}
+
 for (const o of SCENE.objects) {
   if (o.kind === "structure") {
     const shape = new THREE.Shape(o.contour.map(p => new THREE.Vector2(p[0], p[1])));
@@ -284,7 +419,28 @@ for (const o of SCENE.objects) {
     mesh.position.z = o.z0 * Z_SCALE;
     mesh.userData = o;
     inGroup(o.group).add(mesh);
-    if (o.opacity >= 1) pickables.push(mesh);
+    if (o.group !== "background") pickables.push(mesh);
+  } else if (o.kind === "portplane") {
+    // the port's mode source/monitor plane at its real dimensions, with a
+    // crisp border and a floating name + dimensions label
+    const geo = new THREE.PlaneGeometry(o.width, o.depth * Z_SCALE);
+    const mat = new THREE.MeshBasicMaterial({ color: o.color, transparent: true,
+      opacity: 0.35, side: THREE.DoubleSide, depthWrite: false });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.add(new THREE.LineSegments(
+      new THREE.EdgesGeometry(geo),
+      new THREE.LineBasicMaterial({ color: 0xff6b6b })));
+    if (o.direction % 180 === 0) { mesh.rotation.y = Math.PI / 2; mesh.rotation.z = Math.PI / 2; }
+    else { mesh.rotation.x = Math.PI / 2; }
+    mesh.position.set(o.center[0], o.center[1], o.center[2] * Z_SCALE);
+    mesh.userData = o;
+    inGroup("ports").add(mesh);
+    pickables.push(mesh);
+    const tag = makeLabel(o.name.replace("_plane", "") + " · " +
+                          o.width + "×" + o.depth + " µm");
+    tag.position.set(o.center[0], o.center[1],
+                     (o.center[2] + o.depth / 2) * Z_SCALE + 0.06 * radius);
+    inGroup("ports").add(tag);
   } else if (o.kind === "port") {
     const geo = new THREE.ConeGeometry(0.35 * o.width, 0.9 * o.width, 20);
     const mat = new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.4 });
@@ -332,11 +488,9 @@ if (SCENE.domain) {
   }
 }
 
-// frame the scene from the Python-computed bounds. Chip coordinates map to
-// world as (x, y, z) -> (x, z * Z_SCALE, -y) through the root rotation.
-const F = SCENE.frame;
+// frame the scene from the Python-computed bounds (F/radius hoisted above).
+// Chip coordinates map to world as (x, y, z) -> (x, z * Z_SCALE, -y).
 const target = new THREE.Vector3(F.center[0], F.center[2] * Z_SCALE, -F.center[1]);
-const radius = Math.max(F.span[0], F.span[1], F.span[2] * Z_SCALE, 1);
 camera.position.set(target.x + 0.55 * radius,
                     target.y + 0.55 * radius,
                     target.z + 0.85 * radius);
@@ -344,18 +498,28 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.copy(target);
 controls.enableDamping = true;
 
-// legend with visibility toggles
+// legend with visibility toggles. Built with createElement/textContent only:
+// HTML-string sinks (innerHTML/insertAdjacentHTML) are restricted by Trusted
+// Types in hardened webviews, and text APIs work everywhere.
 const CHIP = "display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px";
 for (const [label, color] of Object.entries(SCENE.legend)) {
-  legendBox.insertAdjacentHTML("beforeend",
-    `<div><span style="${CHIP};background:${color}"></span>${label}</div>`);
+  const row = document.createElement("div");
+  const chip = document.createElement("span");
+  chip.setAttribute("style", CHIP + ";background:" + color);
+  row.appendChild(chip);
+  row.appendChild(document.createTextNode(label));
+  legendBox.appendChild(row);
 }
 for (const g of Object.keys(groups)) {
-  const id = "__ID___" + g;
-  legendBox.insertAdjacentHTML("beforeend",
-    `<div><input type="checkbox" id="${id}" checked style="margin-right:6px">${g}</div>`);
-  legendBox.querySelector("#" + CSS.escape(id)).addEventListener("change",
-    e => { groups[g].visible = e.target.checked; });
+  const row = document.createElement("div");
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  box.checked = true;
+  box.setAttribute("style", "margin-right:6px");
+  box.addEventListener("change", function () { groups[g].visible = box.checked; });
+  row.appendChild(box);
+  row.appendChild(document.createTextNode(g));
+  legendBox.appendChild(row);
 }
 
 // picking
@@ -375,7 +539,7 @@ renderer.domElement.addEventListener("click", (ev) => {
     info.textContent = selected.userData.info || selected.userData.name;
   } else {
     selected = null;
-    info.textContent = "__NAME__";
+    stage("drag to orbit · scroll to zoom · click an object");
   }
 });
 
@@ -383,11 +547,19 @@ function animate() {
   requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera);
 }
 animate();
+stage("drag to orbit · scroll to zoom · click an object");
 new ResizeObserver(() => {
   camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix();
   renderer.setSize(host.clientWidth, host.clientHeight);
 }).observe(host);
+} catch (e) {
+  // surface the exception where the user can see it - a silent black panel
+  // is undebuggable from a screenshot
+  fail("scene build failed: " + (e && e.message ? e.message : e));
+}
 });
+}
+start(0);
 })();
 </script>
 """
@@ -395,7 +567,12 @@ new ResizeObserver(() => {
 
 def scene_html(scene: dict[str, Any], height: int = 520) -> str:
     """The interactive viewer as a self-contained HTML snippet (three.js via CDN)."""
-    uid = f"gdsfdtd3d_{abs(hash(json.dumps(scene, sort_keys=True))) % 10**8}"
+    import uuid
+
+    # ids must be unique per EMISSION, not per scene: a notebook holds the
+    # committed output and the freshly-run one side by side, and a content-
+    # derived id would make the script attach its canvas to the stale copy
+    uid = f"gdsfdtd3d_{uuid.uuid4().hex[:10]}"
     return (
         _HTML_TEMPLATE.replace("__ID__", uid)
         .replace("__HEIGHT__", str(int(height)))
@@ -409,12 +586,16 @@ def show_3d(obj: Any, height: int = 520) -> Any:
     """Display the interactive 3D scene in a notebook (and in the docs gallery).
 
     Accepts a solver (geometry + ports + monitor planes + domain) or a bare
-    component (geometry + ports). The output is a plain HTML snippet rendered
-    directly into the cell output — the same classic-script pattern plotly and
-    bokeh use, which is what notebook webviews (VSCode, JupyterLab) and the
-    myst-nb documentation gallery all execute reliably. Requires internet for
-    the three.js CDN; use :func:`render_static` where JavaScript cannot run.
+    component (geometry + ports). The output is an ``<iframe srcdoc>`` — the
+    one embed that executes its scripts in every renderer (the folium/pydeck
+    pattern): JupyterLab inserts outputs via innerHTML, where bare ``<script>``
+    tags are inert by spec, but an iframe's document always runs; VSCode and
+    static docs pages load it the same way. Inside the iframe the page is a
+    plain document, so no shadow-DOM or sanitizer concerns apply. Requires
+    internet for the three.js CDN; use :func:`render_static` where JavaScript
+    cannot run.
     """
+    import warnings
     from typing import cast
 
     from IPython import display as _display
@@ -423,7 +604,17 @@ def show_3d(obj: Any, height: int = 520) -> Any:
     # gate holds regardless of which release is installed
     html_cls = cast("Any", _display).HTML
 
-    return html_cls(scene_html(build_scene(obj), height=height))
+    html = scene_html(build_scene(obj), height=height)
+    escaped = html.replace("&", "&amp;").replace('"', "&quot;")
+    iframe = (
+        f'<iframe srcdoc="{escaped}" style="width:100%;height:{height + 20}px;'
+        f'border:none" loading="lazy" title="gds_fdtd 3D viewer"></iframe>'
+    )
+    with warnings.catch_warnings():
+        # IPython suggests IPython.display.IFrame on seeing an iframe string,
+        # but IFrame needs a served src URL; srcdoc is the point here
+        warnings.filterwarnings("ignore", message=".*IFrame.*")
+        return html_cls(iframe)
 
 
 def save_3d(obj: Any, path: str, height: int = 640, title: str | None = None) -> str:
@@ -465,7 +656,7 @@ def render_static(
         fig = ax.figure
 
     for o in scene["objects"]:
-        if o["kind"] != "structure" or o["opacity"] < 1:
+        if o["kind"] != "structure" or o["group"] == "background":
             continue
         pts = np.asarray(o["contour"])
         z0, z1 = o["z0"], o["z1"]
@@ -474,14 +665,48 @@ def render_static(
         faces = [top, bot]
         n = len(pts)
         faces += [[bot[i], bot[(i + 1) % n], top[(i + 1) % n], top[i]] for i in range(n)]
+        alpha = 0.95 if o["opacity"] >= 1 else 0.35  # port-extension stubs stay see-through
         ax.add_collection3d(
-            Poly3DCollection(faces, facecolor=o["color"], edgecolor="none", alpha=0.95)
+            Poly3DCollection(faces, facecolor=o["color"], edgecolor="none", alpha=alpha)
         )
     for o in scene["objects"]:
         if o["kind"] == "port":
             x, y, z = o["center"]
             ax.scatter([x], [y], [z], color=o["color"], s=45, depthshade=False)
             ax.text(x, y, z + 0.25, o["name"], fontsize=8, ha="center")
+        elif o["kind"] == "portplane":
+            x, y, z = o["center"]
+            w, d = o["width"], o["depth"]
+            if o["direction"] % 180 == 0:  # x-normal plane
+                verts = [
+                    [
+                        (x, y - w / 2, z - d / 2),
+                        (x, y + w / 2, z - d / 2),
+                        (x, y + w / 2, z + d / 2),
+                        (x, y - w / 2, z + d / 2),
+                    ]
+                ]
+            else:  # y-normal plane
+                verts = [
+                    [
+                        (x - w / 2, y, z - d / 2),
+                        (x + w / 2, y, z - d / 2),
+                        (x + w / 2, y, z + d / 2),
+                        (x - w / 2, y, z + d / 2),
+                    ]
+                ]
+            ax.add_collection3d(
+                Poly3DCollection(verts, facecolor=o["color"], alpha=0.25, edgecolor=o["color"])
+            )
+            ax.text(
+                x,
+                y,
+                z + d / 2 + 0.15,
+                f"{w:g}×{d:g} µm",
+                fontsize=7,
+                ha="center",
+                color=o["color"],
+            )
 
     if "domain" in scene:
         d = scene["domain"]

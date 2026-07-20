@@ -39,7 +39,12 @@ import numpy as np
 
 from gds_fdtd import SimulationSpec, Technology, get_solver
 from gds_fdtd.lyprocessor import load_cell
-from gds_fdtd.plotting import component_outlines, plot_field, plot_monitor_planes
+from gds_fdtd.plotting import (
+    component_outlines,
+    plot_field,
+    plot_monitor_planes,
+    port_plane_outlines,
+)
 from gds_fdtd.simprocessor import load_component_from_tech
 
 
@@ -119,13 +124,16 @@ show_3d(solver, height=460)
 # `PROVENANCE.md`). The y-normal monitor cuts along the propagation axis, so
 # it shows the vertical story: the mode enters in the Si core (z ≈ 0.1 µm),
 # transfers upward through the taper, and exits in the SiN core (z ≈ 0.5 µm).
-# The dashed outlines are the layer bands from `component_outlines(comp, "y")`:
+# The dashed outlines are the layer bands and port-extension stubs
+# (`component_outlines`), and the short vertical strokes at the ends are each
+# port's mode plane at its real depth (`port_plane_outlines`):
 
 # %%
 fy = np.load(REC / "escalator_field_y.npz")
 plot_field(
     fy["mag2"][0], x=fy["h"], y=fy["v"], scale="db",
-    outline=component_outlines(comp, axis="y"),
+    outline=component_outlines(comp, axis="y", buffer=2 * spec.buffer)
+    + port_plane_outlines(comp, spec, axis="y"),
     title=f"escalator side view (y-normal), |E|² dB at {fy['wavelength_um'][0]:.2f} um",
 )
 plt.ylabel("z [µm]")
@@ -143,7 +151,8 @@ plt.show()
 fz = np.load(REC / "escalator_field_z.npz")
 plot_field(
     fz["mag2"][0], x=fz["h"], y=fz["v"], scale="db",
-    outline=component_outlines(comp, axis="z"),
+    outline=component_outlines(comp, axis="z", buffer=2 * spec.buffer)
+    + port_plane_outlines(comp, spec, axis="z"),
     title="escalator top view pinned at z=0.11 um (Si core), |E|² dB",
 )
 plt.show()
