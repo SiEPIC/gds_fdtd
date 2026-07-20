@@ -925,7 +925,7 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
     { name = "myst-nb", marker = "extra == 'docs'", specifier = ">=1.1" },
     { name = "numpy", specifier = ">=1.26" },
-    { name = "pip", marker = "extra == 'dev'", specifier = ">=23.3" },
+    { name = "pip", marker = "extra == 'dev'", specifier = ">=26.1.2" },
     { name = "prefab", marker = "extra == 'all'", specifier = ">=1.2.0" },
     { name = "prefab", marker = "extra == 'prefab'", specifier = ">=1.2.0" },
     { name = "pydantic", specifier = ">=2.7" },
