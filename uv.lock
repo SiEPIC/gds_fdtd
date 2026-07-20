@@ -920,7 +920,7 @@ requires-dist = [
     { name = "gdsfactory", marker = "extra == 'gdsfactory'", specifier = ">=9.5.7,<10" },
     { name = "h5py", marker = "extra == 'dev'", specifier = ">=3.10" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.100" },
-    { name = "klayout", specifier = ">=0.30.1" },
+    { name = "klayout", specifier = ">=0.30.9" },
     { name = "matplotlib", specifier = ">=3.11.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
     { name = "myst-nb", marker = "extra == 'docs'", specifier = ">=1.1" },
