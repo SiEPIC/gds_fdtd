@@ -703,7 +703,8 @@ def render_static(
         faces += [[bot[i], bot[(i + 1) % n], top[(i + 1) % n], top[i]] for i in range(n)]
         alpha = 0.95 if o["opacity"] >= 1 else 0.35  # port-extension stubs stay see-through
         ax.add_collection3d(
-            Poly3DCollection(faces, facecolor=o["color"], edgecolor="none", alpha=alpha)
+            Poly3DCollection(faces, facecolor=o["color"], edgecolor="none", alpha=alpha),
+            autolim=False,  # explicit limits below; mpl's 3D autoscale can overflow
         )
     for o in scene["objects"]:
         if o["kind"] == "port":
@@ -732,7 +733,8 @@ def render_static(
                     ]
                 ]
             ax.add_collection3d(
-                Poly3DCollection(verts, facecolor=o["color"], alpha=0.25, edgecolor=o["color"])
+                Poly3DCollection(verts, facecolor=o["color"], alpha=0.25, edgecolor=o["color"]),
+                autolim=False,  # explicit limits below; mpl's 3D autoscale can overflow
             )
             ax.text(
                 x,
@@ -772,7 +774,8 @@ def render_static(
             else:
                 verts = [[(p, y0, z0), (p, y1, z0), (p, y1, z1), (p, y0, z1)]]
             ax.add_collection3d(
-                Poly3DCollection(verts, facecolor=o["color"], alpha=0.15, edgecolor=o["color"])
+                Poly3DCollection(verts, facecolor=o["color"], alpha=0.15, edgecolor=o["color"]),
+                autolim=False,  # explicit limits below; mpl's 3D autoscale can overflow
             )
         ax.set_xlim(x0, x1)
         ax.set_ylim(y0, y1)
