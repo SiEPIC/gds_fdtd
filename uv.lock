@@ -940,7 +940,7 @@ requires-dist = [
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=9.0.4" },
     { name = "sphinx-copybutton", marker = "extra == 'docs'", specifier = ">=0.5.2" },
     { name = "sphinx-design", marker = "extra == 'docs'", specifier = ">=0.7.0" },
-    { name = "sphinx-toggleprompt", marker = "extra == 'docs'", specifier = ">=0.1.0" },
+    { name = "sphinx-toggleprompt", marker = "extra == 'docs'", specifier = ">=0.6.0" },
     { name = "tidy3d", marker = "extra == 'all'", specifier = ">=2.11,<3" },
     { name = "tidy3d", marker = "extra == 'engines'", specifier = ">=2.11,<3" },
     { name = "tidy3d", marker = "extra == 'tidy3d'", specifier = ">=2.11,<3" },
