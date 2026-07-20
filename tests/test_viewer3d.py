@@ -92,6 +92,8 @@ def test_scene_html_embeds_scene_and_viewer(escalator_solver):
     # ES-module CDN imports, and bare "three" specifiers need import maps
     assert "three@0." in html and "OrbitControls" in html
     assert 'type="module"' not in html
+    # true proportions by default, with the opt-in z exaggeration toggle
+    assert "let zScale = 1.0;" in html and "z ×4" in html
     assert "height:430px" in html
     # the scene JSON survives the template substitution intact
     start = html.index("var SCENE = ") + len("var SCENE = ")

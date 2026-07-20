@@ -365,22 +365,24 @@ scene.add(key);
 const fill = new THREE.DirectionalLight(0xbcd4ff, 0.35); fill.position.set(-2, 1, -1);
 scene.add(fill);
 
-// z is "up" for a chip; scale z so thin layers stay visible
-const Z_SCALE = 4.0;
+// z is "up" for a chip. zScale = 1 shows TRUE proportions (a 220 nm layer
+// really is hair-thin next to a many-µm device); the legend checkbox turns on
+// a 4x z exaggeration for inspecting thin stacks.
+let zScale = 1.0;
 const root = new THREE.Group();
 root.rotation.x = -Math.PI / 2;   // lay the chip flat, z up on screen
 scene.add(root);
 
-const pickables = [];
-const groups = {};
+let pickables = [];
+let groups = {};
+const groupVisibility = {};
+const F = SCENE.frame;
+let radius = 1;
+
 function inGroup(name) {
   if (!groups[name]) { groups[name] = new THREE.Group(); root.add(groups[name]); }
   return groups[name];
 }
-
-// scene scale, needed while building (label sizes, camera later)
-const F = SCENE.frame;
-const radius = Math.max(F.span[0], F.span[1], F.span[2] * Z_SCALE, 1);
 
 // text label as a camera-facing sprite (canvas texture; no DOM/HTML sinks)
 function makeLabel(txt) {
@@ -405,98 +407,113 @@ function makeLabel(txt) {
   return sp;
 }
 
-for (const o of SCENE.objects) {
-  if (o.kind === "structure") {
-    const shape = new THREE.Shape(o.contour.map(p => new THREE.Vector2(p[0], p[1])));
-    const geo = new THREE.ExtrudeGeometry(shape,
-      { depth: (o.z1 - o.z0) * Z_SCALE, bevelEnabled: false });
-    const mat = new THREE.MeshStandardMaterial({
-      color: o.color, roughness: 0.55, metalness: 0.05,
-      transparent: o.opacity < 1, opacity: o.opacity,
-      depthWrite: o.opacity >= 1,
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.z = o.z0 * Z_SCALE;
-    mesh.userData = o;
-    inGroup(o.group).add(mesh);
-    if (o.group !== "background") pickables.push(mesh);
-  } else if (o.kind === "portplane") {
-    // the port's mode source/monitor plane at its real dimensions, with a
-    // crisp border and a floating name + dimensions label
-    const geo = new THREE.PlaneGeometry(o.width, o.depth * Z_SCALE);
-    const mat = new THREE.MeshBasicMaterial({ color: o.color, transparent: true,
-      opacity: 0.35, side: THREE.DoubleSide, depthWrite: false });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.add(new THREE.LineSegments(
-      new THREE.EdgesGeometry(geo),
-      new THREE.LineBasicMaterial({ color: 0xff6b6b })));
-    if (o.direction % 180 === 0) { mesh.rotation.y = Math.PI / 2; mesh.rotation.z = Math.PI / 2; }
-    else { mesh.rotation.x = Math.PI / 2; }
-    mesh.position.set(o.center[0], o.center[1], o.center[2] * Z_SCALE);
-    mesh.userData = o;
-    inGroup("ports").add(mesh);
-    pickables.push(mesh);
-    const tag = makeLabel(o.name.replace("_plane", "") + " · " +
-                          o.width + "×" + o.depth + " µm");
-    tag.position.set(o.center[0], o.center[1],
-                     (o.center[2] + o.depth / 2) * Z_SCALE + 0.06 * radius);
-    inGroup("ports").add(tag);
-  } else if (o.kind === "port") {
-    const geo = new THREE.ConeGeometry(0.35 * o.width, 0.9 * o.width, 20);
-    const mat = new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.4 });
-    const mesh = new THREE.Mesh(geo, mat);
-    const rad = (o.direction * Math.PI) / 180;
-    // cone points INTO the device (against the port's facing direction)
-    mesh.rotation.z = rad - Math.PI / 2;
-    mesh.position.set(o.center[0] + 0.45 * o.width * Math.cos(rad),
-                      o.center[1] + 0.45 * o.width * Math.sin(rad),
-                      o.center[2] * Z_SCALE);
-    mesh.userData = o;
-    inGroup("ports").add(mesh);
-    pickables.push(mesh);
-  }
-}
-
-if (SCENE.domain) {
-  const d = SCENE.domain;
-  const geo = new THREE.BoxGeometry(d.span[0], d.span[1], d.span[2] * Z_SCALE);
-  const edges = new THREE.LineSegments(
-    new THREE.EdgesGeometry(geo),
-    new THREE.LineBasicMaterial({ color: 0x9aa7b4 }));
-  edges.position.set(d.center[0], d.center[1], d.center[2] * Z_SCALE);
-  edges.userData = { name: "simulation domain",
-    info: `domain ${d.span[0].toFixed(1)} × ${d.span[1].toFixed(1)} × ${d.span[2].toFixed(2)} µm` };
-  inGroup("domain").add(edges);
-
-  for (const o of SCENE.objects.filter(o => o.kind === "monitor")) {
-    let w, h;
-    if (o.axis === "z") { w = d.span[0]; h = d.span[1]; }
-    else if (o.axis === "y") { w = d.span[0]; h = d.span[2] * Z_SCALE; }
-    else { w = d.span[1]; h = d.span[2] * Z_SCALE; }
-    const geo = new THREE.PlaneGeometry(w, h);
-    const mat = new THREE.MeshBasicMaterial({ color: o.color, transparent: true,
-      opacity: 0.18, side: THREE.DoubleSide, depthWrite: false });
-    const mesh = new THREE.Mesh(geo, mat);
-    if (o.axis === "z") mesh.position.set(d.center[0], d.center[1], o.position * Z_SCALE);
-    else if (o.axis === "y") { mesh.rotation.x = Math.PI / 2;
-      mesh.position.set(d.center[0], o.position, d.center[2] * Z_SCALE); }
-    else { mesh.rotation.y = Math.PI / 2; mesh.rotation.z = Math.PI / 2;
-      mesh.position.set(o.position, d.center[1], d.center[2] * Z_SCALE); }
-    mesh.userData = o;
-    inGroup("monitors").add(mesh);
-    pickables.push(mesh);
-  }
-}
-
-// frame the scene from the Python-computed bounds (F/radius hoisted above).
-// Chip coordinates map to world as (x, y, z) -> (x, z * Z_SCALE, -y).
-const target = new THREE.Vector3(F.center[0], F.center[2] * Z_SCALE, -F.center[1]);
-camera.position.set(target.x + 0.55 * radius,
-                    target.y + 0.55 * radius,
-                    target.z + 0.85 * radius);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.copy(target);
 controls.enableDamping = true;
+
+function buildScene() {
+  while (root.children.length) root.remove(root.children[0]);
+  groups = {}; pickables = [];
+  const Z = zScale;
+  radius = Math.max(F.span[0], F.span[1], F.span[2] * Z, 1);
+
+  for (const o of SCENE.objects) {
+    if (o.kind === "structure") {
+      const shape = new THREE.Shape(o.contour.map(p => new THREE.Vector2(p[0], p[1])));
+      const geo = new THREE.ExtrudeGeometry(shape,
+        { depth: (o.z1 - o.z0) * Z, bevelEnabled: false });
+      const mat = new THREE.MeshStandardMaterial({
+        color: o.color, roughness: 0.55, metalness: 0.05,
+        transparent: o.opacity < 1, opacity: o.opacity,
+        depthWrite: o.opacity >= 1,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.z = o.z0 * Z;
+      mesh.userData = o;
+      inGroup(o.group).add(mesh);
+      if (o.group !== "background") pickables.push(mesh);
+    } else if (o.kind === "portplane") {
+      // the port's mode source/monitor plane at its real dimensions, with a
+      // crisp border and a floating name + dimensions label
+      const geo = new THREE.PlaneGeometry(o.width, o.depth * Z);
+      const mat = new THREE.MeshBasicMaterial({ color: o.color, transparent: true,
+        opacity: 0.35, side: THREE.DoubleSide, depthWrite: false });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.add(new THREE.LineSegments(
+        new THREE.EdgesGeometry(geo),
+        new THREE.LineBasicMaterial({ color: 0xff6b6b })));
+      if (o.direction % 180 === 0) { mesh.rotation.y = Math.PI / 2; mesh.rotation.z = Math.PI / 2; }
+      else { mesh.rotation.x = Math.PI / 2; }
+      mesh.position.set(o.center[0], o.center[1], o.center[2] * Z);
+      mesh.userData = o;
+      inGroup("ports").add(mesh);
+      pickables.push(mesh);
+      const tag = makeLabel(o.name.replace("_plane", "") + " · " +
+                            o.width + "×" + o.depth + " µm");
+      tag.position.set(o.center[0], o.center[1],
+                       (o.center[2] + o.depth / 2) * Z + 0.06 * radius);
+      inGroup("ports").add(tag);
+    } else if (o.kind === "port") {
+      const geo = new THREE.ConeGeometry(0.35 * o.width, 0.9 * o.width, 20);
+      const mat = new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.4 });
+      const mesh = new THREE.Mesh(geo, mat);
+      const rad = (o.direction * Math.PI) / 180;
+      // cone points INTO the device (against the port's facing direction)
+      mesh.rotation.z = rad - Math.PI / 2;
+      mesh.position.set(o.center[0] + 0.45 * o.width * Math.cos(rad),
+                        o.center[1] + 0.45 * o.width * Math.sin(rad),
+                        o.center[2] * Z);
+      mesh.userData = o;
+      inGroup("ports").add(mesh);
+      pickables.push(mesh);
+    }
+  }
+
+  if (SCENE.domain) {
+    const d = SCENE.domain;
+    const geo = new THREE.BoxGeometry(d.span[0], d.span[1], d.span[2] * Z);
+    const edges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(geo),
+      new THREE.LineBasicMaterial({ color: 0x9aa7b4 }));
+    edges.position.set(d.center[0], d.center[1], d.center[2] * Z);
+    edges.userData = { name: "simulation domain",
+      info: `domain ${d.span[0].toFixed(1)} × ${d.span[1].toFixed(1)} × ` +
+        `${d.span[2].toFixed(2)} µm` };
+    inGroup("domain").add(edges);
+
+    for (const o of SCENE.objects.filter(o => o.kind === "monitor")) {
+      let w, h;
+      if (o.axis === "z") { w = d.span[0]; h = d.span[1]; }
+      else if (o.axis === "y") { w = d.span[0]; h = d.span[2] * Z; }
+      else { w = d.span[1]; h = d.span[2] * Z; }
+      const geo = new THREE.PlaneGeometry(w, h);
+      const mat = new THREE.MeshBasicMaterial({ color: o.color, transparent: true,
+        opacity: 0.18, side: THREE.DoubleSide, depthWrite: false });
+      const mesh = new THREE.Mesh(geo, mat);
+      if (o.axis === "z") mesh.position.set(d.center[0], d.center[1], o.position * Z);
+      else if (o.axis === "y") { mesh.rotation.x = Math.PI / 2;
+        mesh.position.set(d.center[0], o.position, d.center[2] * Z); }
+      else { mesh.rotation.y = Math.PI / 2; mesh.rotation.z = Math.PI / 2;
+        mesh.position.set(o.position, d.center[1], d.center[2] * Z); }
+      mesh.userData = o;
+      inGroup("monitors").add(mesh);
+      pickables.push(mesh);
+    }
+  }
+
+  // keep the user's group toggles across z-scale rebuilds
+  for (const g of Object.keys(groups)) {
+    if (g in groupVisibility) groups[g].visible = groupVisibility[g];
+  }
+
+  // frame from the Python-computed bounds. Chip coordinates map to world as
+  // (x, y, z) -> (x, z * Z, -y) through the root rotation.
+  const target = new THREE.Vector3(F.center[0], F.center[2] * Z, -F.center[1]);
+  camera.position.set(target.x + 0.55 * radius,
+                      target.y + 0.55 * radius,
+                      target.z + 0.85 * radius);
+  controls.target.copy(target);
+}
+buildScene();
 
 // legend with visibility toggles. Built with createElement/textContent only:
 // HTML-string sinks (innerHTML/insertAdjacentHTML) are restricted by Trusted
@@ -516,9 +533,28 @@ for (const g of Object.keys(groups)) {
   box.type = "checkbox";
   box.checked = true;
   box.setAttribute("style", "margin-right:6px");
-  box.addEventListener("change", function () { groups[g].visible = box.checked; });
+  box.addEventListener("change", function () {
+    groupVisibility[g] = box.checked;
+    if (groups[g]) groups[g].visible = box.checked;
+  });
   row.appendChild(box);
   row.appendChild(document.createTextNode(g));
+  legendBox.appendChild(row);
+}
+{
+  // true 1:1 proportions by default; opt-in exaggeration for thin stacks
+  const row = document.createElement("div");
+  row.setAttribute("style", "margin-top:6px;border-top:1px solid #39424d;padding-top:5px");
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  box.checked = false;
+  box.setAttribute("style", "margin-right:6px");
+  box.addEventListener("change", function () {
+    zScale = box.checked ? 4.0 : 1.0;
+    buildScene();
+  });
+  row.appendChild(box);
+  row.appendChild(document.createTextNode("z ×4 (exaggerate thin layers)"));
   legendBox.appendChild(row);
 }
 
@@ -756,9 +792,12 @@ def render_static(
     ax.set_ylabel("y [µm]")
     ax.set_zlabel("z [µm]")
     ax.set_title(scene["name"])
-    try:  # matplotlib >= 3.6
-        ax.set_aspect("equalxy")
-    except (NotImplementedError, ValueError):
+    try:  # true 1:1:1 proportions, matching the interactive viewer's default
+        x0, x1 = ax.get_xlim()
+        y0, y1 = ax.get_ylim()
+        z0, z1 = ax.get_zlim()
+        ax.set_box_aspect((abs(x1 - x0), abs(y1 - y0), abs(z1 - z0)))
+    except (AttributeError, NotImplementedError, ValueError):
         pass  # older 3D axes cannot fix the aspect; the view stays usable
     ax.view_init(elev=elev, azim=azim)
     if savefig:
