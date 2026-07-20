@@ -58,7 +58,7 @@ engines     = ["gds_fdtd[tidy3d,beamz]"]                             # every pip
 all         = ["gds_fdtd[tidy3d,beamz,gdsfactory,prefab,siepic]"]    # every engine + layout frontend
 
 dev = [
-  "pip>=23.3",
+  "pip>=26.1.2",
   "build>=1.0.0",  # `just build` (sdist+wheel); releases publish via CI trusted publishing
   "pytest>=8.1",
   "pytest-cov>=5.0",
