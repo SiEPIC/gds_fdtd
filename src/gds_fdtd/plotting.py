@@ -245,6 +245,25 @@ def plot_component(
             )
             stub_labeled = True
 
+        # each port's mode source/monitor plane, at its real simulated width
+        plane_labeled = False
+        for p in component.ports:
+            w = spec.width_ports
+            if p.direction in (0, 180):
+                seg = ([p.x, p.x], [p.y - w / 2, p.y + w / 2])
+            else:
+                seg = ([p.x - w / 2, p.x + w / 2], [p.y, p.y])
+            ax.plot(
+                *seg,
+                color="#67001f",
+                lw=2.6,
+                solid_capstyle="butt",
+                label=None
+                if plane_labeled
+                else f"port mode plane ({spec.width_ports:g} × {spec.depth_ports:g} µm)",
+            )
+            plane_labeled = True
+
     # ports: arrow along direction + name
     arrow = max(b.x_span, b.y_span) * 0.06
     for p in component.ports:
@@ -296,6 +315,9 @@ def plot_component(
     if spec is not None:
         xs += [b.x_min - 2 * spec.buffer, b.x_max + 2 * spec.buffer]
         ys += [b.y_min - 2 * spec.buffer, b.y_max + 2 * spec.buffer]
+        for p in component.ports:
+            xs += [p.x - spec.width_ports / 2, p.x + spec.width_ports / 2]
+            ys += [p.y - spec.width_ports / 2, p.y + spec.width_ports / 2]
     for p in component.ports:
         xs += [p.x - arrow, p.x + arrow, p.x - p.width / 2, p.x + p.width / 2]
         ys += [p.y - arrow, p.y + arrow, p.y - p.width / 2, p.y + p.width / 2]
@@ -307,7 +329,10 @@ def plot_component(
     ax.set_xlabel("x [µm]")
     ax.set_ylabel("y [µm]")
     ax.set_title(f"{component.name}: geometry, ports, simulation region")
-    ax.legend(loc="upper right", fontsize="small")
+    # legend OUTSIDE the axes: inside it covers geometry (a top port and its
+    # extension stub sat invisibly behind it on 4-port devices)
+    ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0), fontsize="small")
+    fig.tight_layout()
     if savefig:
         fig.savefig(savefig, dpi=150, bbox_inches="tight")
     return fig, ax
@@ -712,7 +737,7 @@ def plot_mode(
     return fig, ax
 
 
-def component_outlines(component: Any, axis: str = "z") -> list[Any]:
+def component_outlines(component: Any, axis: str = "z", buffer: float | None = None) -> list[Any]:
     """Device-geometry outlines for overlay on a field plot (see ``plot_field``).
 
     For a z-normal view the outlines are the device polygons themselves (x-y).
@@ -724,22 +749,39 @@ def component_outlines(component: Any, axis: str = "z") -> list[Any]:
         component: a :class:`~gds_fdtd.geometry.Component`.
         axis: the monitor normal — "z" (top view), "y" (x-z side view) or
             "x" (y-z side view).
+        buffer: when given, each port's extension stub (the geometry the
+            solvers push through the domain edge, ``polygon_extension(buffer)``)
+            is outlined as well — pass the solver's ``2 * spec.buffer``.
 
     Returns:
         list of Nx2 point arrays in the plot's coordinates.
     """
+
+    def _project(pts: Any, z0: float, z1: float) -> Any:
+        if axis == "z":
+            return pts
+        i = 0 if axis == "y" else 1  # in-plane horizontal coordinate
+        lo, hi = float(pts[:, i].min()), float(pts[:, i].max())
+        z0, z1 = sorted((z0, z1))
+        return np.array([[lo, z0], [hi, z0], [hi, z1], [lo, z1]])
+
     outlines: list[Any] = []
     for s in component.structures:
         if s.role != "device":
             continue
         pts = np.asarray(s.polygon, dtype=float)
-        if axis == "z":
-            outlines.append(pts)
-            continue
-        i = 0 if axis == "y" else 1  # in-plane horizontal coordinate
-        lo, hi = float(pts[:, i].min()), float(pts[:, i].max())
-        z0, z1 = sorted((s.z_base, s.z_base + s.z_span))
-        outlines.append(np.array([[lo, z0], [hi, z0], [hi, z1], [lo, z1]]))
+        outlines.append(_project(pts, s.z_base, s.z_base + s.z_span))
+    if buffer is not None:
+        for p in component.ports:
+            try:
+                ext = np.asarray(p.polygon_extension(buffer=float(buffer)), dtype=float)
+            except Exception:  # a port without geometry info cannot extend
+                continue
+            if ext.ndim != 2 or len(ext) < 3:
+                continue
+            height = float(p.height) if getattr(p, "height", None) else 0.22
+            z = float(p.center[2]) if len(p.center) > 2 and p.center[2] is not None else 0.11
+            outlines.append(_project(ext, z - height / 2, z + height / 2))
     return outlines
 
 
@@ -788,6 +830,44 @@ def plot_monitor_planes(solver: Any, savefig: str | None = None) -> tuple[Any, A
     x0, x1 = center[0] - span[0] / 2, center[0] + span[0] / 2
     y0, y1 = center[1] - span[1] / 2, center[1] + span[1] / 2
     ax_top.plot([x0, x1, x1, x0, x0], [y0, y0, y1, y1, y0], "-", color="0.3", lw=1)
+
+    # port-extension stubs (the geometry the solvers push through the domain
+    # edge) and each port's mode source/monitor plane at its real width
+    first_ext = True
+    for p in comp.ports:
+        try:
+            ext = np.asarray(p.polygon_extension(buffer=2 * spec.buffer), dtype=float)
+        except Exception:
+            ext = None
+        if ext is not None and ext.ndim == 2 and len(ext) >= 3:
+            closed = np.vstack([ext, ext[:1]])
+            ax_top.plot(
+                closed[:, 0],
+                closed[:, 1],
+                "--",
+                color="0.45",
+                lw=0.9,
+                label="port extensions (2·buffer)" if first_ext else None,
+            )
+            first_ext = False
+        w = spec.width_ports
+        px, py = float(p.center[0]), float(p.center[1])
+        if p.direction in (0, 180):  # x-normal plane: segment along y
+            seg = ([px, px], [py - w / 2, py + w / 2])
+        else:  # y-normal plane: segment along x
+            seg = ([px - w / 2, px + w / 2], [py, py])
+        ax_top.plot(*seg, "-", color="#67001f", lw=2.0, solid_capstyle="butt")
+        ax_top.annotate(
+            str(p.name), (px, py), textcoords="offset points", xytext=(4, 5), fontsize=8
+        )
+    ax_top.plot(
+        [],
+        [],
+        "-",
+        color="#67001f",
+        lw=2.0,
+        label=f"port mode planes ({spec.width_ports:g} × {spec.depth_ports:g} µm)",
+    )
     colors = {"x": "tab:red", "y": "tab:blue", "z": "tab:green"}
     for axis in spec.field_monitors:
         p, kind = _pos(axis)
@@ -820,6 +900,17 @@ def plot_monitor_planes(solver: Any, savefig: str | None = None) -> tuple[Any, A
             ax_side.axhline(p, color=colors["z"], ls="--", lw=1.4)
         elif axis == "x":
             ax_side.axvline(p, color=colors["x"], ls="--", lw=1.4)
+    # port mode planes: a vertical segment of depth_ports at each port x
+    for p in comp.ports:
+        pz = float(p.center[2]) if len(p.center) > 2 and p.center[2] is not None else 0.11
+        ax_side.plot(
+            [p.center[0], p.center[0]],
+            [pz - spec.depth_ports / 2, pz + spec.depth_ports / 2],
+            "-",
+            color="#67001f",
+            lw=2.0,
+            solid_capstyle="butt",
+        )
     ax_side.set_xlim(x0, x1)
     ax_side.set_ylim(spec.z_min - 0.2, spec.z_max + 0.2)
     ax_side.set_xlabel("x [µm]")
@@ -830,3 +921,29 @@ def plot_monitor_planes(solver: Any, savefig: str | None = None) -> tuple[Any, A
     if savefig:
         fig.savefig(savefig, dpi=150, bbox_inches="tight")
     return fig, (ax_top, ax_side)
+
+
+def port_plane_outlines(component: Any, spec: Any, axis: str = "z") -> list[Any]:
+    """Port mode-plane cross-sections for field-map overlays.
+
+    Each port contributes the line its source/monitor plane cuts through the
+    view: in the top view (``axis="z"``) a segment of ``spec.width_ports``
+    perpendicular to the port; in side views a vertical segment of
+    ``spec.depth_ports`` at the port position. Combine with
+    :func:`component_outlines` for the full simulated-geometry overlay.
+    """
+    out: list[Any] = []
+    w, d = float(spec.width_ports), float(spec.depth_ports)
+    for p in component.ports:
+        px, py = float(p.center[0]), float(p.center[1])
+        pz = float(p.center[2]) if len(p.center) > 2 and p.center[2] is not None else 0.11
+        if axis == "z":
+            if p.direction in (0, 180):
+                out.append(np.array([[px, py - w / 2], [px, py + w / 2]]))
+            else:
+                out.append(np.array([[px - w / 2, py], [px + w / 2, py]]))
+        elif axis == "y":  # x-z side view
+            out.append(np.array([[px, pz - d / 2], [px, pz + d / 2]]))
+        else:  # x-normal: y-z cross-section
+            out.append(np.array([[py, pz - d / 2], [py, pz + d / 2]]))
+    return out

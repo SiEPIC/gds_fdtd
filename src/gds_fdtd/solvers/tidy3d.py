@@ -190,9 +190,14 @@ class Tidy3DSolver(Solver):
         data = getattr(self, "_modeler_data", None)
         if data is None:
             raise SolverError("run() has not completed; no field data available")
-        from ..plotting import component_outlines
+        from ..plotting import component_outlines, port_plane_outlines
 
-        lines = component_outlines(self.component, axis=axis) if outline else None
+        lines = (
+            component_outlines(self.component, axis=axis, buffer=2 * self.spec.buffer)
+            + port_plane_outlines(self.component, self.spec, axis=axis)
+            if outline
+            else None
+        )
         return plot_tidy3d_fields(
             data,
             axis=axis,

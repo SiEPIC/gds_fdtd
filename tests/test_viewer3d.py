@@ -41,8 +41,21 @@ def escalator_solver():
 def test_scene_from_solver_carries_everything(escalator_solver):
     scene = build_scene(escalator_solver)
     kinds = {o["kind"] for o in scene["objects"]}
-    assert kinds == {"structure", "port", "monitor"}
+    assert kinds == {"structure", "port", "monitor", "portplane"}
     assert "domain" in scene
+    # every port contributes a mode plane at the spec's real dimensions and
+    # an extension stub extruded at the port's layer z-band
+    n_ports = len(escalator_solver.component.ports)
+    planes = [o for o in scene["objects"] if o["kind"] == "portplane"]
+    assert len(planes) == n_ports
+    assert all(
+        p["width"] == escalator_solver.spec.width_ports
+        and p["depth"] == escalator_solver.spec.depth_ports
+        for p in planes
+    )
+    exts = [o for o in scene["objects"] if o.get("group") == "port extensions"]
+    assert len(exts) == n_ports
+    assert all(0 < o["opacity"] < 1 and len(o["contour"]) >= 3 for o in exts)
     center, span = escalator_solver.domain()
     assert scene["domain"]["span"] == pytest.approx(span)
     # every device layer got a legend chip; background is translucent
@@ -93,15 +106,18 @@ def test_save_3d_writes_standalone_page(escalator_solver, tmp_path):
     assert "si_sin_escalator" in text
 
 
-def test_show_3d_emits_direct_html(escalator_solver):
+def test_show_3d_wraps_in_srcdoc_iframe(escalator_solver):
     pytest.importorskip("IPython")
-    out = show_3d(escalator_solver, height=300)
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # the IFrame suggestion must stay suppressed
+        out = show_3d(escalator_solver, height=300)
     html = out.data
-    # rendered straight into the cell output (the plotly/bokeh pattern) —
-    # a nested srcdoc iframe does not execute in every notebook webview
-    assert html.startswith('<div id="gdsfdtd3d_')
-    assert "<iframe" not in html
-    assert "height:300px" in html
+    # srcdoc is the one embed whose scripts execute in every renderer:
+    # JupyterLab inserts outputs via innerHTML where bare <script> is inert
+    assert html.startswith('<iframe srcdoc="')
+    assert "&quot;" in html and "height:320px" in html  # height + chrome
 
 
 def test_render_static_solver_and_component(escalator_solver, tmp_path):
@@ -127,10 +143,10 @@ def test_scene_skips_degenerate_polygons(escalator_solver):
     # a structure with a 2-point "polygon" must be ignored, not crash
     bad = copy.copy(comp.structures[0])
     bad.polygon = [[0.0, 0.0], [1.0, 1.0]]
-    objects, _ = _structure_objects(comp)
+    objects, _, _ = _structure_objects(comp)
     n_before = len(objects)
     comp2 = copy.copy(comp)
     comp2.structures = list(comp.structures) + [bad]
-    objects2, _ = _structure_objects(comp2)
+    objects2, _, _ = _structure_objects(comp2)
     assert len(objects2) == n_before + 1 or len(objects2) == n_before  # bad one skipped
     assert all(len(np.asarray(o["contour"])) >= 3 for o in objects2)

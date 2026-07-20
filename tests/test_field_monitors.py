@@ -116,6 +116,9 @@ def test_component_outlines_per_axis():
     top = component_outlines(comp, axis="z")
     n_dev = sum(1 for s in comp.structures if s.role == "device")
     assert len(top) == n_dev
+    # with a buffer, each port's extension stub is outlined as well
+    with_ext = component_outlines(comp, axis="z", buffer=2.0)
+    assert len(with_ext) == n_dev + len(comp.ports)
     side = component_outlines(comp, axis="y")
     assert len(side) == n_dev
     for rect in side:
@@ -172,4 +175,39 @@ def test_plot_monitor_planes_labels_default_vs_custom():
     labels = [t.get_text() for t in ax_top.get_legend().get_texts()]
     assert any("y=0.75" in la and "custom" in la for la in labels)
     assert any("z_field" in la and "default" in la for la in labels)
+    plt.close(fig)
+
+
+def test_port_plane_outlines_geometry():
+    from gds_fdtd.plotting import port_plane_outlines
+
+    comp, _ = _escalator("tech_tidy3d.yaml")
+    spec = SimulationSpec(width_ports=2.0, depth_ports=1.5)
+    top = port_plane_outlines(comp, spec, axis="z")
+    assert len(top) == len(comp.ports)
+    for seg in top:  # x-facing ports cut the top view as width_ports segments
+        seg = np.asarray(seg)
+        assert seg.shape == (2, 2)
+        assert abs(seg[1][1] - seg[0][1]) == pytest.approx(2.0)
+    side = port_plane_outlines(comp, spec, axis="y")
+    for seg in side:  # side views show the plane's depth
+        seg = np.asarray(seg)
+        assert abs(seg[1][1] - seg[0][1]) == pytest.approx(1.5)
+    cross = port_plane_outlines(comp, spec, axis="x")
+    assert len(cross) == len(comp.ports)
+
+
+def test_plot_component_shows_mode_planes_and_extensions():
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    from gds_fdtd.plotting import plot_component
+
+    comp, _ = _escalator("tech_lumerical.yaml")
+    fig, ax = plot_component(comp, spec=SimulationSpec())
+    labels = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert any("port mode plane" in la and "µm" in la for la in labels)
+    assert any("port extension" in la for la in labels)
     plt.close(fig)

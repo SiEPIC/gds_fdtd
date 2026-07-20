@@ -39,7 +39,13 @@ import numpy as np
 
 from gds_fdtd import SimulationSpec, Technology, get_solver
 from gds_fdtd.lyprocessor import load_cell
-from gds_fdtd.plotting import component_outlines, plot_component, plot_field, plot_monitor_planes
+from gds_fdtd.plotting import (
+    component_outlines,
+    plot_component,
+    plot_field,
+    plot_monitor_planes,
+    port_plane_outlines,
+)
 from gds_fdtd.simprocessor import load_component_from_tech
 from gds_fdtd.smatrix import SMatrix
 
@@ -162,7 +168,9 @@ fz = np.load(REC / "bragg_field_z.npz")
 wls = np.asarray(fz["wavelength_um"])
 i_in = int(np.argmin(np.abs(wls - in_band)))
 i_out = int(np.argmax(np.abs(wls - in_band)))
-outlines = component_outlines(comp, axis="z")
+outlines = component_outlines(comp, axis="z", buffer=2 * spec.buffer) + port_plane_outlines(
+    comp, spec, axis="z"
+)
 
 fig, axs = plt.subplots(2, 1, figsize=(10, 5.5), sharex=True)
 for ax, idx, tag in (
