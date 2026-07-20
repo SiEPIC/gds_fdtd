@@ -82,7 +82,7 @@ jobs:
         uses: sigstore/gh-action-sigstore-python@5b79a39c381910c090341a2c9b0bf022c8b387e1 # v3.4.0
         with:
           inputs: ./dist/*.tar.gz ./dist/*.whl
-      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+      - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
         with:
           enable-cache: false # publishing job: no cache-poisoning surface
       - name: Generate SBOM (CycloneDX, from the released wheel)
