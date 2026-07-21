@@ -5,10 +5,16 @@ should be able to read this, understand the current state, and pick up work
 without losing context. Keep it current; move granular tracking to GitHub
 Issues as items are picked up.
 
-## Where we are — v0.6.0 (released 2026-07-15)
+## Where we are — v0.6.1 (released 2026-07-21)
 
-`v0.6.0` is tagged with a signed GitHub release (Sigstore bundles + SBOM).
-The PyPI upload is the one step still blocked — see the owner actions below.
+`v0.6.1` is tagged with a signed GitHub release (Sigstore bundles + SBOM),
+building on `v0.6.0` (2026-07-15). It adds the interactive 3D viewer
+(`viewer3d.show_3d` / `save_3d` / `render_static`), steerable field monitors
+(`field_monitor_positions` / `field_monitor_wavelengths`, `plot_monitor_planes`),
+and examples `05b_field_monitors` + `11_bragg_grating`; it hardens the viewer
+against HTML/JS injection from GDS-derived names and makes its embed render
+across JupyterLab / VSCode / static docs. The PyPI upload is the one step
+still blocked — see the owner actions below.
 
 Solver-agnostic FDTD: one `Component` + one technology file + one
 `SimulationSpec`, any engine (tidy3d / Lumerical / beamz) behind
@@ -128,9 +134,9 @@ Not committed; a palette to choose from. Roughly ordered by impact.
 - [ ] **PyPI trusted publisher** (project `gds_fdtd`, owner `SiEPIC`,
       workflow `release.yml`, env `pypi`) — in progress with Lukas; until it
       lands, tagged releases produce signed GitHub artifacts but the PyPI
-      publish step cannot run (re-verified 2026-07-17: `invalid-publisher`,
+      publish step cannot run (re-verified 2026-07-21: `invalid-publisher`,
       PyPI still serves 0.4.0). Once registered, re-run the failed publish job
-      of the v0.6.0 Release run.
+      of the latest (v0.6.1) Release run.
 - [ ] **OpenSSF Best Practices badge** — register at bestpractices.dev.
 - [ ] **`cloud-tests` environment** with a required reviewer (guards the
       budget-gated tidy3d smoke).

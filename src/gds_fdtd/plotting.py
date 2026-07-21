@@ -775,7 +775,12 @@ def component_outlines(component: Any, axis: str = "z", buffer: float | None = N
         for p in component.ports:
             try:
                 ext = np.asarray(p.polygon_extension(buffer=float(buffer)), dtype=float)
-            except Exception:  # a port without geometry info cannot extend
+            except (
+                AttributeError,
+                ValueError,
+                TypeError,
+                IndexError,
+            ):  # a port without geometry info cannot extend
                 continue
             if ext.ndim != 2 or len(ext) < 3:
                 continue
@@ -837,7 +842,7 @@ def plot_monitor_planes(solver: Any, savefig: str | None = None) -> tuple[Any, A
     for p in comp.ports:
         try:
             ext = np.asarray(p.polygon_extension(buffer=2 * spec.buffer), dtype=float)
-        except Exception:
+        except (AttributeError, ValueError, TypeError, IndexError):
             ext = None
         if ext is not None and ext.ndim == 2 and len(ext) >= 3:
             closed = np.vstack([ext, ext[:1]])

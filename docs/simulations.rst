@@ -84,9 +84,10 @@ wavelength selection to watch one device reflect in-band and transmit
 out-of-band from a single run.
 
 The whole setup also renders as an **interactive 3D scene** — the extruded
-layer stack with per-layer colors, the port cones, the monitor planes, and
-the domain box; orbit, zoom, click an object for its material and z-extent,
-and toggle groups from the legend:
+layer stack with per-layer colors, the port cones, each port's mode plane at
+its real ``width_ports × depth_ports`` (with a dimensions label), the
+extension stubs, the monitor planes, and the domain box; orbit, zoom, click an
+object for its material and z-extent, and toggle groups from the legend:
 
 .. code-block:: python
 
@@ -95,6 +96,20 @@ and toggle groups from the legend:
     show_3d(solver)                     # notebooks AND these docs (three.js)
     save_3d(solver, "device_3d.html")   # standalone shareable page
     render_static(solver)               # matplotlib, for JS-free contexts
+
+The scene shows **true 1:1:1 proportions** by default (a 220 nm layer really is
+hair-thin beside a many-µm device); the legend's *z ×4* checkbox exaggerates
+the vertical axis when you want to inspect a thin stack. ``render_static``
+draws the identical scene with matplotlib for the README and other JS-free
+contexts:
+
+.. figure:: images/escalator_3d.png
+   :width: 90%
+   :align: center
+
+   ``render_static`` of the Si→SiN escalator solver: the two cores, the
+   translucent cladding, the port mode planes, the monitor planes, and the
+   domain box — the same scene ``show_3d`` renders interactively.
 
 The 3D views embedded in :doc:`_notebooks/01_layout_to_component`,
 :doc:`_notebooks/05b_field_monitors`, and :doc:`_notebooks/11_bragg_grating`

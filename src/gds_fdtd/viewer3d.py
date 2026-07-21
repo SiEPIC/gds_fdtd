@@ -120,7 +120,12 @@ def _port_extension_objects(
     for p in component.ports:
         try:
             contour = np.asarray(p.polygon_extension(buffer=buffer), dtype=float)
-        except Exception:  # a port without geometry info cannot extend
+        except (
+            AttributeError,
+            ValueError,
+            TypeError,
+            IndexError,
+        ):  # a port without geometry info cannot extend
             continue
         if contour.ndim != 2 or len(contour) < 3:
             continue
@@ -257,7 +262,7 @@ background:#101418;border-radius:8px;overflow:hidden;\
 font-family:system-ui,sans-serif">
   <div id="__ID___info" style="position:absolute;left:10px;top:10px;z-index:2;\
 color:#dde3ea;font-size:12px;background:rgba(16,20,24,.75);padding:6px 10px;\
-border-radius:6px;max-width:65%">__NAME__ — loading 3D viewer…</div>
+border-radius:6px;max-width:65%">loading 3D viewer…</div>
   <div id="__ID___legend" style="position:absolute;right:10px;top:10px;z-index:2;\
 color:#dde3ea;font-size:12px;background:rgba(16,20,24,.75);padding:6px 10px;\
 border-radius:6px"></div>
@@ -314,7 +319,8 @@ if (!host || !info || !legendBox) {
 
 // boot stages are written into the panel: a failure names itself instead of
 // leaving a silent black rectangle
-function stage(msg) { info.textContent = "__NAME__ — " + msg; }
+// SCENE.name reaches the DOM only via textContent, which never parses HTML
+function stage(msg) { info.textContent = (SCENE.name || "component") + " — " + msg; }
 function fail(msg) {
   info.textContent = "3D viewer: " + msg +
     " — use viewer3d.render_static for a static view.";
@@ -410,7 +416,20 @@ function makeLabel(txt) {
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
+function disposeTree(obj) {
+  // three.js does not free GPU memory on JS GC; release geometries, materials
+  // and textures explicitly so repeated z-scale rebuilds do not leak VRAM
+  obj.traverse(function (n) {
+    if (n.geometry) n.geometry.dispose();
+    if (n.material) {
+      var mats = Array.isArray(n.material) ? n.material : [n.material];
+      mats.forEach(function (m) { if (m.map) m.map.dispose(); m.dispose(); });
+    }
+  });
+}
+
 function buildScene() {
+  disposeTree(root);
   while (root.children.length) root.remove(root.children[0]);
   groups = {}; pickables = [];
   const Z = zScale;
@@ -551,7 +570,9 @@ for (const g of Object.keys(groups)) {
   box.setAttribute("style", "margin-right:6px");
   box.addEventListener("change", function () {
     zScale = box.checked ? 4.0 : 1.0;
-    buildScene();
+    try { buildScene(); } catch (e) {
+      fail("scene rebuild failed: " + (e && e.message ? e.message : e));
+    }
   });
   row.appendChild(box);
   row.appendChild(document.createTextNode("z ×4 (exaggerate thin layers)"));
@@ -609,12 +630,27 @@ def scene_html(scene: dict[str, Any], height: int = 520) -> str:
     # committed output and the freshly-run one side by side, and a content-
     # derived id would make the script attach its canvas to the stale copy
     uid = f"gdsfdtd3d_{uuid.uuid4().hex[:10]}"
+    # Escape the scene JSON for a <script> context: user-derived strings
+    # (component/structure/port names, materials — sourced from arbitrary GDS
+    # files) must not be able to close the script element or inject markup.
+    # <, >, & become \u.... escapes json.loads reads back unchanged, so the
+    # JS still parses the real characters; U+2028/U+2029 are JSON-legal but
+    # were JS line terminators before ES2019. The name reaches the DOM only
+    # through SCENE.name via textContent (never parsed as HTML), so there is
+    # no separate __NAME__ substitution to escape.
+    scene_json = (
+        json.dumps(scene)
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+        .replace("&", "\\u0026")
+        .replace("\u2028", "\\u2028")
+        .replace("\u2029", "\\u2029")
+    )
     return (
         _HTML_TEMPLATE.replace("__ID__", uid)
         .replace("__HEIGHT__", str(int(height)))
-        .replace("__NAME__", str(scene.get("name", "component")))
         .replace("__THREE__", _THREE_VERSION)
-        .replace("__SCENE_JSON__", json.dumps(scene))
+        .replace("__SCENE_JSON__", scene_json)
     )
 
 
