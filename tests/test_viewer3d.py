@@ -152,3 +152,56 @@ def test_scene_skips_degenerate_polygons(escalator_solver):
     objects2, _, _ = _structure_objects(comp2)
     assert len(objects2) == n_before + 1 or len(objects2) == n_before  # bad one skipped
     assert all(len(np.asarray(o["contour"])) >= 3 for o in objects2)
+
+
+def test_scene_html_escapes_hostile_names():
+    """User-derived GDS names must not break out of the <script> block or the
+    srcdoc document (component/structure/port names come from arbitrary files;
+    save_3d output gets shared)."""
+    evil = '</script><img src=x onerror="window.__P=1"><div id="M">Z</div>'
+    scene = {
+        "name": evil,
+        "objects": [
+            {
+                "kind": "structure",
+                "group": "layers",
+                "name": evil,
+                "info": "mat & <stuff>",
+                "contour": [[0, 0], [1, 0], [1, 1]],
+                "z0": 0.0,
+                "z1": 0.22,
+                "color": "#b2182b",
+                "opacity": 1.0,
+            }
+        ],
+        "legend": {"layer 1/0": "#b2182b"},
+        "frame": {"center": [0.5, 0.5, 0.11], "span": [1, 1, 0.22]},
+    }
+    html = scene_html(scene, height=300)
+    # the raw injection payload never appears verbatim; < is <-escaped
+    assert "<img src=x" not in html
+    assert 'onerror="window.__P=1"' not in html
+    assert "\\u003c" in html
+    # exactly one real </script> (the template's own close), none injected
+    assert html.count("</script>") == 1
+    # __NAME__ is never substituted raw anymore
+    assert "__NAME__" not in html
+    # the JSON still decodes back to the ORIGINAL characters for the viewer
+    start = html.index("var SCENE = ") + len("var SCENE = ")
+    end = html.index(";\n", start)
+    recovered = json.loads(html[start:end])
+    assert recovered["name"] == evil
+    assert recovered["objects"][0]["name"] == evil
+
+
+def test_scene_html_plain_scene_unescaped():
+    """Escaping is a no-op for ordinary names (no false churn / no broken JSON)."""
+    scene = {
+        "name": "escalator",
+        "objects": [],
+        "legend": {},
+        "frame": {"center": [0, 0, 0], "span": [1, 1, 1]},
+    }
+    html = scene_html(scene, height=200)
+    assert "\\u003c" not in html
+    assert "disposeTree" in html  # GPU cleanup on z-scale rebuild is present

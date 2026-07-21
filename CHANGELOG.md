@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.1] - 2026-07-21
 
 ### Added
 - Interactive 3D viewer (`gds_fdtd.viewer3d`): `show_3d(solver_or_component)`
@@ -24,7 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `plot_component` draws the mode planes (dimensions in the legend, which now
   sits outside the axes where it no longer hides top ports),
   `port_plane_outlines()` adds them to field-map overlays, and
-  `component_outlines(buffer=)` outlines the extension stubs.
+  `component_outlines(buffer=)` outlines the extension stubs. The scene renders
+  at true 1:1:1 proportions by default, with an opt-in "z ×4" legend toggle
+  that exaggerates thin layers for inspecting a stack.
 - Field monitors are steerable and visible: `SimulationSpec.field_monitor_positions`
   pins any monitor plane at an absolute coordinate along its normal axis, and
   `SimulationSpec.field_monitor_wavelengths` restricts what the monitors record
@@ -42,7 +44,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   wavelength — reflection in-band vs transmission out-of-band from a single
   run). Both ship recorded artifacts with provenance.
 
+### Security
+- The 3D viewer now escapes all user-derived strings before embedding them.
+  Component, structure, and port names (and material labels) come from
+  arbitrary GDS files and were substituted verbatim into the viewer's
+  `<script>` block and info panel, so a name containing `</script>` or markup
+  could inject executable HTML/JS — a real risk for shared `save_3d` output.
+  The scene JSON is now `\uXXXX`-escaped for the script context and the
+  component name reaches the DOM only through `textContent` (never parsed as
+  HTML). Verified against a headless-browser injection probe.
+
 ### Fixed
+- The 3D viewer renders in every notebook renderer: it emits an
+  `<iframe srcdoc>` (the one embed whose scripts execute under JupyterLab's
+  innerHTML insertion, VSCode's shadow-DOM webviews, and static docs pages
+  alike) wrapping classic (non-module) three.js, with unique per-emission ids,
+  a shadow-DOM-aware element finder, and boot-stage captions that name any
+  failure in the panel instead of a blank rectangle.
+- The viewer's static `render_static` derives axis limits from the structure
+  extents when no simulation domain is present, disables matplotlib's 3D
+  autoscale on the collections (whose margin math could overflow to `inf`),
+  and uses a true box aspect — matching the interactive viewer's 1:1 default.
+  Repeated z-scale toggles now dispose GPU geometries/materials/textures.
+- The subprocess job runner closes its open log file handle if the child
+  process fails to launch, instead of leaking it on that error path.
 - The `filterwarnings = ["error::DeprecationWarning:gds_fdtd.*"]` guard sat
   under `[tool.coverage.report]`, where pytest never read it — moved to
   `[tool.pytest.ini_options]`, so in-package deprecation warnings fail tests
@@ -58,9 +83,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the remaining violations were fixed (mutable default arguments in
   `lyprocessor`, a swallowed exception chain in `simprocessor`, a dead
   variable, 36 long lines wrapped) and the lint config now carries no ignores.
-  Unused dev dependencies (`twine`, `watchdog`, `wheel`) were dropped, stale
-  docs figures deleted, and `HANDOFF.md`/`ROADMAP.md`/`SOLVER_STATUS.md`
-  refreshed to the post-release state.
+  Unused dev dependencies (`twine`, `watchdog`, `wheel`, and `sphinx-rtd-theme`
+  — the docs build on furo) were dropped, stale docs figures deleted, and
+  `HANDOFF.md`/`ROADMAP.md`/`SOLVER_STATUS.md` refreshed to the post-release
+  state.
+- Dependency floors raised across the board (numpy ≥ 2.4.6, shapely ≥ 2.1.2,
+  klayout ≥ 0.30.9, SiEPIC ≥ 0.5.31; dev: ruff ≥ 0.15.22, mypy ≥ 2.3.0,
+  pip ≥ 26.1.2, codespell ≥ 2.4.3, sphinx-toggleprompt), with `uv.lock`
+  re-synced, and the pinned GitHub Actions bumped to current releases
+  (setup-uv, gh-action-pypi-publish, codeql-action, configure-pages,
+  action-gh-release).
 - The reference `examples/tech.yaml` now demonstrates material-source pinning
   live: the substrate material (`SiO2_rii`) carries eda + rii + nk sources and
   sets `source: rii`, so every engine models the buried oxide from the same

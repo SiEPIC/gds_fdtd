@@ -6,12 +6,16 @@ the compressed history and the working conventions; the live plan is
 [`SOLVER_STATUS.md`](SOLVER_STATUS.md), and user-facing docs live at
 <https://siepic.github.io/gds_fdtd/>.
 
-**State:** `v0.6.0` is released (tagged 2026-07-15, signed GitHub release).
+**State:** `v0.6.1` is released (tagged 2026-07-21, signed GitHub release).
+It adds the interactive 3D viewer (`gds_fdtd.viewer3d.show_3d`), steerable and
+visible field monitors (`SimulationSpec.field_monitor_positions` /
+`field_monitor_wavelengths`, `plot_monitor_planes`), and two examples
+(`05b_field_monitors`, `11_bragg_grating`) on top of `v0.6.0` (2026-07-15).
 The three engines were validated **live** against each other during the 0.6
 arc — tidy3d ↔ Lumerical within 0.0033 dB, beamz within 0.052 dB on the
 identical job — and that agreement is locked into CI through recorded
 artifacts. All-extras branch coverage is ≥90 (gated), `mypy --strict` passes
-on the whole package (required check), and the examples are 13 executed
+on the whole package (required check), and the examples are 15 executed
 notebooks with committed outputs. The one loose end is the PyPI trusted
 publisher (owner action; PyPI still serves 0.4.0 — see ROADMAP).
 
