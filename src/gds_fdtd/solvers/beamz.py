@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-BeamzSolver: the beamz (>= 0.4) adapter on the Phase-3 Solver contract. beamz
+BeamzSolver: the beamz (>= 0.4.3, < 0.5) adapter on the Phase-3 Solver contract. beamz
 is an open-source JAX FDTD engine (Apache-2.0, pip-installable, CPU or GPU) —
 the first zero-cost engine in the registry.
 

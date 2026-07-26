@@ -62,7 +62,7 @@ show_3d(solver)   # notebooks + docs; save_3d(...) writes a shareable page
 |---|---|---|---|
 | [Tidy3D](https://github.com/flexcompute/tidy3d) >= 2.11 | cloud | FlexCredits | `pip install gds_fdtd[tidy3d]` |
 | Ansys Lumerical FDTD 2024/2025 | local | license | Lumerical install + `lumapi` on path |
-| [beamz](https://github.com/beamzorg/beamz) >= 0.4 | local (JAX, CPU/GPU) | free | `pip install gds_fdtd[beamz]` |
+| [beamz](https://github.com/beamzorg/beamz) >= 0.4.3, < 0.5 | local (JAX, CPU/GPU) | free | `pip install gds_fdtd[beamz]` |
 
 ## Examples
 
