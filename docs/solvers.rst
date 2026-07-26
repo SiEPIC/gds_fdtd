@@ -63,7 +63,7 @@ Available engines
      - local
      - license
      - Lumerical install with ``lumapi`` on path
-   * - `beamz <https://github.com/beamzorg/beamz>`_ >= 0.4
+   * - `beamz <https://github.com/beamzorg/beamz>`_ >= 0.4.3, < 0.5
      - local (JAX CPU/GPU)
      - free
      - ``pip install gds_fdtd[beamz]``
