@@ -923,7 +923,7 @@ requires-dist = [
     { name = "klayout", specifier = ">=0.30.9" },
     { name = "matplotlib", specifier = ">=3.11.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=2.3.0" },
-    { name = "myst-nb", marker = "extra == 'docs'", specifier = ">=1.1" },
+    { name = "myst-nb", marker = "extra == 'docs'", specifier = ">=1.4.0" },
     { name = "numpy", specifier = ">=2.4.6" },
     { name = "pip", marker = "extra == 'dev'", specifier = ">=26.1.2" },
     { name = "prefab", marker = "extra == 'all'", specifier = ">=1.2.0" },
