@@ -75,7 +75,7 @@ docs = [
   "docutils<0.24",
   "sphinx-toggleprompt>=0.6.0",
   "sphinx-copybutton>=0.5.2",
-  "myst-nb>=1.1",  # markdown docs + executed-notebook gallery (brings in myst-parser)
+  "myst-nb>=1.4.0",  # markdown docs + executed-notebook gallery (brings in myst-parser)
   "sphinx-design>=0.7.0",
   "furo>=2025.12.19",
 ]
