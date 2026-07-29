@@ -77,7 +77,7 @@ docs = [
   "sphinx-copybutton>=0.5.2",
   "myst-nb>=1.1",  # markdown docs + executed-notebook gallery (brings in myst-parser)
   "sphinx-design>=0.7.0",
-  "furo>=2024.08.06",
+  "furo>=2025.12.19",
 ]
 
 # ─────────────── solver plugin entry points (WP3.1e) ───────────────
