@@ -915,7 +915,7 @@ requires-dist = [
     { name = "codespell", marker = "extra == 'dev'", specifier = ">=2.4.3" },
     { name = "coverage", marker = "extra == 'dev'" },
     { name = "docutils", marker = "extra == 'docs'", specifier = "<0.24" },
-    { name = "furo", marker = "extra == 'docs'", specifier = ">=2024.8.6" },
+    { name = "furo", marker = "extra == 'docs'", specifier = ">=2025.12.19" },
     { name = "gdsfactory", marker = "extra == 'all'", specifier = ">=9.45.0,<10" },
     { name = "gdsfactory", marker = "extra == 'gdsfactory'", specifier = ">=9.45.0,<10" },
     { name = "h5py", marker = "extra == 'dev'", specifier = ">=3.10" },
