@@ -46,7 +46,7 @@ gds-fdtd = "gds_fdtd.cli:main"
 
 [project.optional-dependencies]
 
-tidy3d      = ["tidy3d>=2.11,<3"]              # enables gds_fdtd.solver_tidy3d (2.8.x is numpy<2/py<=3.12 only; F5)
+tidy3d      = ["tidy3d>=2.12.0,<3"]              # enables gds_fdtd.solver_tidy3d (2.8.x is numpy<2/py<=3.12 only; F5)
 gdsfactory  = ["gdsfactory>=9.45.0,<10"]
 beamz       = ["beamz>=0.4.3,<0.5"]            # open-source JAX FDTD engine
 prefab      = ["prefab>=1.6.0"]
