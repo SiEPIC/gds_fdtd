@@ -911,7 +911,7 @@ requires-dist = [
     { name = "beamz", marker = "extra == 'all'", specifier = ">=0.4.3,<0.5" },
     { name = "beamz", marker = "extra == 'beamz'", specifier = ">=0.4.3,<0.5" },
     { name = "beamz", marker = "extra == 'engines'", specifier = ">=0.4.3,<0.5" },
-    { name = "build", marker = "extra == 'dev'", specifier = ">=1.0.0" },
+    { name = "build", marker = "extra == 'dev'", specifier = ">=1.5.0" },
     { name = "codespell", marker = "extra == 'dev'", specifier = ">=2.4.3" },
     { name = "coverage", marker = "extra == 'dev'" },
     { name = "docutils", marker = "extra == 'docs'", specifier = "<0.24" },
