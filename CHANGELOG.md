@@ -7,9 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-08-04
+
+Maintenance release: dependency floors, a protective cap on beamz, and a
+documented security exception. No API changes and no behavioural changes to
+the package itself — code written against 0.6.1 keeps working.
+
 ### Changed
 - Cap the optional beamz dependency below 0.5 until the adapter is migrated to
   beamz's backward-incompatible 0.5 API (#85).
+- Dependency floors raised to current releases, with `uv.lock` re-synced:
+  - runtime: klayout ≥ 0.30.10, matplotlib ≥ 3.11.1, PyYAML ≥ 6.0.3
+  - extras: tidy3d ≥ 2.12.0 (still `<3`), gdsfactory ≥ 9.45.0 (still `<10`),
+    prefab ≥ 1.6.0
+  - dev: pytest ≥ 9.1.1, pytest-cov ≥ 7.1.0, ruff ≥ 0.16.1,
+    hypothesis ≥ 6.164.0, h5py ≥ 3.16.0, build ≥ 1.5.0, pip ≥ 26.2
+  - docs: myst-nb ≥ 1.4.0, furo ≥ 2025.12.19
+- Pinned GitHub Actions bumped to current releases (setup-uv v9,
+  download-artifact v8, build-and-inspect-python-package v3, prek-action v3,
+  sigstore-python 3.5.0, checkout, codeql-action, scorecard, pypi-publish).
+  The two majors on the release path were checked against how we use them:
+  `build-and-inspect` v3 keeps an identical `Packages` artifact contract, and
+  the actions dropping floating `@vN` tags are unaffected here because every
+  action is pinned by commit SHA.
+
+### Security
+- `pip-audit` reports three advisories against `cryptography` 48.0.1 —
+  **CVE-2026-69247** (high; a Bleichenbacher oracle in PKCS#7 EnvelopedData
+  decryption), CVE-2026-69248 and CVE-2026-69249. They cannot be remediated
+  downstream: tidy3d 2.12.0 declares an exact `cryptography==48.0.1` pin, and
+  re-locking under a `cryptography>=50` constraint reports the requirements as
+  unsatisfiable.
+  The vulnerable API is not reachable from this package — authlib 1.7.2 and
+  tidy3d 2.12.0 each contain zero references to `serialization.pkcs7`, and
+  gds_fdtd never imports `cryptography` at all — so the three ids are ignored
+  explicitly in the security workflow, with the reasoning inline and exit
+  criteria tracked in #115. Every other advisory still fails that job.
+  Capping `tidy3d < 2.12` remains a one-line alternative that restores a fully
+  clean audit at the cost of holding users on 2.11.2.
 
 ## [0.6.1] - 2026-07-21
 
