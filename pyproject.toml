@@ -35,7 +35,7 @@ dependencies = [
   "klayout>=0.30.9",
   "matplotlib>=3.11.1",
   "shapely>=2.1.2",
-  "PyYAML>=6.0",
+  "PyYAML>=6.0.3",
   "pydantic>=2.7",
   "pydantic-settings>=2.14.2"
 ]
