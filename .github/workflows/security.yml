@@ -28,9 +28,24 @@ jobs:
         with:
           python-version: "3.13"
       - name: Audit locked dependency tree
+        # Scoped exceptions, reviewed individually - NOT a blanket mute. Each id
+        # is listed with the reason it cannot be remediated downstream; drop the
+        # flag as soon as upstream moves. Tracking issue: #115.
+        #
+        # CVE-2026-69247/69248/69249 (cryptography < 50.0.0 / < 49.0.0):
+        #   tidy3d 2.12.0 hard-pins `cryptography==48.0.1` (an exact pin it
+        #   applies on Intel macOS), so no resolution of this lock can satisfy
+        #   the fixed versions while the tidy3d extra is present - verified with
+        #   `uv lock` under a `cryptography>=50` constraint, which reports the
+        #   requirements as unsatisfiable. The affected code path is authlib's
+        #   JWT handling inside the fastmcp server that tidy3d vendors; gds_fdtd
+        #   never exercises it (we use tidy3d's `web` upload/download API).
         run: |
           uv export --locked --all-extras --format requirements-txt --no-emit-project -o requirements-audit.txt
-          uvx pip-audit --strict -r requirements-audit.txt
+          uvx pip-audit --strict -r requirements-audit.txt \
+            --ignore-vuln CVE-2026-69247 \
+            --ignore-vuln CVE-2026-69248 \
+            --ignore-vuln CVE-2026-69249
 
   dependency-review:
     name: dependency review (PR diff)
