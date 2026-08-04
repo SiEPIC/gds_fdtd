@@ -61,7 +61,7 @@ dev = [
   "pip>=26.2",
   "build>=1.5.0",  # `just build` (sdist+wheel); releases publish via CI trusted publishing
   "pytest>=9.1.1",
-  "pytest-cov>=5.0",
+  "pytest-cov>=7.1.0",
   "coverage",
   "ruff>=0.16.1",
   "codespell>=2.4.3",  # same spell check the CI prek hooks run
