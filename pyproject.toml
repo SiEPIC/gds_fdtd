@@ -63,7 +63,7 @@ dev = [
   "pytest>=9.1.1",
   "pytest-cov>=5.0",
   "coverage",
-  "ruff>=0.16.0",
+  "ruff>=0.16.1",
   "codespell>=2.4.3",  # same spell check the CI prek hooks run
   "mypy>=2.3.0",
   "hypothesis>=6.164.0",  # property-based tests for the numeric core (WS2)
