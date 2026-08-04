@@ -6,7 +6,9 @@ the compressed history and the working conventions; the live plan is
 [`SOLVER_STATUS.md`](SOLVER_STATUS.md), and user-facing docs live at
 <https://siepic.github.io/gds_fdtd/>.
 
-**State:** `v0.6.1` is released (tagged 2026-07-21, signed GitHub release).
+**State:** `v0.6.2` is released (tagged 2026-08-04, signed GitHub release) — a
+maintenance release over `v0.6.1` (dependency floors, a beamz `<0.5` cap, and a
+documented `pip-audit` exception tracked in #115; no API change).
 It adds the interactive 3D viewer (`gds_fdtd.viewer3d.show_3d`), steerable and
 visible field monitors (`SimulationSpec.field_monitor_positions` /
 `field_monitor_wavelengths`, `plot_monitor_planes`), and two examples

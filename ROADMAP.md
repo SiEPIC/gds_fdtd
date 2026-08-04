@@ -5,10 +5,17 @@ should be able to read this, understand the current state, and pick up work
 without losing context. Keep it current; move granular tracking to GitHub
 Issues as items are picked up.
 
-## Where we are — v0.6.1 (released 2026-07-21)
+## Where we are — v0.6.2 (released 2026-08-04)
 
-`v0.6.1` is tagged with a signed GitHub release (Sigstore bundles + SBOM),
-building on `v0.6.0` (2026-07-15). It adds the interactive 3D viewer
+`v0.6.2` is a maintenance release over `v0.6.1`: dependency floors raised to
+current releases, a protective `beamz < 0.5` cap ahead of that project's
+breaking 0.5 API (#85), and a documented `pip-audit` exception for three
+`cryptography` advisories that cannot be remediated while tidy3d 2.12 pins
+`cryptography==48.0.1` (#115). No API change.
+
+`v0.6.1` (2026-07-21) is the feature release beneath it, tagged with a signed
+GitHub release (Sigstore bundles + SBOM) and building on `v0.6.0`
+(2026-07-15). It adds the interactive 3D viewer
 (`viewer3d.show_3d` / `save_3d` / `render_static`), steerable field monitors
 (`field_monitor_positions` / `field_monitor_wavelengths`, `plot_monitor_planes`),
 and examples `05b_field_monitors` + `11_bragg_grating`; it hardens the viewer
@@ -136,7 +143,7 @@ Not committed; a palette to choose from. Roughly ordered by impact.
       lands, tagged releases produce signed GitHub artifacts but the PyPI
       publish step cannot run (re-verified 2026-07-21: `invalid-publisher`,
       PyPI still serves 0.4.0). Once registered, re-run the failed publish job
-      of the latest (v0.6.1) Release run.
+      of the latest (v0.6.2) Release run.
 - [ ] **OpenSSF Best Practices badge** — register at bestpractices.dev.
 - [ ] **`cloud-tests` environment** with a required reviewer (guards the
       budget-gated tidy3d smoke).

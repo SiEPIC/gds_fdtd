@@ -37,9 +37,12 @@ jobs:
         #   applies on Intel macOS), so no resolution of this lock can satisfy
         #   the fixed versions while the tidy3d extra is present - verified with
         #   `uv lock` under a `cryptography>=50` constraint, which reports the
-        #   requirements as unsatisfiable. The affected code path is authlib's
-        #   JWT handling inside the fastmcp server that tidy3d vendors; gds_fdtd
-        #   never exercises it (we use tidy3d's `web` upload/download API).
+        #   requirements as unsatisfiable.
+        #   Not reachable here: the defect is a Bleichenbacher oracle in PKCS#7
+        #   EnvelopedData decryption (cryptography...serialization.pkcs7).
+        #   Checked rather than assumed - authlib 1.7.2 and tidy3d 2.12.0 each
+        #   contain zero references to that API (authlib imports only the
+        #   asymmetric/JOSE primitives), and gds_fdtd never imports cryptography.
         run: |
           uv export --locked --all-extras --format requirements-txt --no-emit-project -o requirements-audit.txt
           uvx pip-audit --strict -r requirements-audit.txt \
