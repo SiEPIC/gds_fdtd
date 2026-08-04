@@ -32,7 +32,7 @@ classifiers = [
 # ─────────────── core runtime (always installed) ───────────────
 dependencies = [
   "numpy>=2.4.6",
-  "klayout>=0.30.9",
+  "klayout>=0.30.10",
   "matplotlib>=3.11.1",
   "shapely>=2.1.2",
   "PyYAML>=6.0.3",
