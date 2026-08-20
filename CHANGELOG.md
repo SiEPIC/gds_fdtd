@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-08-04
+
+Maintenance release: dependency floors and pinned GitHub Actions moved to
+current releases. No API or behavioural change to the package — code written
+against 0.6.2 keeps working.
+
+### Changed
+- Dependency floors raised, with `uv.lock` re-synced:
+  - runtime: pydantic-settings >= 2.15.0
+  - dev: ruff >= 0.16.3, hypothesis >= 6.165.10, pip >= 26.2.1
+- Pinned GitHub Actions bumped: `setup-uv` v10.0.1 and
+  `codeql-action/upload-sarif` 4.37.7.
+  `setup-uv` v10 disables the cache by default for `pull_request_target`,
+  `workflow_run` and `release` events as cache-poisoning protection; that is a
+  no-op here, since the workflows that care set `enable-cache` explicitly
+  (`true` in CI, `false` in the publishing job) and none of those three
+  triggers is used in this repository.
+
+### Security
+- The `pip-audit` exception for the three `cryptography` advisories
+  (CVE-2026-69247 high, plus 69248/69249) documented in 0.6.2 still stands:
+  tidy3d remains at 2.12.0, which pins `cryptography==48.0.1` exactly, so the
+  exit criteria in #115 are not yet met. Re-checked at release time rather
+  than assumed. The vulnerable PKCS#7 API remains unreferenced by authlib,
+  tidy3d and this package.
+
 ## [0.6.2] - 2026-08-04
 
 Maintenance release: dependency floors, a protective cap on beamz, and a
