@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.6.3] - 2026-08-04
+## [0.6.3] - 2026-08-19
 
 Maintenance release: dependency floors and pinned GitHub Actions moved to
 current releases. No API or behavioural change to the package — code written
