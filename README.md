@@ -60,7 +60,7 @@ show_3d(solver)   # notebooks + docs; save_3d(...) writes a shareable page
 
 | engine | execution | cost | install |
 |---|---|---|---|
-| [Tidy3D](https://github.com/flexcompute/tidy3d) >= 2.11 | cloud | FlexCredits | `pip install gds_fdtd[tidy3d]` |
+| [Tidy3D](https://github.com/flexcompute/tidy3d) >= 2.12 | cloud | FlexCredits | `pip install gds_fdtd[tidy3d]` |
 | Ansys Lumerical FDTD 2024/2025 | local | license | Lumerical install + `lumapi` on path |
 | [beamz](https://github.com/beamzorg/beamz) >= 0.4.3, < 0.5 | local (JAX, CPU/GPU) | free | `pip install gds_fdtd[beamz]` |
 
@@ -159,7 +159,7 @@ The version is derived **from git tags** via `hatch-vcs` — there is nothing to
 version string in the source. To release:
 
 ```bash
-git tag v0.6.2
+git tag v0.6.3
 git push --tags
 ```
 

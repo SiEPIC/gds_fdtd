@@ -6,13 +6,15 @@ the compressed history and the working conventions; the live plan is
 [`SOLVER_STATUS.md`](SOLVER_STATUS.md), and user-facing docs live at
 <https://siepic.github.io/gds_fdtd/>.
 
-**State:** `v0.6.2` is released (tagged 2026-08-04, signed GitHub release) — a
-maintenance release over `v0.6.1` (dependency floors, a beamz `<0.5` cap, and a
-documented `pip-audit` exception tracked in #115; no API change).
-It adds the interactive 3D viewer (`gds_fdtd.viewer3d.show_3d`), steerable and
-visible field monitors (`SimulationSpec.field_monitor_positions` /
+**State:** `v0.6.3` is released (tagged 2026-08-04, signed GitHub release) — a
+maintenance release over `v0.6.2` (dependency floors and pinned GitHub Actions
+moved to current releases; no API change). `v0.6.2` before it carried the beamz
+`<0.5` cap and the documented `pip-audit` exception still tracked in #115.
+The feature content beneath these came in `v0.6.1` (2026-07-21): the
+interactive 3D viewer (`gds_fdtd.viewer3d.show_3d`), steerable and visible
+field monitors (`SimulationSpec.field_monitor_positions` /
 `field_monitor_wavelengths`, `plot_monitor_planes`), and two examples
-(`05b_field_monitors`, `11_bragg_grating`) on top of `v0.6.0` (2026-07-15).
+(`05b_field_monitors`, `11_bragg_grating`), on top of `v0.6.0` (2026-07-15).
 The three engines were validated **live** against each other during the 0.6
 arc — tidy3d ↔ Lumerical within 0.0033 dB, beamz within 0.052 dB on the
 identical job — and that agreement is locked into CI through recorded

@@ -55,7 +55,7 @@ Available engines
      - execution
      - cost
      - install
-   * - `Tidy3D <https://github.com/flexcompute/tidy3d>`_ >= 2.11
+   * - `Tidy3D <https://github.com/flexcompute/tidy3d>`_ >= 2.12
      - cloud
      - FlexCredits
      - ``pip install gds_fdtd[tidy3d]`` + ``TIDY3D_API_KEY``

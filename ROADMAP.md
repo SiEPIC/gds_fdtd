@@ -5,9 +5,15 @@ should be able to read this, understand the current state, and pick up work
 without losing context. Keep it current; move granular tracking to GitHub
 Issues as items are picked up.
 
-## Where we are — v0.6.2 (released 2026-08-04)
+## Where we are — v0.6.3 (released 2026-08-04)
 
-`v0.6.2` is a maintenance release over `v0.6.1`: dependency floors raised to
+`v0.6.3` is a maintenance release over `v0.6.2`: dependency floors and pinned
+GitHub Actions moved to current releases (including `setup-uv` v10, whose new
+cache-poisoning default is a no-op here). No API change. The `pip-audit`
+exception from 0.6.2 still stands — tidy3d remains at 2.12.0, so #115's exit
+criteria are unmet.
+
+`v0.6.2` is the maintenance release beneath it, over `v0.6.1`: dependency floors raised to
 current releases, a protective `beamz < 0.5` cap ahead of that project's
 breaking 0.5 API (#85), and a documented `pip-audit` exception for three
 `cryptography` advisories that cannot be remediated while tidy3d 2.12 pins
@@ -143,7 +149,7 @@ Not committed; a palette to choose from. Roughly ordered by impact.
       lands, tagged releases produce signed GitHub artifacts but the PyPI
       publish step cannot run (re-verified 2026-07-21: `invalid-publisher`,
       PyPI still serves 0.4.0). Once registered, re-run the failed publish job
-      of the latest (v0.6.2) Release run.
+      of the latest (v0.6.3) Release run.
 - [ ] **OpenSSF Best Practices badge** — register at bestpractices.dev.
 - [ ] **`cloud-tests` environment** with a required reviewer (guards the
       budget-gated tidy3d smoke).
