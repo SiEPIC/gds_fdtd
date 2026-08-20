@@ -66,7 +66,7 @@ dev = [
   "ruff>=0.16.3",
   "codespell>=2.4.3",  # same spell check the CI prek hooks run
   "mypy>=2.3.0",
-  "hypothesis>=6.164.0",  # property-based tests for the numeric core (WS2)
+  "hypothesis>=6.165.10",  # property-based tests for the numeric core (WS2)
   "h5py>=3.16.0",  # SMatrix HDF5 I/O tests (optional at runtime)
 ]
 
