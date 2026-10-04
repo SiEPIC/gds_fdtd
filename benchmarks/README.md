@@ -1,7 +1,10 @@
 # BeamZ integration on the local RTX 3090
 
-The adapter supports BeamZ **0.5.0–0.5.2**, with **0.5.2** locked as the latest
-release checked on 2026-10-04 ([PyPI](https://pypi.org/project/beamz/0.5.2/)).
+The adapter supports BeamZ **0.5.0–0.5.3**, with **0.5.3** locked as the latest
+release checked on 2026-10-04 ([PyPI](https://pypi.org/project/beamz/0.5.3/)).
+See the [0.5.3 verification report](BEAMZ_053_RESULTS.md) for the upstream
+material-snapshot fix. The release comparison below preserves the original
+0.5.0–0.5.2 measurements.
 It uses immutable sources, ports, monitors, and detached simulation results.
 Canonical GDS_FDTD polygons supply geometry for every frontend. Preparation
 uses CPU rasterization; simulation construction and GPU execution occur in `run()`.

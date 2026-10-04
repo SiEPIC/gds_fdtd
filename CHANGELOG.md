@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Migrate the BeamZ adapter to the 0.5 immutable source/monitor/result API;
-  support `beamz>=0.5.0,<0.6` and lock 0.5.2. Geometry now comes directly from
+  support `beamz>=0.5.0,<0.6` and lock 0.5.3. Geometry now comes directly from
   canonical component polygons, including multilayer port extensions. Build
   and estimate use CPU rasterization; only run constructs a simulation.
 - Keep port measurement planes fixed across excitation columns, with sources
@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exact sampling region.
 - Use mesh 6 for the short real-engine regression: mesh 5 exceeds the original
   reciprocity tolerance on BeamZ 0.5; the tolerance itself is unchanged.
+- Verify the BeamZ 0.5.3 material-snapshot fix for upstream #309: the mesh-20
+  uniform-lead monitor spread falls from 0.130 to 0.027 dB. Preserve the
+  0.5.2 baseline and document remaining numerical sensitivity.
 - Add a reproducible RTX 3090 integration benchmark with versioned results
   and comparisons to the historical three-engine straight-waveguide data.
 

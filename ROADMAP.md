@@ -7,9 +7,8 @@ Issues as items are picked up.
 
 ## Where we are — v0.6.3 (released 2026-08-04)
 
-**Unreleased BeamZ migration (2026-10-04; draft, merge blocked by
-[BeamZ #309](https://github.com/beamzorg/beamz/issues/309)):** the adapter now supports
-`beamz>=0.5.0,<0.6` (locked to 0.5.2), with immutable ports/sources/monitors
+**Unreleased BeamZ migration (2026-10-04; PR #154 remains draft):** the adapter now supports
+`beamz>=0.5.0,<0.6` (locked to 0.5.3), with immutable ports/sources/monitors
 and detached modal/field results. Canonical polygons replace the removed
 0.4 geometry helper; preparation stays on the CPU. The 0.5.0/0.5.1/0.5.2
 release matrix runs locally on the RTX 3090; reproducible scripts, full
@@ -18,12 +17,22 @@ S-matrices, convergence diagnostics, and plots live in
 unchanged. TE fundamental mode and x-facing ports remain the validated
 adapter scope; y-facing ports, TM, and multimode need separate validation.
 
+**BeamZ 0.5.3 fix verified (2026-10-04):** the released material-snapshot
+correction works through the integration without adapter changes. Exact probes
+reduce uniform-lead monitor spread from 0.315 to 0.097 dB at mesh 10 and from
+0.130 to 0.027 dB at mesh 20. The specific upstream defect is addressed;
+residual numerical sensitivity and absolute mesh convergence remain separate
+validation concerns. Full mesh-10 y-branch/escalator matrices and mesh-10/20
+S-bend runs also pass finite, incident-power, and temporal-convergence checks.
+The local test suite passes (369 passed, 27 skipped). PR #154 stays draft. [Follow-up report](benchmarks/BEAMZ_053_RESULTS.md)
+contains versioned artifacts; the original 0.5.2 results remain unchanged.
+
 **Device validation completed (2026-10-04):** fresh RTX 3090 / BeamZ 0.5.2
 runs cover the sharp S-bend (meshes 6/10/14/20), full three-port y-branch,
 and Si→SiN escalator (meshes 6/10). Forward y-branch paths agree within
 0.05 dB and escalator transmission within 0.09 dB of recorded commercial
 results; weak matrix entries still differ. The y-branch reverse paths work.
-S-bend monitor-plane sensitivity remains unresolved: a controlled mesh-20
+On 0.5.2, S-bend monitor-plane sensitivity remained unresolved: a mesh-20
 probe varies by 0.130 dB along the straight output lead. Filed
 [BeamZ #309](https://github.com/beamzorg/beamz/issues/309) with a verified
 standalone reproducer. [Results and reproduction](benchmarks/DEVICE_RESULTS.md)

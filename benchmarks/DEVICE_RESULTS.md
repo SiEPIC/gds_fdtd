@@ -1,10 +1,9 @@
 # README device validation on RTX 3090
 
-> **Draft / merge blocked:** The updated BeamZ results are promising, with much
-> better sharp S-bend accuracy and mesh-refinement behavior than the recorded
-> 0.4.3 results, and working y-branch reverse paths. BeamZ
-> [#309](https://github.com/beamzorg/beamz/issues/309) must be resolved and the
-> affected benchmarks rerun before this migration is ready to merge.
+> **Historical 0.5.2 results:** The blocker identified here was investigated
+> in BeamZ 0.5.3. The [follow-up verification](BEAMZ_053_RESULTS.md) confirms
+> the material-snapshot fix substantially reduces monitor sensitivity.
+> PR #154 remains draft; residual numerical sensitivity is documented.
 
 On 2026-10-04, BeamZ 0.5.2 completed full S-matrix runs of the sharp S-bend,
 three-port y-branch, and Si→SiN escalator on the local RTX 3090. The y-branch

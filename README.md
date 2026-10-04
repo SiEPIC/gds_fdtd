@@ -68,7 +68,9 @@ show_3d(solver)  # notebooks + docs; save_3d(...) writes a shareable page
 BeamZ 0.5.0–0.5.2 GPU integration results and reproduction commands are in
 [the RTX 3090 benchmark report](benchmarks/README.md).
 Fresh [S-bend, y-branch, and Si→SiN escalator comparisons](benchmarks/DEVICE_RESULTS.md)
-include full matrices and the remaining S-bend monitor-position limitation.
+include full matrices and the S-bend monitor-position investigation.
+[BeamZ 0.5.3 verification](benchmarks/BEAMZ_053_RESULTS.md) confirms that the
+upstream material-snapshot correction substantially reduces that sensitivity.
 
 ## Examples
 

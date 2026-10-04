@@ -222,7 +222,7 @@ wheels = [
 
 [[package]]
 name = "beamz"
-version = "0.5.2"
+version = "0.5.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jax" },
@@ -235,13 +235,13 @@ dependencies = [
     { name = "shapely" },
     { name = "xarray" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/64/a3/5482b423302c26b3e67d1fa4398b55434fae83eb5bb4d022df7bbe6877b9/beamz-0.5.2.tar.gz", hash = "sha256:41ec37c622bb7e7643fe457e62ceecce32f0f54ce84576b285e08d05d154c6a1", size = 486126, upload-time = "2026-10-01T14:46:49.66Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/46/77/d4eb179705b96d29f46450298e84c0455de753481dc9877bdb1a2ca9558c/beamz-0.5.3.tar.gz", hash = "sha256:eb65518f04fef73545dc8b432c896f9e3bea159a2aa58321ac860f942be5b3ae", size = 486909, upload-time = "2026-10-04T10:24:43.402Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/10/56/17835f11d36ab1ae76af87bb9596b13a8cd193d6d475d8f820bfe4dc6d2b/beamz-0.5.2-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:48639b256164df264d087f0c48e3e6cc96334ee2edadc261fb7455c3ed1897c1", size = 1513630, upload-time = "2026-10-01T14:46:42.246Z" },
-    { url = "https://files.pythonhosted.org/packages/2b/19/ecd3dc7b7031d34f82353f8ff4801ff5cf4a86db886e4cb30877335a4672/beamz-0.5.2-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:209c07ce37128e99f3d8bf762304700b8034ccf400c801f0c423ad6e2db1563a", size = 1444167, upload-time = "2026-10-01T14:46:43.984Z" },
-    { url = "https://files.pythonhosted.org/packages/3c/32/0573e2801a6e3ce76cbc8c70db22e3b6f8caa194dd7b37691c6da6fcbfb8/beamz-0.5.2-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:938e59303f82aa7de6442491e9240114c0eb17e9e55cc10cf84f115c95d64da7", size = 1556643, upload-time = "2026-10-01T14:46:45.499Z" },
-    { url = "https://files.pythonhosted.org/packages/63/18/61cb99f6a72d6eb83c5bbee308bb6034730b348d6dfb2c8c878c968741d8/beamz-0.5.2-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:087b6ec442f29f6c92cce266f16c9223897ab2b16b4e3cad3620bb478a5e78ef", size = 1628416, upload-time = "2026-10-01T14:46:47.022Z" },
-    { url = "https://files.pythonhosted.org/packages/d6/b0/814ab8ab3f7b2705d7133f5d5a749d134fe41bc34feaff7c92c36f370ae1/beamz-0.5.2-cp310-abi3-win_amd64.whl", hash = "sha256:8cad88a18b6dec06631df620e3ba5dc867ce50718e6d121524d72040afa65427", size = 1380238, upload-time = "2026-10-01T14:46:48.363Z" },
+    { url = "https://files.pythonhosted.org/packages/29/54/c1afffdc843b5e445992c01c2bda4662b9f168f2da20c97d6b91bd9824ce/beamz-0.5.3-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:608950269c9a9efd3f49bddcc6b331fda7a4a5f907b69033eee918900276e222", size = 1517924, upload-time = "2026-10-04T10:24:36.292Z" },
+    { url = "https://files.pythonhosted.org/packages/86/11/bf2fbdd23755c2da8d3c695e82dd955ae0f9504345175b2b3f1f8c6297b8/beamz-0.5.3-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:130d39c0824b785358e1391b1df80791747a7b1337861185ee47815fff520789", size = 1441349, upload-time = "2026-10-04T10:24:37.997Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/01/45bec1b9ab0b67361b9092d66bff54688f34118ae6b50678f399ae6d7a42/beamz-0.5.3-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8b5c4dbaa395abee360dd8232b02d15382070928cf29a866c6aa9e81af6974a2", size = 1566880, upload-time = "2026-10-04T10:24:39.262Z" },
+    { url = "https://files.pythonhosted.org/packages/62/35/9878e2421666fa7908bdaf50d6cd692590368af897c2ff2608371c6fbe08/beamz-0.5.3-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:eaba19af73aef1d9a9b3f7fd9875620895b6797f14b726f598469f8666ea09d4", size = 1637688, upload-time = "2026-10-04T10:24:40.531Z" },
+    { url = "https://files.pythonhosted.org/packages/d3/65/684414bbc0d6fcfe706913704450580142bea61ca8a007f878971b31a231/beamz-0.5.3-cp310-abi3-win_amd64.whl", hash = "sha256:66d144b5224611bd659f85e6d8a3a8db77ed9eeb247dd08b7b230a9ccd896680", size = 1382490, upload-time = "2026-10-04T10:24:42.183Z" },
 ]
 
 [[package]]

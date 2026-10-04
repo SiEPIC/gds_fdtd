@@ -10,6 +10,7 @@ import argparse
 import dataclasses
 import json
 import time
+from pathlib import Path
 
 import beamz
 import numpy as np
@@ -121,13 +122,14 @@ class ProbeSolver(BeamzSolver):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mesh", type=int, default=10)
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     solver, layout, _ = make_job("sbend", args.mesh)
     probe = ProbeSolver(solver.component, solver.technology, solver.spec)
     start = time.perf_counter()
     sm = probe.run()
     probe.probe_record["wall_seconds"] = time.perf_counter() - start
-    out = ROOT / f"benchmarks/results/devices/sbend-plane-probe-mesh{args.mesh}"
+    out = args.output or ROOT / f"benchmarks/results/devices/sbend-plane-probe-mesh{args.mesh}"
     out.mkdir(parents=True, exist_ok=True)
     sm.to_npz(str(out / "smatrix.npz"))
     np.savez_compressed(out / "modal_waves.npz", **probe.probe_waves)
