@@ -26,7 +26,11 @@ Declare what your engine can do — these are promises, not probes:
 
 ```python
 from gds_fdtd.solvers import (
-    ResourceEstimate, SetupArtifacts, Solver, SolverCapabilities, register_solver,
+    ResourceEstimate,
+    SetupArtifacts,
+    Solver,
+    SolverCapabilities,
+    register_solver,
 )
 
 
@@ -34,14 +38,14 @@ from gds_fdtd.solvers import (
 class YourSolver(Solver):
     name = "yourengine"
     capabilities = SolverCapabilities(
-        tier="full",              # "full" = has its own sources/monitors;
-                                  # "kernel" = raw eps in, fields out
-        execution="local",        # or "cloud"
+        tier="full",  # "full" = has its own sources/monitors;
+        # "kernel" = raw eps in, fields out
+        execution="local",  # or "cloud"
         supports_dispersion=False,
         supports_sidewall_angle=True,
         supports_multimode=False,
         supports_gpu=False,
-        cost_model="free",        # or "licensed" / "credits"
+        cost_model="free",  # or "licensed" / "credits"
     )
 ```
 

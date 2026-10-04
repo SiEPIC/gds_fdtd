@@ -40,7 +40,8 @@ from the legend. **[Play with it live in the docs](https://siepic.github.io/gds_
 
 ```python
 from gds_fdtd.viewer3d import show_3d
-show_3d(solver)   # notebooks + docs; save_3d(...) writes a shareable page
+
+show_3d(solver)  # notebooks + docs; save_3d(...) writes a shareable page
 ```
 
 ## Features

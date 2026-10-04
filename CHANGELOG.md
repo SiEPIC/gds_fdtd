@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Apply the compatible Dependabot maintenance updates: klayout >=0.30.12,
+  matplotlib >=3.11.2, build >=1.6.1, mypy >=2.3.1, hypothesis >=6.168.1,
+  and ruff >=0.16.9; sync the Ruff hook and regenerate `uv.lock`.
+- Update the pinned setup-uv, deploy-pages, action-gh-release, CodeQL SARIF,
+  and alls-green actions, retaining full commit SHA pins.
+- Restrict the optional Atheris fuzz dependency to Linux x86_64 on Python >=3.12,
+  where its supported wheels are available, so universal dependency resolution
+  preserves the package's Python 3.11 and cross-platform support.
+- Keep BeamZ below 0.5 and ignore Dependabot proposals for >=0.5 until the
+  adapter migration is validated. Defer the Pydantic >=2.13.5 floor because
+  the Python 3.11 gdsfactory/kfactory dependency graph requires Pydantic <2.13.
+
+### Security
+- Upgrade locked Tornado from 6.5.7 to 6.5.10, urllib3 from 2.7.0 to 2.8.0,
+  and PyJWT from 2.13.0 to 2.15.1 to remediate newly reported advisories;
+  upgrade soupsieve to 2.9. Retain the existing scoped cryptography exceptions.
+- Update alls-green to 1.3.0, which fixes GHSA-gj76-h2ch-5m76.
+
 ## [0.6.3] - 2026-08-19
 
 Maintenance release: dependency floors and pinned GitHub Actions moved to
