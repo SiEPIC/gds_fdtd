@@ -10,6 +10,8 @@ Issues as items are picked up.
 **Maintenance review (2026-10-04):** the compatible Dependabot updates are
 consolidated with a fresh lock and security fixes for Tornado (6.5.10),
 urllib3 (2.8.0), and PyJWT (2.15.1).
+The initial batch landed in #155; follow-up proposals #156–#158 bring
+setup-uv to 10.2.0, CodeQL SARIF to 4.38.2, and hypothesis to 6.168.3.
 BeamZ remains `>=0.4.3,<0.5`; Dependabot upgrades to >=0.5 are deferred until
 the adapter migration is validated. Pydantic's >=2.13.5 floor is also
 deferred: gdsfactory 9.45.0 is the last supported version on Python 3.11,
