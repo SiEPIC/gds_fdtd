@@ -87,9 +87,10 @@ placement changes were introduced.
 
 For a stronger quantitative-accuracy claim, prioritize these follow-ups:
 
-1. Extend the **0.5.3 S-bend sweep to meshes 25 and 30**, comparing successive
-   refinements and recorded references. Repeat the same-run uniform-lead probes;
-   keep the default-plane result visible rather than selecting a matching plane.
+1. **Completed:** the [S-bend convergence study](BEAMZ_CONVERGENCE.md) now covers
+   meshes 10/14/20/25/30 and a mesh-30 monitor probe. The final through changes
+   pass 0.05 dB (0.02655/0.03720 dB); the mesh-30 lead spread is 0.01371 dB
+   at 1.55 µm. Reflections still do not meet the same tolerance.
 2. Run the **0.5.3 y-branch and escalator at meshes 14 and 20**, checking the full
    spectrum and every matrix column for transmission, reciprocity, and power
    balance. Earlier 0.5.2 coarse runs do not establish 0.5.3 mesh convergence.

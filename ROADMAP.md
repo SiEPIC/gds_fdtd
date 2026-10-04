@@ -30,6 +30,17 @@ S-matrix magnitudes, convergence diagnostics, and plots live in
 unchanged. TE fundamental mode and x-facing ports remain the validated
 adapter scope; y-facing ports, TM, and multimode need separate validation.
 
+**Reviewer-requested convergence study completed (2026-10-04):** the fixed-setup
+BeamZ 0.5.3 S-bend sweep covers meshes 10/14/20/25/30 on RTX 3090. Both final
+through-path changes pass the predeclared 0.05 dB tolerance: 0.02655 dB
+(20→25) and 0.03720 dB (25→30), across both directions and all three wavelength
+samples. The mesh-30 uniform-lead probe spread is 0.01371 dB at 1.55 µm and
+0.00904–0.01752 dB across its three wavelengths. Reflections do not meet the
+same convergence tolerance (all-entry final change 0.50777 dB); complex phase,
+PML/domain convergence, and other device families remain outside this claim.
+[Report, plots, and reproduction](benchmarks/BEAMZ_CONVERGENCE.md).
+PR #154 remains draft for maintainer review; generated NPZ archives stay local.
+
 **BeamZ 0.5.3 fix verified (2026-10-04):** the released material-snapshot
 correction works through the integration without adapter changes. Exact probes
 reduce uniform-lead monitor spread from 0.315 to 0.097 dB at mesh 10 and from

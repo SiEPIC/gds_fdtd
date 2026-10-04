@@ -1,0 +1,8 @@
+{
+  "mesh30_device_exit_code": 0,
+  "mesh30_device_cuda_allocation_warning": "The runtime logged a failed 7.52 GiB allocation while starting the second excitation, then continued and completed successfully. No simulation settings were changed in response.",
+  "mesh30_allocator": "platform",
+  "npz_archives": "Local generated files only; ignored by Git.",
+  "mesh30_probe_output_complete": true,
+  "mesh30_probe_temporally_converged": true
+}

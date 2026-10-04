@@ -12,6 +12,10 @@ uses CPU rasterization; simulation construction and GPU execution occur in `run(
 For the README devices, see [the S-bend, y-branch, and escalator report](DEVICE_RESULTS.md),
 including full matrices, refinement sweeps, and upstream BeamZ issue #309.
 
+The reviewer-requested [BeamZ 0.5.3 mesh-convergence study](BEAMZ_CONVERGENCE.md)
+passes the declared 0.05 dB through-path criterion at the final two refinements;
+reflection and reference-plane limitations are reported separately.
+
 ## Reproduce
 
 From the repository root:

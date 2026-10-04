@@ -71,6 +71,8 @@ Fresh [S-bend, y-branch, and Si→SiN escalator comparisons](benchmarks/DEVICE_R
 include full matrices and the S-bend monitor-position investigation.
 [BeamZ 0.5.3 verification](benchmarks/BEAMZ_053_RESULTS.md) confirms that the
 upstream material-snapshot correction substantially reduces that sensitivity.
+The [0.5.3 S-bend mesh sweep](benchmarks/BEAMZ_CONVERGENCE.md) through mesh 30
+passes a 0.05 dB successive-change criterion for sampled through paths.
 
 ## Examples
 

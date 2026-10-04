@@ -180,3 +180,7 @@ fuzz/corpus/
 
 # Regenerable benchmark binary outputs; retain JSON summaries and selected plots.
 /benchmarks/results/**/*.npz
+
+# Per-run benchmark previews stay local; report comparison figures are retained.
+/benchmarks/results/**/geometry.png
+/benchmarks/results/**/fields.png

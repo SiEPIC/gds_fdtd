@@ -1,0 +1,74 @@
+{
+  "device": "sbend",
+  "beamz": "0.5.3",
+  "jax": "0.10.2",
+  "mesh": 14,
+  "diagnostic_monitor_offset_um": null,
+  "diagnostic_source_offset_um": null,
+  "gds_sha256": "efcb1f267ccc1b0296c6531814127b29c080e6c7b9b03c126f75f1e9849218ee",
+  "gds_file": "devices.gds",
+  "spec": {
+    "wavelength_start": 1.5,
+    "wavelength_end": 1.6,
+    "wavelength_points": 3,
+    "mesh": 14,
+    "boundary": [
+      "PML",
+      "PML",
+      "PML"
+    ],
+    "symmetry": [
+      0,
+      0,
+      0
+    ],
+    "z_min": -1.0,
+    "z_max": 1.11,
+    "width_ports": 2.0,
+    "depth_ports": 1.5,
+    "buffer": 1.0,
+    "modes": [
+      1
+    ],
+    "mode_freq_pts": 3,
+    "run_time_factor": 3.0,
+    "field_monitors": [
+      "z"
+    ],
+    "field_monitor_positions": {},
+    "field_monitor_wavelengths": []
+  },
+  "setup": {
+    "n_ports": 2,
+    "grid_shape": [
+      164,
+      220,
+      220
+    ],
+    "dx_nm": 31.85106033207299,
+    "n_core": 3.476,
+    "n_clad": 1.444,
+    "n_simulations": 2
+  },
+  "build_seconds": 1.7733568749390543,
+  "ports": [
+    {
+      "name": "opt2",
+      "center_um": [
+        1.0,
+        0.5,
+        0.11
+      ],
+      "direction": 0
+    },
+    {
+      "name": "opt1",
+      "center_um": [
+        0.0,
+        0.0,
+        0.11
+      ],
+      "direction": 180
+    }
+  ]
+}
