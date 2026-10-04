@@ -39,6 +39,9 @@ samples. The mesh-30 uniform-lead probe spread is 0.01371 dB at 1.55 µm and
 same convergence tolerance (all-entry final change 0.50777 dB); complex phase,
 PML/domain convergence, and other device families remain outside this claim.
 [Report, plots, and reproduction](benchmarks/BEAMZ_CONVERGENCE.md).
+[Example 06](examples/06_convergence_and_caching/06_convergence_and_caching.ipynb)
+now replays the 0.5.3 JSON records with editable convergence and monitor plots,
+checks the reported criteria, and labels the older 0.4.3 figures as historical.
 PR #154 remains draft for maintainer review; generated NPZ archives stay local.
 
 **BeamZ 0.5.3 fix verified (2026-10-04):** the released material-snapshot
