@@ -7,6 +7,30 @@ Issues as items are picked up.
 
 ## Where we are — v0.6.3 (released 2026-08-04)
 
+**Unreleased BeamZ migration (2026-10-04; draft, merge blocked by
+[BeamZ #309](https://github.com/beamzorg/beamz/issues/309)):** the adapter now supports
+`beamz>=0.5.0,<0.6` (locked to 0.5.2), with immutable ports/sources/monitors
+and detached modal/field results. Canonical polygons replace the removed
+0.4 geometry helper; preparation stays on the CPU. The 0.5.0/0.5.1/0.5.2
+release matrix runs locally on the RTX 3090; reproducible scripts, full
+S-matrices, convergence diagnostics, and plots live in
+[`benchmarks/`](benchmarks/README.md). The historical 0.4.3 recordings remain
+unchanged. TE fundamental mode and x-facing ports remain the validated
+adapter scope; y-facing ports, TM, and multimode need separate validation.
+
+**Device validation completed (2026-10-04):** fresh RTX 3090 / BeamZ 0.5.2
+runs cover the sharp S-bend (meshes 6/10/14/20), full three-port y-branch,
+and Si→SiN escalator (meshes 6/10). Forward y-branch paths agree within
+0.05 dB and escalator transmission within 0.09 dB of recorded commercial
+results; weak matrix entries still differ. The y-branch reverse paths work.
+S-bend monitor-plane sensitivity remains unresolved: a controlled mesh-20
+probe varies by 0.130 dB along the straight output lead. Filed
+[BeamZ #309](https://github.com/beamzorg/beamz/issues/309) with a verified
+standalone reproducer. [Results and reproduction](benchmarks/DEVICE_RESULTS.md)
+include full matrices, fields, convergence diagnostics, and limitations.
+No fresh cloud or licensed runs were performed.
+
+
 `v0.6.3` is a maintenance release over `v0.6.2`: dependency floors and pinned
 GitHub Actions moved to current releases (including `setup-uv` v10, whose new
 cache-poisoning default is a no-op here). No API change. The `pip-audit`

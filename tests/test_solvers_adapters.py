@@ -291,3 +291,32 @@ def test_beamz_rejects_y_oriented_ports():
     comp = from_gdsfactory(c, tech)
     problems = get_solver("beamz")(comp, technology=tech).validate()
     assert any("F14" in p for p in problems), problems
+
+
+@pytest.mark.parametrize("version", ["0.4.3", "0.6.0"])
+def test_beamz_unsupported_api_has_actionable_error(monkeypatch, version):
+    beamz = pytest.importorskip("beamz")
+    from gds_fdtd.solvers.beamz import probe_beamz
+
+    monkeypatch.setattr(beamz, "__version__", version)
+    assert "requires beamz>=0.5.0,<0.6" in probe_beamz()
+
+
+def test_beamz_preparation_does_not_initialize_accelerator(monkeypatch):
+    """Even with CUDA installed, all preparation must stay on the CPU."""
+    beamz = pytest.importorskip("beamz")
+    import jax
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("offline preparation initialized a runtime or accelerator")
+
+    monkeypatch.setattr(beamz, "Simulation", forbidden)
+    monkeypatch.setattr(jax, "devices", forbidden)
+    monkeypatch.setattr(jax, "device_put", forbidden)
+    monkeypatch.setattr(jax, "default_backend", forbidden)
+    comp, tech, layout = _job("tech_unified.yaml")
+    solver = get_solver("beamz")(comp, tech, SimulationSpec(mesh=5, wavelength_points=3))
+    assert solver.validate() == []
+    assert solver.build().summary["n_ports"] == 2
+    assert solver.estimate().grid_cells > 0
+    del layout
