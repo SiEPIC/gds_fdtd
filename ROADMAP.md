@@ -42,6 +42,9 @@ PML/domain convergence, and other device families remain outside this claim.
 [Example 06](examples/06_convergence_and_caching/06_convergence_and_caching.ipynb)
 now replays the 0.5.3 JSON records with editable convergence and monitor plots,
 checks the reported criteria, and labels the older 0.4.3 figures as historical.
+The notebook also compares the mesh-30 0.5.3 field intensity with the recorded
+commercial fields in linear/log views, using a portable cropped JSON map
+with source provenance; no new complex NPZ archives are committed.
 PR #154 remains draft for maintainer review; generated NPZ archives stay local.
 
 **BeamZ 0.5.3 fix verified (2026-10-04):** the released material-snapshot

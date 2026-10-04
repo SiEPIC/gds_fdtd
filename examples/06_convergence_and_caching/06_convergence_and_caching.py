@@ -492,6 +492,86 @@ display(
 # another engine are distinct checks; neither guarantees exact physical truth.
 
 # %% [markdown]
+# ### Updated fields through the bend — BeamZ 0.5.3
+#
+# The same linear/log comparison, now using the **mesh-30 BeamZ 0.5.3 RTX3090
+# run** from the convergence study. Excitation is `opt1`, with the horizontal
+# slice at **z = 0.11 µm** and the recorded center-frequency sample at
+# **λ = 1.54839 µm**. Commercial fields below are the existing **1.55 µm**
+# recordings (Tidy3D mesh 12; Lumerical ppw 14 / accuracy 3); their runs
+# have not been repeated. These are not the finest-grid commercial references
+# in the separate convergence curves. S21 labels use the 1.55 µm
+# values, interpolated for BeamZ.
+#
+# These maps show **normalized electric-field intensity, |E|²**, not Poynting
+# flux or calibrated transmitted power. Each engine is normalized to its own
+# full-plane peak, so compare spatial patterns rather than absolute brightness.
+# BeamZ's native Yee components are summed without spatial collocation and
+# shown at cell-center display coordinates. The commercial grids retain their
+# recorded coordinates. Cyan rings mark the device ports; the white strip
+# beyond the Lumerical recording indicates unavailable data, not zero intensity.
+#
+# The portable JSON stores the displayed crop at native spatial resolution
+# (six significant digits). It is derived from the locally retained complex
+# field archive by `benchmarks/export_beamz_field.py`; the archive is not added
+# to the repository. Provenance includes the run path and source-file hash.
+
+# %%
+field_053 = json.loads((REC / "sbend_beamz_053_intensity.json").read_text())
+assert field_053["beamz"] == "0.5.3" and field_053["mesh"] == 30
+assert field_053["gds_sha256"] == records[-1].record["gds_sha256"]
+e2_053 = np.asarray(field_053["intensity_normalized"])
+assert e2_053.shape == (len(field_053["y_um"]), len(field_053["x_um"]))
+assert np.isfinite(e2_053).all() and np.all((e2_053 >= 0) & (e2_053 <= 1))
+current_panels = [
+    (
+        "BeamZ 0.5.3 · mesh 30",
+        field_053["x_um"],
+        field_053["y_um"],
+        e2_053,
+        db_at(records[-1], 2, 1),
+    ),
+    ("Tidy3D · recorded", t3["x"], t3["y"], t3["E2"].T / t3["E2"].max(), float(t3["s21"])),
+    ("Lumerical · recorded", lu["x"], lu["y"], lu["E2"].T / lu["E2"].max(), float(lu["s21"])),
+]
+fig, axes = plt.subplots(2, 3, figsize=(13, 9), layout="constrained")
+for col, (name, x, y, intensity, s21) in enumerate(current_panels):
+    linear = axes[0, col].pcolormesh(
+        x, y, intensity, shading="nearest", cmap="magma", vmin=0, vmax=1
+    )
+    logarithmic = axes[1, col].pcolormesh(
+        x,
+        y,
+        10 * np.log10(np.clip(intensity, 1e-4, 1)),
+        shading="nearest",
+        cmap="magma",
+        vmin=-40,
+        vmax=0,
+    )
+    axes[0, col].set_title(f"{name}\nLinear · S21 = {s21:+.2f} dB")
+    axes[1, col].set_title(f"{name}\nLogarithmic")
+    for ax in axes[:, col]:
+        ax.scatter([0, 1], [0, 0.5], s=36, edgecolor="cyan", facecolor="none", lw=1.5)
+        ax.set(
+            xlim=(cx - 1.9, cx + 1.9),
+            ylim=(cy - 2, cy + 2),
+            xlabel="x (µm)",
+            ylabel="y (µm)",
+            aspect="equal",
+        )
+fig.colorbar(linear, ax=axes[0, :], label="|E|² / full-plane peak", shrink=0.75)
+fig.colorbar(logarithmic, ax=axes[1, :], label="Normalized |E|² (dB)", shrink=0.75)
+fig.suptitle("Sharp S-bend electric-field intensity · z = 0.11 µm")
+plt.show()
+
+
+# %% [markdown]
+# The maps provide a spatial check of the guided field and radiation through
+# the sharp bend. Peak normalization does not establish transmission accuracy;
+# the separate S-parameter and refinement checks above remain the quantitative
+# evidence.
+
+# %% [markdown]
 # ### Does monitor placement still matter?
 #
 # Each probe run holds the source and input monitor fixed and samples five

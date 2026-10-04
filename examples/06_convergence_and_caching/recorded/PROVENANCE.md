@@ -1,4 +1,9 @@
-# Recorded results — `sbend_dontfabme` cross-engine convergence (06 §3)
+# Recorded results — `sbend_dontfabme` cross-engine convergence
+
+## Historical BeamZ 0.4.3 baseline (06 §3)
+
+The conclusions in this historical section apply to BeamZ 0.4.3 only.
+See notebook §4 for the updated 0.5.3 convergence and field comparisons.
 
 Real solver output for the `sbend_dontfabme` device (a sharp S-bend
 from `examples/devices.gds`), used by `06_convergence_and_caching` §3 so the
@@ -64,3 +69,38 @@ figure, the full per-engine setup was audited:
 - The S-parameter conclusion is unchanged by the audit: tidy3d converges to
   S21 ≈ −5.6 dB; beamz wanders and never converges (its v1 single-mode
   normalization under-counts the bend's mode conversion).
+
+
+## BeamZ 0.5.3 field comparison (06 §4, 2026-10-04)
+
+`sbend_beamz_053_intensity.json` is derived from the local complex `field_z.npz`
+of `benchmarks/results/beamz-0.5.3-convergence/sbend-mesh30`. This was the
+RTX3090, BeamZ 0.5.3, mesh-30 run used in the convergence study: opt1 excitation,
+z = 0.11 µm, center-frequency wavelength 1.548387 µm. The JSON includes the
+source archive SHA-256, GDS SHA-256, run path, grid spacing, and coordinates.
+
+The displayed quantity is the sum of squared electric-field component
+magnitudes, normalized to the full-plane maximum. It is not Poynting flux
+or calibrated power. Native Yee components are not spatially collocated;
+cell centers are used for display. Only the displayed viewport is retained,
+without spatial decimation, rounded to six significant digits. The exporter
+checks reconstruction against the original normalized values.
+
+Rebuild from the local archive with:
+
+```bash
+.venv/bin/python benchmarks/export_beamz_field.py
+```
+
+To regenerate the source simulation, run `benchmarks/beamz_devices.py sbend
+--mesh 30 --output benchmarks/results/beamz-0.5.3-convergence/sbend-mesh30`
+with BeamZ 0.5.3 and the GPU environment documented in
+[the convergence report](../../../benchmarks/BEAMZ_CONVERGENCE.md).
+Generated complex archives remain local.
+
+The comparison uses the existing Tidy3D mesh-12 and Lumerical ppw-14 /
+accuracy-3 field recordings at 1.55 µm. These are not the finest-grid
+commercial runs in the separate convergence curves. Their field-panel S21
+labels come from their own recorded runs; BeamZ S21 is interpolated to 1.55 µm.
+Per-engine peak normalization supports a spatial comparison, not an absolute
+brightness or efficiency comparison.
