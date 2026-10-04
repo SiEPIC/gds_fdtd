@@ -1,7 +1,7 @@
 """
 gds_fdtd simulation toolbox.
 
-BeamzSolver: the beamz (>= 0.5.0, < 0.6) adapter on the Phase-3 Solver contract. beamz
+BeamzSolver: the beamz (>= 0.5.3, < 0.6) adapter on the Phase-3 Solver contract. beamz
 is an open-source JAX FDTD engine (Apache-2.0, pip-installable, CPU or GPU) —
 the first zero-cost engine in the registry.
 
@@ -50,8 +50,9 @@ def probe_beamz() -> str | None:
     try:
         import beamz
 
-        if not beamz.__version__.startswith("0.5."):
-            return f"BeamzSolver requires beamz>=0.5.0,<0.6; found {beamz.__version__}"
+        version = tuple(int(part) for part in beamz.__version__.split(".")[:3])
+        if not ((0, 5, 3) <= version < (0, 6)):
+            return f"BeamzSolver requires beamz>=0.5.3,<0.6; found {beamz.__version__}"
 
         return None
     except Exception as e:  # pragma: no cover - env dependent

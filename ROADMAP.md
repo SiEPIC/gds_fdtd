@@ -5,10 +5,23 @@ should be able to read this, understand the current state, and pick up work
 without losing context. Keep it current; move granular tracking to GitHub
 Issues as items are picked up.
 
-## Where we are — v0.6.3 (released 2026-08-04)
+## Where we are — v0.6.3 (released 2026-08-19)
+
+**Maintenance review (2026-10-04):** the compatible Dependabot updates are
+consolidated with a fresh lock and security fixes for Tornado (6.5.10),
+urllib3 (2.8.0), and PyJWT (2.15.1).
+The initial batch landed in #155; follow-up proposals #156–#158 bring
+setup-uv to 10.2.0, CodeQL SARIF to 4.38.2, and hypothesis to 6.168.3.
+The temporary BeamZ <0.5 hold from maintenance is superseded by the validated
+0.5.3 migration below; Dependabot defers >=0.6 pending API validation.
+Pydantic's >=2.13.5 floor remains deferred: gdsfactory 9.45.0 is the last supported version on Python 3.11,
+and its kfactory dependency requires Pydantic <2.13. The fuzz extra is
+restricted to Linux x86_64/Python >=3.12 to match available Atheris wheels without
+reducing the package's supported Python/platform range. See the Unreleased
+changelog for the complete maintenance scope.
 
 **Unreleased BeamZ migration (2026-10-04; PR #154 remains draft):** the adapter now supports
-`beamz>=0.5.0,<0.6` (locked to 0.5.3), with immutable ports/sources/monitors
+`beamz>=0.5.3,<0.6` (locked to 0.5.3), with immutable ports/sources/monitors
 and detached modal/field results. Canonical polygons replace the removed
 0.4 geometry helper; preparation stays on the CPU. The 0.5.0/0.5.1/0.5.2
 release matrix runs locally on the RTX 3090; reproducible scripts, full
@@ -24,7 +37,12 @@ reduce uniform-lead monitor spread from 0.315 to 0.097 dB at mesh 10 and from
 residual numerical sensitivity and absolute mesh convergence remain separate
 validation concerns. Full mesh-10 y-branch/escalator matrices and mesh-10/20
 S-bend runs also pass finite, incident-power, and temporal-convergence checks.
-The local test suite passes (369 passed, 27 skipped). PR #154 stays draft. [Follow-up report](benchmarks/BEAMZ_053_RESULTS.md)
+After merging the upstream maintenance/security updates and requiring
+BeamZ >=0.5.3, the local suite passes (372 passed, 27 skipped); repository-wide
+lint/formatting, spelling, strict source typing, and lock checks pass. The migration is suitable for merge after normal checks/review within its
+fundamental-TE/x-facing scope; extra convergence studies are follow-up accuracy
+work, not an unresolved upstream-fix blocker. PR #154 remains draft for
+maintainer review. [Follow-up report](benchmarks/BEAMZ_053_RESULTS.md)
 contains versioned artifacts; the original 0.5.2 results remain unchanged.
 
 **Device validation completed (2026-10-04):** fresh RTX 3090 / BeamZ 0.5.2

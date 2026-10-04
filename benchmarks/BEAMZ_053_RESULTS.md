@@ -70,11 +70,39 @@ Escalator S12 = -0.064 dB; its maximum
 guided-power sum is 1.010148. Any small positive
 transmission/power excess is numerical error, not physical gain.
 
-The specific modal-analysis defect has been corrected and the released fix is
-verified in this integration. PR #154 remains draft for review of the residual
-numerical sensitivity and the documented validation scope. Do not interpret
-this as certification of arbitrary devices, TM/multimode/y-facing ports, or
-complete mesh convergence. No source/monitor placement changes were introduced.
+## Merge scope and remaining accuracy work
+
+The specific modal-analysis defect is corrected and the released fix is verified
+in this integration. The existing evidence supports merging this adapter
+migration after normal CI and review, with BeamZ >=0.5.3 required. Additional
+physics benchmarks are not a prerequisite for this limited compatibility and
+regression-improvement claim. PR #154 remains draft until maintainer review.
+
+This is not a claim of uniform improvement in every matrix entry: the dominant
+S-bend defect is reduced, y-branch forward/reverse paths remain healthy, and
+escalator transmission is stable, while weak reflections/coupling still differ.
+The 0.5.3 default S-bend S21 changes by about 0.194 dB between meshes 10 and 20,
+so the current pair cannot establish mesh convergence. No source/monitor
+placement changes were introduced.
+
+For a stronger quantitative-accuracy claim, prioritize these follow-ups:
+
+1. Extend the **0.5.3 S-bend sweep to meshes 25 and 30**, comparing successive
+   refinements and recorded references. Repeat the same-run uniform-lead probes;
+   keep the default-plane result visible rather than selecting a matching plane.
+2. Run the **0.5.3 y-branch and escalator at meshes 14 and 20**, checking the full
+   spectrum and every matrix column for transmission, reciprocity, and power
+   balance. Earlier 0.5.2 coarse runs do not establish 0.5.3 mesh convergence.
+3. For accurate **weak reflection/crosstalk or phase**, independently vary monitor
+   aperture, straight-lead length, and PML clearance and align reference planes
+   and material/geometry assumptions across engines. More forward-transmission
+   agreement alone cannot validate these quantities.
+
+Choose tolerances before those studies (for example, a design may require
+successive through-loss changes below 0.05 dB); a numerical stopping criterion
+is not an accuracy target. These are follow-up studies, not newly certified
+capabilities. TM, multimode, and y-facing ports remain outside the validated
+adapter scope.
 
 ## Reproduce
 

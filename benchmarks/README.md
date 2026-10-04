@@ -1,6 +1,6 @@
 # BeamZ integration on the local RTX 3090
 
-The adapter supports BeamZ **0.5.0–0.5.3**, with **0.5.3** locked as the latest
+The adapter now requires BeamZ **>=0.5.3,<0.6**, with **0.5.3** locked as the latest
 release checked on 2026-10-04 ([PyPI](https://pypi.org/project/beamz/0.5.3/)).
 See the [0.5.3 verification report](BEAMZ_053_RESULTS.md) for the upstream
 material-snapshot fix. The release comparison below preserves the original
@@ -25,7 +25,8 @@ JAX_PLATFORMS=cuda XLA_PYTHON_CLIENT_PREALLOCATE=false MPLBACKEND=Agg \
 MPLBACKEND=Agg .venv/bin/python benchmarks/plot_beamz_results.py
 ```
 
-For the release matrix, install each `beamz==0.5.0`, `beamz==0.5.1`, and
+The historical release matrix predates the 0.5.3 minimum. To reproduce it,
+use commit `9679ac1`, then install each `beamz==0.5.0`, `beamz==0.5.1`, and
 `beamz==0.5.2` using `uv pip install`, then run the benchmark in a fresh
 interpreter with a distinct output directory. Use `.venv/bin/python` directly:
 `uv run` may restore the locked version. The plot script reads the three
@@ -111,6 +112,7 @@ Final checks: 368 offline tests passed (27 optional-engine skips), plus the
 real GPU end-to-end test passed. The 0.5.0 and 0.5.1 adapter/conformance suites
 each passed 44 tests (9 optional-engine skips). Ruff lint, formatting of changed
 files, codespell, lock consistency, and strict mypy over all 35 source files pass.
-The repository-wide Ruff format check still finds pre-existing code-block
-formatting in `HANDOFF.md`, `docs/adding_a_solver.md`, and
-`docs/remote_compute.md`; the same failures were verified against `HEAD`.
+The original check found baseline formatting failures in `HANDOFF.md`,
+`docs/adding_a_solver.md`, and `docs/remote_compute.md`. Subsequent upstream
+maintenance fixes these; after merging it into this PR, all repository-wide
+formatting checks pass and the test suite passes 372 tests (27 skips).

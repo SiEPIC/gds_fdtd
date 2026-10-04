@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Migrate the BeamZ adapter to the 0.5 immutable source/monitor/result API;
-  support `beamz>=0.5.0,<0.6` and lock 0.5.3. Geometry now comes directly from
+  support `beamz>=0.5.3,<0.6` and lock 0.5.3. Geometry now comes directly from
   canonical component polygons, including multilayer port extensions. Build
   and estimate use CPU rasterization; only run constructs a simulation.
 - Keep port measurement planes fixed across excitation columns, with sources
@@ -22,6 +22,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   0.5.2 baseline and document remaining numerical sensitivity.
 - Add a reproducible RTX 3090 integration benchmark with versioned results
   and comparisons to the historical three-engine straight-waveguide data.
+- Apply the compatible Dependabot maintenance updates: klayout >=0.30.12,
+  matplotlib >=3.11.2, build >=1.6.1, mypy >=2.3.1, hypothesis >=6.168.3,
+  and ruff >=0.16.9; sync the Ruff hook and regenerate `uv.lock`.
+- Update the pinned setup-uv, deploy-pages, action-gh-release, CodeQL SARIF,
+  and alls-green actions, retaining full commit SHA pins.
+  Include the follow-up setup-uv 10.2.0 and CodeQL SARIF 4.38.2 proposals
+  generated after the initial maintenance merge.
+- Restrict the optional Atheris fuzz dependency to Linux x86_64 on Python >=3.12,
+  where its supported wheels are available, so universal dependency resolution
+  preserves the package's Python 3.11 and cross-platform support.
+- Replace the temporary BeamZ <0.5 cap with >=0.5.3,<0.6 after validating
+  the adapter migration and upstream modal-analysis fix. Defer the Pydantic >=2.13.5 floor because
+  the Python 3.11 gdsfactory/kfactory dependency graph requires Pydantic <2.13.
+
+### Security
+- Upgrade locked Tornado from 6.5.7 to 6.5.10, urllib3 from 2.7.0 to 2.8.0,
+  and PyJWT from 2.13.0 to 2.15.1 to remediate newly reported advisories;
+  upgrade soupsieve to 2.9. Retain the existing scoped cryptography exceptions.
+- Update alls-green to 1.3.0, which fixes GHSA-gj76-h2ch-5m76.
 
 ## [0.6.3] - 2026-08-19
 

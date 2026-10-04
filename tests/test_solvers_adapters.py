@@ -293,13 +293,13 @@ def test_beamz_rejects_y_oriented_ports():
     assert any("F14" in p for p in problems), problems
 
 
-@pytest.mark.parametrize("version", ["0.4.3", "0.6.0"])
+@pytest.mark.parametrize("version", ["0.4.3", "0.5.0", "0.5.1", "0.5.2", "0.6.0"])
 def test_beamz_unsupported_api_has_actionable_error(monkeypatch, version):
     beamz = pytest.importorskip("beamz")
     from gds_fdtd.solvers.beamz import probe_beamz
 
     monkeypatch.setattr(beamz, "__version__", version)
-    assert "requires beamz>=0.5.0,<0.6" in probe_beamz()
+    assert "requires beamz>=0.5.3,<0.6" in probe_beamz()
 
 
 def test_beamz_preparation_does_not_initialize_accelerator(monkeypatch):

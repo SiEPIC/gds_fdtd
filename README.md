@@ -63,7 +63,7 @@ show_3d(solver)  # notebooks + docs; save_3d(...) writes a shareable page
 |---|---|---|---|
 | [Tidy3D](https://github.com/flexcompute/tidy3d) >= 2.12 | cloud | FlexCredits | `pip install gds_fdtd[tidy3d]` |
 | Ansys Lumerical FDTD 2024/2025 | local | license | Lumerical install + `lumapi` on path |
-| [beamz](https://github.com/beamzorg/beamz) >= 0.5.0, < 0.6 | local (JAX, CPU/GPU) | free | `pip install gds_fdtd[beamz]` |
+| [beamz](https://github.com/beamzorg/beamz) >= 0.5.3, < 0.6 | local (JAX, CPU/GPU) | free | `pip install gds_fdtd[beamz]` |
 
 BeamZ 0.5.0–0.5.2 GPU integration results and reproduction commands are in
 [the RTX 3090 benchmark report](benchmarks/README.md).
