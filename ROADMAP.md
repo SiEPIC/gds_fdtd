@@ -5,7 +5,18 @@ should be able to read this, understand the current state, and pick up work
 without losing context. Keep it current; move granular tracking to GitHub
 Issues as items are picked up.
 
-## Where we are — v0.6.3 (released 2026-08-04)
+## Where we are — v0.6.3 (released 2026-08-19)
+
+**Maintenance review (2026-10-04):** the compatible Dependabot updates are
+consolidated with a fresh lock and security fixes for Tornado (6.5.10),
+urllib3 (2.8.0), and PyJWT (2.15.1).
+BeamZ remains `>=0.4.3,<0.5`; Dependabot upgrades to >=0.5 are deferred until
+the adapter migration is validated. Pydantic's >=2.13.5 floor is also
+deferred: gdsfactory 9.45.0 is the last supported version on Python 3.11,
+and its kfactory dependency requires Pydantic <2.13. The fuzz extra is
+restricted to Linux x86_64/Python >=3.12 to match available Atheris wheels without
+reducing the package's supported Python/platform range. See the Unreleased
+changelog for the complete maintenance scope.
 
 `v0.6.3` is a maintenance release over `v0.6.2`: dependency floors and pinned
 GitHub Actions moved to current releases (including `setup-uv` v10, whose new

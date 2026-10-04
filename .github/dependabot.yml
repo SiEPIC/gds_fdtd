@@ -15,6 +15,10 @@ updates:
     commit-message:
       prefix: "build(pip)"            # nice conventional‑commit prefix
     labels: ["dependencies", "python"]
+    ignore:
+      # Keep the 0.4 adapter until the BeamZ 0.5 migration is validated.
+      - dependency-name: "beamz"
+        versions: [">=0.5"]
 
   #######################################################################
   # 2. GitHub Actions – keeps action versions in .github/workflows/*.yml up‑to‑date

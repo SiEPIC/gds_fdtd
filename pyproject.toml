@@ -32,8 +32,8 @@ classifiers = [
 # ─────────────── core runtime (always installed) ───────────────
 dependencies = [
   "numpy>=2.4.6",
-  "klayout>=0.30.10",
-  "matplotlib>=3.11.1",
+  "klayout>=0.30.12",
+  "matplotlib>=3.11.2",
   "shapely>=2.1.2",
   "PyYAML>=6.0.3",
   "pydantic>=2.7",
@@ -51,7 +51,10 @@ gdsfactory  = ["gdsfactory>=9.45.0,<10"]
 beamz       = ["beamz>=0.4.3,<0.5"]            # open-source JAX FDTD engine
 prefab      = ["prefab>=1.6.0"]
 siepic      = ["SiEPIC>=0.5.31"]
-fuzz        = ["atheris>=3.1.0"]                 # run fuzz/ targets locally (CI uses ClusterFuzzLite)
+# Atheris 3.1 wheels target Linux x86_64 on Python 3.12-3.14 only.
+fuzz        = [
+  "atheris>=3.1.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version >= '3.12'",
+]
 
 # convenience bundles (self-referential; Lumerical needs no extra, it uses your local lumapi)
 engines     = ["gds_fdtd[tidy3d,beamz]"]                             # every pip-installable FDTD engine
@@ -59,14 +62,14 @@ all         = ["gds_fdtd[tidy3d,beamz,gdsfactory,prefab,siepic]"]    # every eng
 
 dev = [
   "pip>=26.2.1",
-  "build>=1.5.0",  # `just build` (sdist+wheel); releases publish via CI trusted publishing
+  "build>=1.6.1",  # `just build` (sdist+wheel); releases publish via CI trusted publishing
   "pytest>=9.1.1",
   "pytest-cov>=7.1.0",
   "coverage",
-  "ruff>=0.16.3",
+  "ruff>=0.16.9",
   "codespell>=2.4.3",  # same spell check the CI prek hooks run
-  "mypy>=2.3.0",
-  "hypothesis>=6.165.10",  # property-based tests for the numeric core (WS2)
+  "mypy>=2.3.1",
+  "hypothesis>=6.168.1",  # property-based tests for the numeric core (WS2)
   "h5py>=3.16.0",  # SMatrix HDF5 I/O tests (optional at runtime)
 ]
 

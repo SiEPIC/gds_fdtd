@@ -6,7 +6,7 @@ the compressed history and the working conventions; the live plan is
 [`SOLVER_STATUS.md`](SOLVER_STATUS.md), and user-facing docs live at
 <https://siepic.github.io/gds_fdtd/>.
 
-**State:** `v0.6.3` is released (tagged 2026-08-04, signed GitHub release) — a
+**State:** `v0.6.3` is released (2026-08-19, signed GitHub release) — a
 maintenance release over `v0.6.2` (dependency floors and pinned GitHub Actions
 moved to current releases; no API change). `v0.6.2` before it carried the beamz
 `<0.5` cap and the documented `pip-audit` exception still tracked in #115.
@@ -32,8 +32,8 @@ S-matrix:
 ```python
 from gds_fdtd import get_solver, SimulationSpec, Technology
 
-solver  = get_solver("tidy3d" | "lumerical" | "beamz")(component, tech, SimulationSpec())
-smatrix = solver.run()          # the ONLY call that spends money / license / GPU
+solver = get_solver("tidy3d" | "lumerical" | "beamz")(component, tech, SimulationSpec())
+smatrix = solver.run()  # the ONLY call that spends money / license / GPU
 ```
 
 EDA-agnostic on the front (KLayout/SiEPIC, gdsfactory ≥9), solver-agnostic on

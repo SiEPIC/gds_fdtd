@@ -43,6 +43,7 @@ image = (
     .add_local_dir("jobs", remote_path="/jobs")
 )
 
+
 @app.function(image=image, gpu="T4", timeout=1800)
 def run_job(job_filename: str) -> bytes:
     import pathlib
@@ -53,6 +54,7 @@ def run_job(job_filename: str) -> bytes:
         check=True,
     )
     return pathlib.Path("/tmp/out/smatrix.npz").read_bytes()
+
 
 # sweep: run_job.map(["mesh_6.json", "mesh_8.json", "mesh_10.json"])
 ```
@@ -86,6 +88,7 @@ image = (
     .pip_install("gds_fdtd[tidy3d]")
     .add_local_dir("jobs", remote_path="/jobs")
 )
+
 
 @app.function(image=image, secrets=[modal.Secret.from_name("tidy3d-api-key")])
 def run_job(job_filename: str) -> bytes:
