@@ -73,8 +73,7 @@ for reliable near-unity transmission estimates.
 ![Release comparison](results/comparison.png)
 
 [Latest field plot](results/beamz-0.5.2-mesh10/fields.png) ·
-[Latest raw results](results/beamz-0.5.2-mesh10/results.json) ·
-[Latest S-matrix](results/beamz-0.5.2-mesh10/smatrix.npz)
+[Latest numeric results](results/beamz-0.5.2-mesh10/results.json)
 
 The historical Tidy3D/Lumerical/BeamZ 0.4.3 datasets are replayed from
 `tests/recorded/straight_mesh10_*.npz`; those engines were **not rerun**.
@@ -116,3 +115,7 @@ The original check found baseline formatting failures in `HANDOFF.md`,
 `docs/adding_a_solver.md`, and `docs/remote_compute.md`. Subsequent upstream
 maintenance fixes these; after merging it into this PR, all repository-wide
 formatting checks pass and the test suite passes 372 tests (27 skips).
+
+Benchmark `.npz` archives are generated locally and ignored by Git. Committed
+JSON magnitudes and diagnostic summaries reproduce the comparison plots;
+rerun the solver scripts to obtain complex S-matrices and raw fields.

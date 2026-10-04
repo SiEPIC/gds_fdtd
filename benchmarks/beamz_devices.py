@@ -140,6 +140,10 @@ def main() -> None:
                 if array.dtype.kind != "O":
                     arrays[key] = array
 
+        record.setdefault("modal_sources", {})[keywords["source_port"]] = {
+            "all_incident_samples_valid": bool(np.all(result.diagnostics["valid_mask"])),
+            "min_incident_power": float(np.min(result.diagnostics["P_in"])),
+        }
         flatten(result.diagnostics, "diagnostics")
         np.savez_compressed(out / f"modal_{keywords['source_port']}.npz", **arrays)
         return result

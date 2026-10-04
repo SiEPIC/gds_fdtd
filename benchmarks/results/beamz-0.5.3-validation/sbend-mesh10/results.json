@@ -144,5 +144,15 @@
         "consecutive_checks": 3
       }
     }
-  ]
+  ],
+  "modal_sources": {
+    "opt1": {
+      "all_incident_samples_valid": true,
+      "min_incident_power": 0.9946581084751435
+    },
+    "opt2": {
+      "all_incident_samples_valid": true,
+      "min_incident_power": 0.9928714549304773
+    }
+  }
 }

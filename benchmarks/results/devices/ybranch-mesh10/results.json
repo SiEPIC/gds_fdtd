@@ -215,5 +215,19 @@
         "consecutive_checks": 3
       }
     }
-  ]
+  ],
+  "modal_sources": {
+    "opt1": {
+      "all_incident_samples_valid": true,
+      "min_incident_power": 0.9946500731768619
+    },
+    "opt2": {
+      "all_incident_samples_valid": true,
+      "min_incident_power": 0.9922036611504902
+    },
+    "opt3": {
+      "all_incident_samples_valid": true,
+      "min_incident_power": 0.9919724514592085
+    }
+  }
 }

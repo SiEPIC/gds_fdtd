@@ -7,6 +7,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from magnitude_results import MagnitudeResults
 
 from gds_fdtd import SMatrix
 
@@ -16,7 +17,7 @@ F0 = 299792458 / 1.55e-6
 COLORS = {"beamz": "#0072B2", "tidy3d": "#D55E00", "lumerical": "#009E73"}
 
 
-def db_at(sm: SMatrix, output: int, source: int) -> float:
+def db_at(sm: SMatrix | MagnitudeResults, output: int, source: int) -> float:
     return float(np.interp(F0, sm.f, sm.magnitude_db(out=output, in_=source)))
 
 
@@ -35,7 +36,7 @@ def main() -> None:
     records = []
     for path in sorted(RESULTS.glob("*/results.json")):
         r = json.loads(path.read_text())
-        sm = SMatrix.from_npz(str(path.parent / "smatrix.npz"))
+        sm = MagnitudeResults(path)
         row = {
             "run": path.parent.name,
             "device": r["device"],
@@ -49,13 +50,7 @@ def main() -> None:
             "s12_db": db_at(sm, 1, 2),
             "s11_db": db_at(sm, 1, 1),
         }
-        modal_sources = {}
-        for modal_path in path.parent.glob("modal_*.npz"):
-            with np.load(modal_path, allow_pickle=False) as modal:
-                modal_sources[modal_path.stem.removeprefix("modal_")] = {
-                    "all_incident_samples_valid": bool(np.all(modal["diagnostics/valid_mask"])),
-                    "min_incident_power": float(np.min(modal["diagnostics/P_in"])),
-                }
+        modal_sources = r.get("modal_sources", {})
         if modal_sources:
             row["modal_sources"] = modal_sources
         if sm.n_ports == 3:
@@ -112,7 +107,7 @@ def main() -> None:
             )
         else:
             latest = runs[-1]
-            sm = SMatrix.from_npz(str(RESULTS / latest["run"] / "smatrix.npz"))
+            sm = MagnitudeResults(RESULTS / latest["run"] / "results.json")
             sources = {"beamz": sm, **references(device)}
             for engine, matrix in sources.items():
                 for output in [2, 3] if device == "ybranch" else [2]:
@@ -142,7 +137,7 @@ def main() -> None:
         if not runs:
             continue
         matrices = {
-            "beamz": SMatrix.from_npz(str(RESULTS / runs[-1]["run"] / "smatrix.npz")),
+            "beamz": MagnitudeResults(RESULTS / runs[-1]["run"] / "results.json"),
             **references(device),
         }
         fig, axs = plt.subplots(1, 3, figsize=(11, 3.7), layout="constrained")

@@ -177,3 +177,6 @@ fuzz/corpus/
 
 # solver result cache (env-specific job hashes; not an artifact)
 **/.gds_fdtd_cache/
+
+# Regenerable benchmark binary outputs; retain JSON summaries and selected plots.
+/benchmarks/results/**/*.npz

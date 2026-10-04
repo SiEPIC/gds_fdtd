@@ -8,8 +8,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from compare_beamz_devices import db_at, references
-
-from gds_fdtd import SMatrix
+from magnitude_results import MagnitudeResults
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / "benchmarks/results"
@@ -58,8 +57,8 @@ def main():
     plt.close(fig)
     for path in sorted(NEW.glob("*/results.json")):
         data = json.loads(path.read_text())
-        sm = SMatrix.from_npz(str(path.parent / "smatrix.npz"))
-        old = SMatrix.from_npz(str(BASE / "devices" / path.parent.name / "smatrix.npz"))
+        sm = MagnitudeResults(path)
+        old = MagnitudeResults(BASE / "devices" / path.parent.name / "results.json")
         row = {
             "device": data["device"],
             "mesh": data["mesh"],
@@ -83,10 +82,10 @@ def main():
                 ]
                 for engine, matrix in references(data["device"]).items()
             }
-        row["incident_valid"] = {}
-        for modal in path.parent.glob("modal_*.npz"):
-            with np.load(modal, allow_pickle=False) as waves:
-                row["incident_valid"][modal.stem] = bool(np.all(waves["diagnostics/valid_mask"]))
+        row["incident_valid"] = {
+            f"modal_{name}": values["all_incident_samples_valid"]
+            for name, values in data.get("modal_sources", {}).items()
+        }
         summary["devices"].append(row)
     (NEW / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(json.dumps(summary, indent=2))

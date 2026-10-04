@@ -25,7 +25,7 @@ changelog for the complete maintenance scope.
 and detached modal/field results. Canonical polygons replace the removed
 0.4 geometry helper; preparation stays on the CPU. The 0.5.0/0.5.1/0.5.2
 release matrix runs locally on the RTX 3090; reproducible scripts, full
-S-matrices, convergence diagnostics, and plots live in
+S-matrix magnitudes, convergence diagnostics, and plots live in
 [`benchmarks/`](benchmarks/README.md). The historical 0.4.3 recordings remain
 unchanged. TE fundamental mode and x-facing ports remain the validated
 adapter scope; y-facing ports, TM, and multimode need separate validation.
@@ -43,7 +43,9 @@ lint/formatting, spelling, strict source typing, and lock checks pass. The migra
 fundamental-TE/x-facing scope; extra convergence studies are follow-up accuracy
 work, not an unresolved upstream-fix blocker. PR #154 remains draft for
 maintainer review. [Follow-up report](benchmarks/BEAMZ_053_RESULTS.md)
-contains versioned artifacts; the original 0.5.2 results remain unchanged.
+contains versioned JSON/plot artifacts; original 0.5.2 measurements are preserved.
+Generated `.npz` archives are excluded from Git and can be recreated by the
+benchmark scripts; the duplicated upstream issue body is linked on GitHub.
 
 **Device validation completed (2026-10-04):** fresh RTX 3090 / BeamZ 0.5.2
 runs cover the sharp S-bend (meshes 6/10/14/20), full three-port y-branch,

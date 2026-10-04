@@ -111,7 +111,7 @@ plane was not substituted into the main comparison.
 
 [Standalone reproducer](repro/beamz_plane_dependence.py) ·
 [Exact native scene](repro/sbend_scene.json) ·
-[Submitted issue body](repro/UPSTREAM_ISSUE.md) ·
+[Upstream issue](https://github.com/beamzorg/beamz/issues/309) ·
 [Native reproduction output](results/devices/native-plane-probe-mesh10.json)
 
 ## Reproduce and inspect
@@ -139,8 +139,10 @@ JAX_PLATFORMS=cuda XLA_PYTHON_CLIENT_PREALLOCATE=false MPLBACKEND=Agg \
 Repeat the device commands at the meshes in the refinement table to reproduce
 the whole sweep. `--build-only` performs offline preparation without GPU use.
 Each device directory under `results/devices/` contains `setup.json` (geometry,
-GDS SHA256, grid, ports and specification), `results.json`, `smatrix.npz`,
-and saved fields. Later runs also retain raw `modal_opt*.npz` diagnostics.
+GDS SHA256, grid, ports and specification), `results.json` (matrix magnitudes
+and diagnostic summaries), and selected plots. Complex `smatrix.npz`, raw
+fields, and `modal_opt*.npz` diagnostics are generated locally by rerunning the
+benchmark; these binary archives are ignored by Git.
 The `sbend-plane-probe-mesh*` directories contain simultaneous-monitor probes;
 `sbend-mesh10-offset*` are separate source/monitor-offset experiments excluded
 from the primary mesh comparison.

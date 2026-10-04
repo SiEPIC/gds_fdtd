@@ -7,6 +7,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from magnitude_results import MagnitudeResults
 
 from gds_fdtd import SMatrix
 
@@ -20,7 +21,7 @@ def main() -> None:
     for version in ("0.5.0", "0.5.1", "0.5.2"):
         folder = RESULTS / f"beamz-{version}-mesh10"
         result = json.loads((folder / "results.json").read_text())
-        sm = SMatrix.from_npz(str(folder / "smatrix.npz"))
+        sm = MagnitudeResults(folder / "results.json")
         axes[0].plot(sm.wavelength_um, sm.magnitude_db(out=2, in_=1), label=version)
         axes[1].plot(sm.wavelength_um, sm.magnitude_db(out=1, in_=1), label=version)
         rows.append(result)
@@ -49,7 +50,7 @@ def main() -> None:
     fig.suptitle("GDS_FDTD / BeamZ · RTX 3090 · 5 um straight · mesh 10 · 11 wavelengths")
     fig.savefig(RESULTS / "comparison.png", dpi=180)
     fig.savefig(RESULTS / "comparison.svg")
-    latest = SMatrix.from_npz(str(RESULTS / "beamz-0.5.2-mesh10/smatrix.npz"))
+    latest = MagnitudeResults(RESULTS / "beamz-0.5.2-mesh10/results.json")
     comparison = {}
     for engine in ("beamz", "tidy3d", "lumerical"):
         old = SMatrix.from_npz(str(ROOT / f"tests/recorded/straight_mesh10_{engine}.npz"))

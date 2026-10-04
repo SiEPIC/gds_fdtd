@@ -127,8 +127,10 @@ Repeat the device command with `sbend --mesh 10`, `ybranch --mesh 10`, or
 `escalator --mesh 10`, using matching separate output directories. The y-branch
 uses the same SiEPIC EBeam PDK 0.4.53 as the 0.5.2 validation.
 
-The local RTX 3090 runs retain complete S-matrices, fields, raw modal amplitudes,
-incident-power masks, and termination diagnostics. The validation suite passed
+The repository retains matrix magnitudes, incident-power validity summaries,
+termination diagnostics, and selected plots in JSON/image form. Rerunning the
+local RTX 3090 benchmarks generates complex S-matrices, fields, and raw modal
+archives; these `.npz` files are ignored by Git. The validation suite passed
 with 369 tests and 27 skips; it includes the local straight-waveguide end-to-end
 regression. No cloud or licensed tests were run. Commercial comparisons use
 existing recordings; their discretization/material/geometry limitations remain
