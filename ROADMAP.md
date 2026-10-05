@@ -5,7 +5,17 @@ should be able to read this, understand the current state, and pick up work
 without losing context. Keep it current; move granular tracking to GitHub
 Issues as items are picked up.
 
-## Where we are — v0.6.3 (released 2026-08-19)
+## Where we are — v0.7.0
+
+**Release 0.7.0 (2026-10-05):** PR #154 has merged, completing the BeamZ 0.5.3
+adapter migration and the tolerance-qualified S-bend convergence study below.
+The final Dependabot updates move mypy to 2.4.0, Ruff and its hook to 0.16.10,
+and the SHA-pinned Codecov action to 7.1.1, with a synchronized lock.
+The minor version marks the engine API migration and changed numerical behavior;
+the supported BeamZ range is >=0.5.3,<0.6. See the 0.7.0 changelog for the
+dependency, security, and numerical scope. Releases use the tag-driven workflow
+to build inspected packages, Sigstore signatures, and an SBOM; PyPI publication
+still needs verification through that workflow.
 
 **Maintenance review (2026-10-04):** the compatible Dependabot updates are
 consolidated with a fresh lock and security fixes for Tornado (6.5.10),
@@ -17,10 +27,10 @@ The temporary BeamZ <0.5 hold from maintenance is superseded by the validated
 Pydantic's >=2.13.5 floor remains deferred: gdsfactory 9.45.0 is the last supported version on Python 3.11,
 and its kfactory dependency requires Pydantic <2.13. The fuzz extra is
 restricted to Linux x86_64/Python >=3.12 to match available Atheris wheels without
-reducing the package's supported Python/platform range. See the Unreleased
+reducing the package's supported Python/platform range. See the 0.7.0
 changelog for the complete maintenance scope.
 
-**Unreleased BeamZ migration (2026-10-04; PR #154 ready for merge):** the adapter now supports
+**BeamZ migration (2026-10-04; PR #154 merged):** the adapter now supports
 `beamz>=0.5.3,<0.6` (locked to 0.5.3), with immutable ports/sources/monitors
 and detached modal/field results. Canonical polygons replace the removed
 0.4 geometry helper; preparation stays on the CPU. The 0.5.0/0.5.1/0.5.2
@@ -45,7 +55,7 @@ checks the reported criteria, and labels the older 0.4.3 figures as historical.
 The notebook also compares the mesh-30 0.5.3 field intensity with the recorded
 commercial fields in linear/log views, using a portable cropped JSON map
 with source provenance; no new complex NPZ archives are committed.
-PR #154 is ready for merge; generated NPZ archives stay local.
+PR #154 has merged; generated NPZ archives stay local.
 
 **BeamZ 0.5.3 fix verified (2026-10-04):** the released material-snapshot
 correction works through the integration without adapter changes. Exact probes
@@ -57,7 +67,7 @@ S-bend runs also pass finite, incident-power, and temporal-convergence checks.
 After merging the upstream maintenance/security updates and requiring
 BeamZ >=0.5.3, the local suite passes (372 passed, 27 skipped); repository-wide
 lint/formatting, spelling, strict source typing, and lock checks pass. The migration
-is ready for merge within its fundamental-TE/x-facing scope; extra convergence
+has merged within its fundamental-TE/x-facing scope; extra convergence
 studies are follow-up accuracy work, not an unresolved upstream-fix blocker.
 The [follow-up report](benchmarks/BEAMZ_053_RESULTS.md)
 contains versioned JSON/plot artifacts; original 0.5.2 measurements are preserved.
@@ -215,11 +225,11 @@ Not committed; a palette to choose from. Roughly ordered by impact.
       linear history required, force-pushes blocked, admins enforced.
 - [x] **Pages source = GitHub Actions** — the artifact-based docs deploy is live.
 - [ ] **PyPI trusted publisher** (project `gds_fdtd`, owner `SiEPIC`,
-      workflow `release.yml`, env `pypi`) — in progress with Lukas; until it
-      lands, tagged releases produce signed GitHub artifacts but the PyPI
-      publish step cannot run (re-verified 2026-07-21: `invalid-publisher`,
-      PyPI still serves 0.4.0). Once registered, re-run the failed publish job
-      of the latest (v0.6.3) Release run.
+      workflow `release.yml`, env `pypi`) — PyPI still serves 0.4.0
+      (rechecked 2026-10-05). The v0.6.3 publish job failed with
+      `invalid-publisher`; tagged releases produce signed GitHub artifacts
+      independently of this step. Verify publisher registration and re-run the
+      latest failed publish job after setup; no API-token fallback is used.
 - [ ] **OpenSSF Best Practices badge** — register at bestpractices.dev.
 - [ ] **`cloud-tests` environment** with a required reviewer (guards the
       budget-gated tidy3d smoke).

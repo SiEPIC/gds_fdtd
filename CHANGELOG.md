@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-05
+
+BeamZ integration release: migrate to the validated 0.5 API and numerical
+fixes, with reproducible convergence evidence and dependency maintenance.
+BeamZ installations must upgrade to >=0.5.3,<0.6; the adapter no longer
+supports BeamZ 0.4.3. Fundamental TE and x-facing ports remain the validated scope.
+
 ### Changed
 - Migrate the BeamZ adapter to the 0.5 immutable source/monitor/result API;
   support `beamz>=0.5.3,<0.6` and lock 0.5.3. Geometry now comes directly from
@@ -23,12 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add a reproducible RTX 3090 integration benchmark with versioned results
   and comparisons to the historical three-engine straight-waveguide data.
 - Apply the compatible Dependabot maintenance updates: klayout >=0.30.12,
-  matplotlib >=3.11.2, build >=1.6.1, mypy >=2.3.1, hypothesis >=6.168.3,
-  and ruff >=0.16.9; sync the Ruff hook and regenerate `uv.lock`.
+  matplotlib >=3.11.2, build >=1.6.1, mypy >=2.4.0, hypothesis >=6.168.3,
+  and ruff >=0.16.10; sync the Ruff hook and regenerate `uv.lock`.
 - Update the pinned setup-uv, deploy-pages, action-gh-release, CodeQL SARIF,
-  and alls-green actions, retaining full commit SHA pins.
+  alls-green, and Codecov actions, retaining full commit SHA pins.
   Include the follow-up setup-uv 10.2.0 and CodeQL SARIF 4.38.2 proposals
-  generated after the initial maintenance merge.
+  generated after the initial maintenance merge, plus Codecov 7.1.1.
 - Restrict the optional Atheris fuzz dependency to Linux x86_64 on Python >=3.12,
   where its supported wheels are available, so universal dependency resolution
   preserves the package's Python 3.11 and cross-platform support.
