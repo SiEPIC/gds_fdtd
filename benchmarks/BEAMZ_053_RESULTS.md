@@ -76,7 +76,7 @@ The specific modal-analysis defect is corrected and the released fix is verified
 in this integration. The existing evidence supports merging this adapter
 migration after normal CI and review, with BeamZ >=0.5.3 required. Additional
 physics benchmarks are not a prerequisite for this limited compatibility and
-regression-improvement claim. PR #154 is ready for merge within this validated scope.
+regression-improvement claim. PR #154 has merged within this validated scope.
 
 This is not a claim of uniform improvement in every matrix entry: the dominant
 S-bend defect is reduced, y-branch forward/reverse paths remain healthy, and
