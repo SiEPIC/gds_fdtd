@@ -65,7 +65,7 @@ dev = [
   "build>=1.6.1",  # `just build` (sdist+wheel); releases publish via CI trusted publishing
   "pytest>=9.1.1",
   "pytest-cov>=7.1.0",
-  "coverage",
+  "coverage>=7.10.6",  # pytest-cov's minimum; keeps lowest-direct off Python 2 sdists
   "ruff>=0.16.10",
   "codespell>=2.4.3",  # same spell check the CI prek hooks run
   "mypy>=2.4.0",

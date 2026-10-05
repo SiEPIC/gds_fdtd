@@ -11,6 +11,8 @@ Issues as items are picked up.
 adapter migration and the tolerance-qualified S-bend convergence study below.
 The final Dependabot updates move mypy to 2.4.0, Ruff and its hook to 0.16.10,
 and the SHA-pinned Codecov action to 7.1.1, with a synchronized lock.
+The pre-release dependency-floor check also requires an explicit coverage >=7.10.6
+floor (pytest-cov's minimum) to avoid selecting legacy Python 2 source packages.
 The minor version marks the engine API migration and changed numerical behavior;
 the supported BeamZ range is >=0.5.3,<0.6. See the 0.7.0 changelog for the
 dependency, security, and numerical scope. Releases use the tag-driven workflow

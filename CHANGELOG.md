@@ -32,6 +32,8 @@ supports BeamZ 0.4.3. Fundamental TE and x-facing ports remain the validated sco
 - Apply the compatible Dependabot maintenance updates: klayout >=0.30.12,
   matplotlib >=3.11.2, build >=1.6.1, mypy >=2.4.0, hypothesis >=6.168.3,
   and ruff >=0.16.10; sync the Ruff hook and regenerate `uv.lock`.
+- Declare coverage >=7.10.6, matching pytest-cov's requirement, so dependency-floor
+  installs avoid unsupported Python 2 source packages.
 - Update the pinned setup-uv, deploy-pages, action-gh-release, CodeQL SARIF,
   alls-green, and Codecov actions, retaining full commit SHA pins.
   Include the follow-up setup-uv 10.2.0 and CodeQL SARIF 4.38.2 proposals
