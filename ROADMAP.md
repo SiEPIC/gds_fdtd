@@ -20,7 +20,7 @@ restricted to Linux x86_64/Python >=3.12 to match available Atheris wheels witho
 reducing the package's supported Python/platform range. See the Unreleased
 changelog for the complete maintenance scope.
 
-**Unreleased BeamZ migration (2026-10-04; PR #154 remains draft):** the adapter now supports
+**Unreleased BeamZ migration (2026-10-04; PR #154 ready for merge):** the adapter now supports
 `beamz>=0.5.3,<0.6` (locked to 0.5.3), with immutable ports/sources/monitors
 and detached modal/field results. Canonical polygons replace the removed
 0.4 geometry helper; preparation stays on the CPU. The 0.5.0/0.5.1/0.5.2
@@ -45,7 +45,7 @@ checks the reported criteria, and labels the older 0.4.3 figures as historical.
 The notebook also compares the mesh-30 0.5.3 field intensity with the recorded
 commercial fields in linear/log views, using a portable cropped JSON map
 with source provenance; no new complex NPZ archives are committed.
-PR #154 remains draft for maintainer review; generated NPZ archives stay local.
+PR #154 is ready for merge; generated NPZ archives stay local.
 
 **BeamZ 0.5.3 fix verified (2026-10-04):** the released material-snapshot
 correction works through the integration without adapter changes. Exact probes
@@ -56,10 +56,10 @@ validation concerns. Full mesh-10 y-branch/escalator matrices and mesh-10/20
 S-bend runs also pass finite, incident-power, and temporal-convergence checks.
 After merging the upstream maintenance/security updates and requiring
 BeamZ >=0.5.3, the local suite passes (372 passed, 27 skipped); repository-wide
-lint/formatting, spelling, strict source typing, and lock checks pass. The migration is suitable for merge after normal checks/review within its
-fundamental-TE/x-facing scope; extra convergence studies are follow-up accuracy
-work, not an unresolved upstream-fix blocker. PR #154 remains draft for
-maintainer review. [Follow-up report](benchmarks/BEAMZ_053_RESULTS.md)
+lint/formatting, spelling, strict source typing, and lock checks pass. The migration
+is ready for merge within its fundamental-TE/x-facing scope; extra convergence
+studies are follow-up accuracy work, not an unresolved upstream-fix blocker.
+The [follow-up report](benchmarks/BEAMZ_053_RESULTS.md)
 contains versioned JSON/plot artifacts; original 0.5.2 measurements are preserved.
 Generated `.npz` archives are excluded from Git and can be recreated by the
 benchmark scripts; the duplicated upstream issue body is linked on GitHub.

@@ -3,7 +3,7 @@
 > **Historical 0.5.2 results:** The blocker identified here was investigated
 > in BeamZ 0.5.3. The [follow-up verification](BEAMZ_053_RESULTS.md) confirms
 > the material-snapshot fix substantially reduces monitor sensitivity.
-> PR #154 remains draft; residual numerical sensitivity is documented.
+> PR #154 is ready for merge; residual numerical sensitivity is documented.
 
 On 2026-10-04, BeamZ 0.5.2 completed full S-matrix runs of the sharp S-bend,
 three-port y-branch, and Si→SiN escalator on the local RTX 3090. The y-branch
