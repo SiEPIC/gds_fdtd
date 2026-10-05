@@ -31,7 +31,10 @@ def straight_job():
         wavelength_start=1.5,
         wavelength_end=1.6,
         wavelength_points=3,
-        mesh=5,
+        # BeamZ 0.5 mesh 5 resolves the core with only ~2.5 cells and has
+        # ~0.060 complex reciprocity error on this 2 um case. Mesh 6 reduces
+        # it to ~0.013; retain the existing 0.05 tolerance below.
+        mesh=6,
         z_min=-0.6,
         z_max=0.8,
     )
@@ -57,7 +60,7 @@ def test_beamz_straight_end_to_end(straight_job, tmp_path):
     refl_db = sm.magnitude_db(out=1, in_=1)
     assert float(thru_db.max()) > -0.5, f"through path lossy: {thru_db}"
     assert float(refl_db.max()) < -15.0, f"reflection too high: {refl_db}"
-    # mesh 5 is deliberately coarse: beamz's single-mode normalization
+    # Mesh 6 is deliberately coarse: beamz's single-mode normalization
     # overshoots unity by up to ~10% there (see 06_convergence_and_caching).
     # Assert the overshoot stays BOUNDED - a normalization regression like the
     # F14 +40 dB bug would blow far past this.
@@ -67,6 +70,8 @@ def test_beamz_straight_end_to_end(straight_job, tmp_path):
     # field profile recorded and renderable in both scales
     fig, ax = solver.plot_fields(axis="z", scale="linear")
     assert ax.images or ax.collections
+    assert np.asarray(ax.images[0].get_array()).ndim == 2
+    assert all(item["termination"].converged for item in solver.run_diagnostics)
     fig2, ax2 = solver.plot_fields(axis="z", scale="db")
     assert ax2.images or ax2.collections
 

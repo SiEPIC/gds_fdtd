@@ -51,7 +51,7 @@ show_3d(solver)  # notebooks + docs; save_3d(...) writes a shareable page
 - **Layout ingestion:** raw GDS via KLayout with SiEPIC pin/devrec conventions, [SiEPIC](https://github.com/SiEPIC/SiEPIC-Tools) PDK cells, and [gdsfactory](https://github.com/gdsfactory/gdsfactory) (>= 9) components — ports auto-detected, never hand-placed.
 - **Validated technology files:** the layer stack is a pydantic-validated YAML (bad files fail with the offending key named). Materials can carry per-solver entries or a neutral [refractiveindex.info](https://refractiveindex.info) reference (`rii: {shelf, book, page}`), resolved offline from a local database copy.
 - **Canonical S-matrix:** one `SMatrix` type with NaN-aware partial matrices, reciprocity/passivity/power-balance checks, and I/O to Lumerical INTERCONNECT `.dat`, Touchstone `.sNp` (scikit-rf compatible), HDF5/npz, plus plotting.
-- **Cross-validated engines** (see [SOLVER_STATUS.md](SOLVER_STATUS.md) for per-engine last-verified dates): the tidy3d (>= 2.11, cloud) and Lumerical (2024/2025, local) adapters were validated live against each other on identical geometry — within **0.0033 dB**, with the free [beamz](https://github.com/beamzorg/beamz) engine (JAX, CPU/GPU) inside 0.052 dB of both; the agreement is locked into CI via recorded artifacts.
+- **Cross-validated engines** (see [SOLVER_STATUS.md](SOLVER_STATUS.md) for per-engine last-verified dates): the tidy3d (>= 2.11, cloud) and Lumerical (2024/2025, local) adapters were validated live against each other on identical geometry — within **0.0033 dB**, with the recorded [beamz](https://github.com/beamzorg/beamz) 0.4.3 results inside 0.052 dB of both; the agreement is locked into CI via recorded artifacts.
 - **Interactive 3D viewer:** `show_3d(solver)` renders the extruded layer stack, ports, field-monitor planes, and simulation domain as an orbitable, clickable three.js scene — in notebooks and in the [documentation gallery](https://siepic.github.io/gds_fdtd/_notebooks/05b_field_monitors.html) alike; `render_static` draws the same scene without JavaScript.
 - **Multimode/dual-polarization** simulations on the engines that support them (tidy3d, Lumerical).
 - **Serializable jobs + CLI:** every simulation is a JSON `JobSpec`; `gds-fdtd validate|build|estimate|run|convert|solvers` drives it from the shell, and `SubprocessBackend` runs sweeps crash-isolated and in parallel. Secrets stay in the environment — job files are safe to ship to a cluster or cloud runner ([docs/remote_compute.md](docs/remote_compute.md)).
@@ -63,7 +63,16 @@ show_3d(solver)  # notebooks + docs; save_3d(...) writes a shareable page
 |---|---|---|---|
 | [Tidy3D](https://github.com/flexcompute/tidy3d) >= 2.12 | cloud | FlexCredits | `pip install gds_fdtd[tidy3d]` |
 | Ansys Lumerical FDTD 2024/2025 | local | license | Lumerical install + `lumapi` on path |
-| [beamz](https://github.com/beamzorg/beamz) >= 0.4.3, < 0.5 | local (JAX, CPU/GPU) | free | `pip install gds_fdtd[beamz]` |
+| [beamz](https://github.com/beamzorg/beamz) >= 0.5.3, < 0.6 | local (JAX, CPU/GPU) | free | `pip install gds_fdtd[beamz]` |
+
+BeamZ 0.5.0–0.5.2 GPU integration results and reproduction commands are in
+[the RTX 3090 benchmark report](benchmarks/README.md).
+Fresh [S-bend, y-branch, and Si→SiN escalator comparisons](benchmarks/DEVICE_RESULTS.md)
+include full matrices and the S-bend monitor-position investigation.
+[BeamZ 0.5.3 verification](benchmarks/BEAMZ_053_RESULTS.md) confirms that the
+upstream material-snapshot correction substantially reduces that sensitivity.
+The [0.5.3 S-bend mesh sweep](benchmarks/BEAMZ_CONVERGENCE.md) through mesh 30
+passes a 0.05 dB successive-change criterion for sampled through paths.
 
 ## Examples
 

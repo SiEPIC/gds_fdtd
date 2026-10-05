@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Migrate the BeamZ adapter to the 0.5 immutable source/monitor/result API;
+  support `beamz>=0.5.3,<0.6` and lock 0.5.3. Geometry now comes directly from
+  canonical component polygons, including multilayer port extensions. Build
+  and estimate use CPU rasterization; only run constructs a simulation.
+- Keep port measurement planes fixed across excitation columns, with sources
+  in the uniform extensions. Read field-plane dimensions from the result's
+  exact sampling region.
+- Use mesh 6 for the short real-engine regression: mesh 5 exceeds the original
+  reciprocity tolerance on BeamZ 0.5; the tolerance itself is unchanged.
+- Verify the BeamZ 0.5.3 material-snapshot fix for upstream #309: the mesh-20
+  uniform-lead monitor spread falls from 0.130 to 0.027 dB. Preserve the
+  0.5.2 baseline and document remaining numerical sensitivity.
+- Add a reproducible RTX 3090 integration benchmark with versioned results
+  and comparisons to the historical three-engine straight-waveguide data.
 - Apply the compatible Dependabot maintenance updates: klayout >=0.30.12,
   matplotlib >=3.11.2, build >=1.6.1, mypy >=2.3.1, hypothesis >=6.168.3,
   and ruff >=0.16.9; sync the Ruff hook and regenerate `uv.lock`.
@@ -18,8 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restrict the optional Atheris fuzz dependency to Linux x86_64 on Python >=3.12,
   where its supported wheels are available, so universal dependency resolution
   preserves the package's Python 3.11 and cross-platform support.
-- Keep BeamZ below 0.5 and ignore Dependabot proposals for >=0.5 until the
-  adapter migration is validated. Defer the Pydantic >=2.13.5 floor because
+- Replace the temporary BeamZ <0.5 cap with >=0.5.3,<0.6 after validating
+  the adapter migration and upstream modal-analysis fix. Defer the Pydantic >=2.13.5 floor because
   the Python 3.11 gdsfactory/kfactory dependency graph requires Pydantic <2.13.
 
 ### Security

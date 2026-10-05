@@ -1,0 +1,158 @@
+{
+  "device": "sbend",
+  "beamz": "0.5.2",
+  "jax": "0.10.2",
+  "mesh": 10,
+  "diagnostic_monitor_offset_um": -1.0,
+  "diagnostic_source_offset_um": -1.4,
+  "gds_sha256": "efcb1f267ccc1b0296c6531814127b29c080e6c7b9b03c126f75f1e9849218ee",
+  "gds_file": "devices.gds",
+  "spec": {
+    "wavelength_start": 1.5,
+    "wavelength_end": 1.6,
+    "wavelength_points": 3,
+    "mesh": 10,
+    "boundary": [
+      "PML",
+      "PML",
+      "PML"
+    ],
+    "symmetry": [
+      0,
+      0,
+      0
+    ],
+    "z_min": -1.0,
+    "z_max": 1.11,
+    "width_ports": 2.0,
+    "depth_ports": 1.5,
+    "buffer": 1.0,
+    "modes": [
+      1
+    ],
+    "mode_freq_pts": 3,
+    "run_time_factor": 3.0,
+    "field_monitors": [
+      "z"
+    ],
+    "field_monitor_positions": {},
+    "field_monitor_wavelengths": []
+  },
+  "setup": {
+    "n_ports": 2,
+    "grid_shape": [
+      118,
+      157,
+      157
+    ],
+    "dx_nm": 44.59148446490219,
+    "n_core": 3.476,
+    "n_clad": 1.444,
+    "n_simulations": 2
+  },
+  "build_seconds": 0.8572888410417363,
+  "ports": [
+    {
+      "name": "opt2",
+      "center_um": [
+        1.0,
+        0.5,
+        0.11
+      ],
+      "direction": 0
+    },
+    {
+      "name": "opt1",
+      "center_um": [
+        0.0,
+        0.0,
+        0.11
+      ],
+      "direction": 180
+    }
+  ],
+  "devices": [
+    "cuda:0"
+  ],
+  "gpu_before": "NVIDIA GeForce RTX 3090, 610.43.03, 369 MiB, 0 %",
+  "run_seconds": 33.564206205890514,
+  "recorded_at_utc": "2026-10-04T01:18:07.821007+00:00",
+  "port_names": [
+    "opt1",
+    "opt2"
+  ],
+  "finite": true,
+  "max_power_balance": 0.3032860441828447,
+  "reciprocity_max_abs": 0.0011551245771161999,
+  "wavelength_um": [
+    1.6000000506289556,
+    1.5483870518503382,
+    1.4999999970981523
+  ],
+  "entries_db": {
+    "opt1<-opt1": [
+      -26.27240684465489,
+      -28.627100143602753,
+      -26.6911997492093
+    ],
+    "opt1<-opt2": [
+      -5.227580645061764,
+      -5.975272068005784,
+      -6.73375071057272
+    ],
+    "opt2<-opt1": [
+      -5.215390266076881,
+      -5.962145304694988,
+      -6.712084130896788
+    ],
+    "opt2<-opt2": [
+      -26.032287253536385,
+      -28.500532937649197,
+      -26.90427590293971
+    ]
+  },
+  "runs": [
+    {
+      "source": "opt1",
+      "termination": {
+        "reason": "converged",
+        "steps": 8448,
+        "time": 7.247528857438901e-13,
+        "converged": true,
+        "field_decay": 1.333170728268048e-10,
+        "monitor_change": 1.2054890487124399e-06,
+        "source_decay": 0.0,
+        "energy": 3.641533588552211e-24,
+        "peak_energy": 2.7314833061801537e-14,
+        "max_field": 1003.003173828125,
+        "consecutive_checks": 3
+      }
+    },
+    {
+      "source": "opt2",
+      "termination": {
+        "reason": "converged",
+        "steps": 8448,
+        "time": 7.247528857438901e-13,
+        "converged": true,
+        "field_decay": 2.0249813531402825e-10,
+        "monitor_change": 1.3311237709218076e-06,
+        "source_decay": 0.0,
+        "energy": 5.513392300473837e-24,
+        "peak_energy": 2.7226879358290524e-14,
+        "max_field": 2754.7333984375,
+        "consecutive_checks": 3
+      }
+    }
+  ],
+  "modal_sources": {
+    "opt1": {
+      "all_incident_samples_valid": true,
+      "min_incident_power": 0.9943863237833472
+    },
+    "opt2": {
+      "all_incident_samples_valid": true,
+      "min_incident_power": 0.9934028151463491
+    }
+  }
+}

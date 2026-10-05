@@ -12,13 +12,70 @@ consolidated with a fresh lock and security fixes for Tornado (6.5.10),
 urllib3 (2.8.0), and PyJWT (2.15.1).
 The initial batch landed in #155; follow-up proposals #156–#158 bring
 setup-uv to 10.2.0, CodeQL SARIF to 4.38.2, and hypothesis to 6.168.3.
-BeamZ remains `>=0.4.3,<0.5`; Dependabot upgrades to >=0.5 are deferred until
-the adapter migration is validated. Pydantic's >=2.13.5 floor is also
-deferred: gdsfactory 9.45.0 is the last supported version on Python 3.11,
+The temporary BeamZ <0.5 hold from maintenance is superseded by the validated
+0.5.3 migration below; Dependabot defers >=0.6 pending API validation.
+Pydantic's >=2.13.5 floor remains deferred: gdsfactory 9.45.0 is the last supported version on Python 3.11,
 and its kfactory dependency requires Pydantic <2.13. The fuzz extra is
 restricted to Linux x86_64/Python >=3.12 to match available Atheris wheels without
 reducing the package's supported Python/platform range. See the Unreleased
 changelog for the complete maintenance scope.
+
+**Unreleased BeamZ migration (2026-10-04; PR #154 ready for merge):** the adapter now supports
+`beamz>=0.5.3,<0.6` (locked to 0.5.3), with immutable ports/sources/monitors
+and detached modal/field results. Canonical polygons replace the removed
+0.4 geometry helper; preparation stays on the CPU. The 0.5.0/0.5.1/0.5.2
+release matrix runs locally on the RTX 3090; reproducible scripts, full
+S-matrix magnitudes, convergence diagnostics, and plots live in
+[`benchmarks/`](benchmarks/README.md). The historical 0.4.3 recordings remain
+unchanged. TE fundamental mode and x-facing ports remain the validated
+adapter scope; y-facing ports, TM, and multimode need separate validation.
+
+**Reviewer-requested convergence study completed (2026-10-04):** the fixed-setup
+BeamZ 0.5.3 S-bend sweep covers meshes 10/14/20/25/30 on RTX 3090. Both final
+through-path changes pass the predeclared 0.05 dB tolerance: 0.02655 dB
+(20→25) and 0.03720 dB (25→30), across both directions and all three wavelength
+samples. The mesh-30 uniform-lead probe spread is 0.01371 dB at 1.55 µm and
+0.00904–0.01752 dB across its three wavelengths. Reflections do not meet the
+same convergence tolerance (all-entry final change 0.50777 dB); complex phase,
+PML/domain convergence, and other device families remain outside this claim.
+[Report, plots, and reproduction](benchmarks/BEAMZ_CONVERGENCE.md).
+[Example 06](examples/06_convergence_and_caching/06_convergence_and_caching.ipynb)
+now replays the 0.5.3 JSON records with editable convergence and monitor plots,
+checks the reported criteria, and labels the older 0.4.3 figures as historical.
+The notebook also compares the mesh-30 0.5.3 field intensity with the recorded
+commercial fields in linear/log views, using a portable cropped JSON map
+with source provenance; no new complex NPZ archives are committed.
+PR #154 is ready for merge; generated NPZ archives stay local.
+
+**BeamZ 0.5.3 fix verified (2026-10-04):** the released material-snapshot
+correction works through the integration without adapter changes. Exact probes
+reduce uniform-lead monitor spread from 0.315 to 0.097 dB at mesh 10 and from
+0.130 to 0.027 dB at mesh 20. The specific upstream defect is addressed;
+residual numerical sensitivity and absolute mesh convergence remain separate
+validation concerns. Full mesh-10 y-branch/escalator matrices and mesh-10/20
+S-bend runs also pass finite, incident-power, and temporal-convergence checks.
+After merging the upstream maintenance/security updates and requiring
+BeamZ >=0.5.3, the local suite passes (372 passed, 27 skipped); repository-wide
+lint/formatting, spelling, strict source typing, and lock checks pass. The migration
+is ready for merge within its fundamental-TE/x-facing scope; extra convergence
+studies are follow-up accuracy work, not an unresolved upstream-fix blocker.
+The [follow-up report](benchmarks/BEAMZ_053_RESULTS.md)
+contains versioned JSON/plot artifacts; original 0.5.2 measurements are preserved.
+Generated `.npz` archives are excluded from Git and can be recreated by the
+benchmark scripts; the duplicated upstream issue body is linked on GitHub.
+
+**Device validation completed (2026-10-04):** fresh RTX 3090 / BeamZ 0.5.2
+runs cover the sharp S-bend (meshes 6/10/14/20), full three-port y-branch,
+and Si→SiN escalator (meshes 6/10). Forward y-branch paths agree within
+0.05 dB and escalator transmission within 0.09 dB of recorded commercial
+results; weak matrix entries still differ. The y-branch reverse paths work.
+On 0.5.2, S-bend monitor-plane sensitivity remained unresolved: a mesh-20
+probe varies by 0.130 dB along the straight output lead. Filed
+[BeamZ #309](https://github.com/beamzorg/beamz/issues/309) with a verified
+standalone reproducer. [Results and reproduction](benchmarks/DEVICE_RESULTS.md)
+include full matrices, fields, convergence diagnostics, and limitations.
+No fresh cloud or licensed runs were performed.
+
 
 `v0.6.3` is a maintenance release over `v0.6.2`: dependency floors and pinned
 GitHub Actions moved to current releases (including `setup-uv` v10, whose new

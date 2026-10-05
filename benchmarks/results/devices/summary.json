@@ -1,0 +1,228 @@
+[
+  {
+    "run": "escalator-mesh10",
+    "device": "escalator",
+    "mesh": 10,
+    "run_seconds": 106.05377348093316,
+    "finite": true,
+    "reciprocity_max_abs": 0.013820756015290243,
+    "max_power_balance": 1.010370838262331,
+    "all_converged": true,
+    "s21_db": 0.03221663914781915,
+    "s12_db": -0.062449704023389584,
+    "s11_db": -27.764214824697248,
+    "modal_sources": {
+      "opt1": {
+        "all_incident_samples_valid": true,
+        "min_incident_power": 0.9932453860865953
+      },
+      "opt2": {
+        "all_incident_samples_valid": true,
+        "min_incident_power": 0.9962018910788624
+      }
+    },
+    "references": {
+      "tidy3d": {
+        "s21_db": 0.018699248771326796,
+        "s12_db": -0.10420652532044913
+      },
+      "lumerical": {
+        "s21_db": -0.0552983184155236,
+        "s12_db": -0.15561365548362102
+      }
+    }
+  },
+  {
+    "run": "escalator-mesh6",
+    "device": "escalator",
+    "mesh": 6,
+    "run_seconds": 31.589956531999633,
+    "finite": true,
+    "reciprocity_max_abs": 0.036411254759617956,
+    "max_power_balance": 1.03218975908384,
+    "all_converged": true,
+    "s21_db": 0.11291348506050242,
+    "s12_db": -0.17413988639571906,
+    "s11_db": -30.449484166540465,
+    "references": {
+      "tidy3d": {
+        "s21_db": 0.018699248771326796,
+        "s12_db": -0.10420652532044913
+      },
+      "lumerical": {
+        "s21_db": -0.0552983184155236,
+        "s12_db": -0.15561365548362102
+      }
+    }
+  },
+  {
+    "run": "sbend-mesh10",
+    "device": "sbend",
+    "mesh": 10,
+    "run_seconds": 33.839482170064,
+    "finite": true,
+    "reciprocity_max_abs": 0.005026631345872771,
+    "max_power_balance": 0.2865544317087899,
+    "all_converged": true,
+    "s21_db": -6.063226456007284,
+    "s12_db": -5.9930147118444825,
+    "s11_db": -29.950284282462395
+  },
+  {
+    "run": "sbend-mesh10-offset05",
+    "device": "sbend",
+    "mesh": 10,
+    "run_seconds": 33.88394759502262,
+    "finite": true,
+    "reciprocity_max_abs": 0.0007032882872968447,
+    "max_power_balance": 0.32051758813257797,
+    "all_converged": true,
+    "s21_db": -5.645102892251511,
+    "s12_db": -5.640691071443447,
+    "s11_db": -31.61346202923932,
+    "modal_sources": {
+      "opt1": {
+        "all_incident_samples_valid": true,
+        "min_incident_power": 0.9988788268905106
+      },
+      "opt2": {
+        "all_incident_samples_valid": true,
+        "min_incident_power": 0.9973013278149219
+      }
+    }
+  },
+  {
+    "run": "sbend-mesh10-offset10",
+    "device": "sbend",
+    "mesh": 10,
+    "run_seconds": 33.564206205890514,
+    "finite": true,
+    "reciprocity_max_abs": 0.0011551245771161999,
+    "max_power_balance": 0.3032860441828447,
+    "all_converged": true,
+    "s21_db": -5.938055805374677,
+    "s12_db": -5.951152361953122,
+    "s11_db": -28.551140317835102,
+    "modal_sources": {
+      "opt1": {
+        "all_incident_samples_valid": true,
+        "min_incident_power": 0.9943863237833472
+      },
+      "opt2": {
+        "all_incident_samples_valid": true,
+        "min_incident_power": 0.9934028151463491
+      }
+    }
+  },
+  {
+    "run": "sbend-mesh14",
+    "device": "sbend",
+    "mesh": 14,
+    "run_seconds": 78.89648818504065,
+    "finite": true,
+    "reciprocity_max_abs": 0.0025448736051142946,
+    "max_power_balance": 0.29397573635603413,
+    "all_converged": true,
+    "s21_db": -5.902130181204373,
+    "s12_db": -5.8659749111620725,
+    "s11_db": -31.214478921463645
+  },
+  {
+    "run": "sbend-mesh20",
+    "device": "sbend",
+    "mesh": 20,
+    "run_seconds": 301.7976928659482,
+    "finite": true,
+    "reciprocity_max_abs": 0.00267010595323826,
+    "max_power_balance": 0.30325100612848144,
+    "all_converged": true,
+    "s21_db": -5.763729355628047,
+    "s12_db": -5.724660365783157,
+    "s11_db": -30.410888575366336
+  },
+  {
+    "run": "sbend-mesh6",
+    "device": "sbend",
+    "mesh": 6,
+    "run_seconds": 13.907941023004241,
+    "finite": true,
+    "reciprocity_max_abs": 0.019190201798183423,
+    "max_power_balance": 0.23649216738768447,
+    "all_converged": true,
+    "s21_db": -6.980735341784655,
+    "s12_db": -6.853169189811926,
+    "s11_db": -23.90533435851134
+  },
+  {
+    "run": "ybranch-mesh10",
+    "device": "ybranch",
+    "mesh": 10,
+    "run_seconds": 178.46974796091672,
+    "finite": true,
+    "reciprocity_max_abs": 0.003188252463166053,
+    "max_power_balance": 0.969100568124757,
+    "all_converged": true,
+    "s21_db": -3.169804188045953,
+    "s12_db": -3.1347766303585187,
+    "s11_db": -26.865495750026195,
+    "modal_sources": {
+      "opt1": {
+        "all_incident_samples_valid": true,
+        "min_incident_power": 0.9946500731768619
+      },
+      "opt2": {
+        "all_incident_samples_valid": true,
+        "min_incident_power": 0.9922036611504902
+      },
+      "opt3": {
+        "all_incident_samples_valid": true,
+        "min_incident_power": 0.9919724514592085
+      }
+    },
+    "s31_db": -3.1584098667224096,
+    "s13_db": -3.1248365920429317,
+    "references": {
+      "tidy3d": {
+        "s21_db": -3.204259538697941,
+        "s12_db": -3.205097514488397,
+        "s31_db": -3.204225771941598,
+        "s13_db": -3.205058931556537
+      },
+      "lumerical": {
+        "s21_db": -3.20239608735901,
+        "s12_db": -3.2218030816671765,
+        "s31_db": -3.202389774407585,
+        "s13_db": -3.2219638730795648
+      }
+    }
+  },
+  {
+    "run": "ybranch-mesh6",
+    "device": "ybranch",
+    "mesh": 6,
+    "run_seconds": 44.98541039205156,
+    "finite": true,
+    "reciprocity_max_abs": 0.024801706778429758,
+    "max_power_balance": 0.9469098823176595,
+    "all_converged": true,
+    "s21_db": -3.437113582308541,
+    "s12_db": -3.1447471975896972,
+    "s11_db": -29.999906612155545,
+    "s31_db": -3.157177185802897,
+    "s13_db": -3.03840150726711,
+    "references": {
+      "tidy3d": {
+        "s21_db": -3.204259538697941,
+        "s12_db": -3.205097514488397,
+        "s31_db": -3.204225771941598,
+        "s13_db": -3.205058931556537
+      },
+      "lumerical": {
+        "s21_db": -3.20239608735901,
+        "s12_db": -3.2218030816671765,
+        "s31_db": -3.202389774407585,
+        "s13_db": -3.2219638730795648
+      }
+    }
+  }
+]
