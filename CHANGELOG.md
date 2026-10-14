@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-10-14
+
+Maintenance release: dependency floors and pinned GitHub Actions moved to
+current releases. No API or behavioural change — code written against 0.7.0
+keeps working, and **the supported BeamZ range is unchanged at
+`>=0.5.3,<0.6`** (locked to 0.5.3); nothing in this release moves it.
+
+### Changed
+- Dependency floors raised, with `uv.lock` re-synced:
+  - runtime: shapely >= 2.2.0
+  - dev: coverage >= 7.16.2, hypothesis >= 6.169.0
+- Pinned GitHub Actions bumped: `setup-uv` 10.3.0, `download-artifact` 8.0.2,
+  `upload-artifact` 7.0.2, `prek-action` 3.0.1, and
+  `codeql-action/upload-sarif` 4.38.3.
+- shapely 2.2 ships wheels built against **GEOS 3.14** (up from the 3.13
+  line). shapely's own API is unchanged for our use — the Tier-B permittivity
+  rasterizer in `grid.py` (`Polygon`, `box`, `union_all`, and sidewall
+  buffering) — but the geometry engine underneath it moved, so the
+  golden-geometry and rasterizer suites are what guard that path. 2.2 requires
+  Python >= 3.11, matching our existing floor exactly.
+
+### Security
+- The `pip-audit` exception for the three `cryptography` advisories
+  (CVE-2026-69247 high, plus 69248 and 69249) still stands: tidy3d remains at
+  2.12.0, which pins `cryptography==48.0.1` exactly, so the exit criteria in
+  #115 are not yet met. Re-checked at release time rather than assumed.
+
+### Notes
+- Dependabot's `pydantic >= 2.14.0` proposal (#165) was **closed rather than
+  merged**: `gdsfactory` caps pydantic below 2.14 through `kfactory`
+  (`gdsfactory 9.45.0` -> `kfactory[ipy] < 2.7` -> `pydantic < 2.13`), so the
+  floor is unsatisfiable for the `gdsfactory` and `all` extras. The declared
+  `>=2.7` floor stays honest; the lock resolves 2.12.5, inside gdsfactory's
+  window, which is what the suite tests against.
+
 ## [0.7.0] - 2026-10-05
 
 BeamZ integration release: migrate to the validated 0.5 API and numerical

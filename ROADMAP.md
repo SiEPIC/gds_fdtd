@@ -5,7 +5,15 @@ should be able to read this, understand the current state, and pick up work
 without losing context. Keep it current; move granular tracking to GitHub
 Issues as items are picked up.
 
-## Where we are — v0.7.0
+## Where we are — v0.7.1
+
+**Release 0.7.1 (2026-10-14):** maintenance only — dependency floors (shapely
+2.2.0 runtime; coverage 7.16.2 and hypothesis 6.169.0 dev) and five pinned
+GitHub Actions moved to current releases. No API change, and the BeamZ range
+is deliberately untouched at `>=0.5.3,<0.6` (locked 0.5.3). A Dependabot
+`pydantic>=2.14` proposal was closed as unsatisfiable (gdsfactory caps pydantic
+below 2.14 through kfactory), and the `pip-audit` exception in #115 still
+stands because tidy3d remains at 2.12.0.
 
 **Release 0.7.0 (2026-10-05):** PR #154 has merged, completing the BeamZ 0.5.3
 adapter migration and the tolerance-qualified S-bend convergence study below.
