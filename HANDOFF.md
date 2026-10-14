@@ -6,7 +6,13 @@ the compressed history and the working conventions; the live plan is
 [`SOLVER_STATUS.md`](SOLVER_STATUS.md), and user-facing docs live at
 <https://siepic.github.io/gds_fdtd/>.
 
-**State:** the `v0.7.0` release (2026-10-05) integrates the merged BeamZ 0.5.3
+**State:** `v0.7.1` (2026-10-14) is a maintenance release over `v0.7.0` —
+dependency floors and pinned GitHub Actions moved to current releases, with no
+API change and **no movement in the BeamZ range** (`>=0.5.3,<0.6`, locked to
+0.5.3). Note that a Dependabot `pydantic>=2.14` proposal was closed as
+unsatisfiable: gdsfactory caps pydantic below 2.14 via kfactory.
+
+The `v0.7.0` release (2026-10-05) beneath it integrates the merged BeamZ 0.5.3
 adapter, fixed measurement planes, exact field sampling dimensions, and the
 recorded S-bend convergence study. The final two through-path refinements pass
 0.05 dB; reflections and complex phase need further accuracy work. Validated
