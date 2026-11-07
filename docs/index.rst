@@ -123,5 +123,6 @@ What you can do with it
    :hidden:
 
    architecture
+   dependency_security
    examples
    modules

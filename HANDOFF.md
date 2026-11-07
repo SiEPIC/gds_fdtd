@@ -6,7 +6,21 @@ the compressed history and the working conventions; the live plan is
 [`SOLVER_STATUS.md`](SOLVER_STATUS.md), and user-facing docs live at
 <https://siepic.github.io/gds_fdtd/>.
 
-**State:** `v0.7.1` (2026-10-14) is a maintenance release over `v0.7.0` —
+**State:** `v0.7.2` (2026-11-06) consolidates compatible dependency PRs and
+updates five SHA-pinned actions. There is no API change; BeamZ remains
+`>=0.5.3,<0.6` (locked 0.5.3). The unconditional Pydantic >=2.14.2 proposal
+is unsatisfiable on the Python 3.11 gdsfactory branch, so its floor stays put.
+
+The tidy3d extra requires cryptography >=50.0.2 and selects Tidy3D 2.11.x
+on Intel macOS, with >=2.12.2 elsewhere. Both APIs pass offline adapter
+checks. The old cryptography exceptions are removed; nine current filelock
+advisories remain scoped exceptions because Tidy3D caps filelock <4. See
+`docs/dependency_security.md` for reachability and exit criteria. PyPI still
+requires the project's owner to register the trusted publisher (owner
+`SiEPIC`, repo `gds_fdtd`, workflow `release.yml`, environment `pypi`); the
+v0.7.1 upload failed with `invalid-publisher`.
+
+`v0.7.1` (2026-10-14) is a maintenance release over `v0.7.0` —
 dependency floors and pinned GitHub Actions moved to current releases, with no
 API change and **no movement in the BeamZ range** (`>=0.5.3,<0.6`, locked to
 0.5.3). Note that a Dependabot `pydantic>=2.14` proposal was closed as
