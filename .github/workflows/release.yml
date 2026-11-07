@@ -43,7 +43,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0 # hatch-vcs needs tags to derive the version
-      - uses: hynek/build-and-inspect-python-package@2abe76da66d0a6a4a227101f9348ee855797cfa5 # v3.0.1
+      - uses: hynek/build-and-inspect-python-package@67230f7b8410ae0052b39c1efc89d89fff43ff10 # v3.0.2
 
   publish-pypi:
     name: publish to PyPI (trusted publishing + attestations)
@@ -60,7 +60,7 @@ jobs:
         with:
           name: Packages
           path: dist
-      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
 
   github-release:
     name: create signed GitHub release
@@ -82,7 +82,7 @@ jobs:
         uses: sigstore/gh-action-sigstore-python@790bc6befb9d733738f18d8f895854b453640ec9 # v3.5.0
         with:
           inputs: ./dist/*.tar.gz ./dist/*.whl
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
           enable-cache: false # publishing job: no cache-poisoning surface
       - name: Generate SBOM (CycloneDX, from the released wheel)

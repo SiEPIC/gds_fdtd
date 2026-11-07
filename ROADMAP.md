@@ -5,7 +5,23 @@ should be able to read this, understand the current state, and pick up work
 without losing context. Keep it current; move granular tracking to GitHub
 Issues as items are picked up.
 
-## Where we are — v0.7.1
+## Where we are — v0.7.2
+
+**Release 0.7.2 (2026-11-06):** maintenance only — consolidate the compatible
+open dependency PRs, synchronize the lock, and update five SHA-pinned actions.
+No API change. BeamZ stays `>=0.5.3,<0.6` (locked 0.5.3). The unconditional
+Pydantic >=2.14.2 proposal cannot resolve with gdsfactory on Python 3.11,
+so its floor remains compatible.
+
+Tidy3D selects >=2.11.2,<2.12 on Intel macOS and >=2.12.2,<3 elsewhere,
+allowing cryptography >=50.0.2 and current Authlib without the vulnerable
+exact pin. The three cryptography audit exceptions are removed. The lock
+also upgrades dnspython and certifi across platform variants. Tidy3D still
+caps filelock below its patched 4.x releases; nine scoped audit exceptions,
+reachability, and exit criteria are documented in
+[`docs/dependency_security.md`](docs/dependency_security.md).
+PyPI publisher registration remains an external prerequisite; GitHub signed
+release artifacts use the existing independent workflow.
 
 **Release 0.7.1 (2026-10-14):** maintenance only — dependency floors (shapely
 2.2.0 runtime; coverage 7.16.2 and hypothesis 6.169.0 dev) and five pinned
@@ -236,7 +252,7 @@ Not committed; a palette to choose from. Roughly ordered by impact.
 - [x] **Pages source = GitHub Actions** — the artifact-based docs deploy is live.
 - [ ] **PyPI trusted publisher** (project `gds_fdtd`, owner `SiEPIC`,
       workflow `release.yml`, env `pypi`) — PyPI still serves 0.4.0
-      (rechecked 2026-10-05). The v0.6.3 publish job failed with
+      (rechecked 2026-11-06). The v0.7.1 publish job failed with
       `invalid-publisher`; tagged releases produce signed GitHub artifacts
       independently of this step. Verify publisher registration and re-run the
       latest failed publish job after setup; no API-token fallback is used.

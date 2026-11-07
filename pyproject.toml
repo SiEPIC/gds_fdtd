@@ -37,7 +37,7 @@ dependencies = [
   "shapely>=2.2.0",
   "PyYAML>=6.0.3",
   "pydantic>=2.7",
-  "pydantic-settings>=2.15.0"
+  "pydantic-settings>=2.16.2"
 ]
 
 # ──────────────── optional feature / tool sets ────────────────
@@ -46,7 +46,13 @@ gds-fdtd = "gds_fdtd.cli:main"
 
 [project.optional-dependencies]
 
-tidy3d      = ["tidy3d>=2.12.0,<3"]              # enables gds_fdtd.solver_tidy3d (2.8.x is numpy<2/py<=3.12 only; F5)
+# Tidy3D 2.12.x pins vulnerable cryptography on Intel macOS (#115).
+# Keep that platform on the compatible 2.11 API until upstream removes the pin.
+tidy3d      = [
+  "tidy3d>=2.12.2,<3; sys_platform != 'darwin' or platform_machine != 'x86_64'",
+  "tidy3d>=2.11.2,<2.12; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+  "cryptography>=50.0.2",
+]
 gdsfactory  = ["gdsfactory>=9.45.0,<10"]
 beamz       = ["beamz>=0.5.3,<0.6"]            # open-source JAX FDTD engine
 prefab      = ["prefab>=1.6.0"]
@@ -61,15 +67,15 @@ engines     = ["gds_fdtd[tidy3d,beamz]"]                             # every pip
 all         = ["gds_fdtd[tidy3d,beamz,gdsfactory,prefab,siepic]"]    # every engine + layout frontend
 
 dev = [
-  "pip>=26.2.1",
+  "pip>=26.2.2",
   "build>=1.6.1",  # `just build` (sdist+wheel); releases publish via CI trusted publishing
-  "pytest>=9.1.1",
+  "pytest>=9.2.0",
   "pytest-cov>=7.1.0",
-  "coverage>=7.16.2",  # pytest-cov's minimum; keeps lowest-direct off Python 2 sdists
-  "ruff>=0.16.10",
+  "coverage>=7.17.0",  # pytest-cov's minimum; keeps lowest-direct off Python 2 sdists
+  "ruff>=0.17.4",
   "codespell>=2.4.3",  # same spell check the CI prek hooks run
-  "mypy>=2.4.0",
-  "hypothesis>=6.169.0",  # property-based tests for the numeric core (WS2)
+  "mypy>=2.4.1",
+  "hypothesis>=6.170.13",  # property-based tests for the numeric core (WS2)
   "h5py>=3.16.0",  # SMatrix HDF5 I/O tests (optional at runtime)
 ]
 

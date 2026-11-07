@@ -55,7 +55,7 @@ Available engines
      - execution
      - cost
      - install
-   * - `Tidy3D <https://github.com/flexcompute/tidy3d>`_ >= 2.12
+   * - `Tidy3D <https://github.com/flexcompute/tidy3d>`_ >= 2.12.2
      - cloud
      - FlexCredits
      - ``pip install gds_fdtd[tidy3d]`` + ``TIDY3D_API_KEY``
@@ -72,6 +72,9 @@ Available engines
 and, when unavailable, the reason. Per-engine verification against the real
 engines lives in ``SOLVER_STATUS.md``, the three engines agree within
 0.052 dB (tidy3d ↔ Lumerical within 0.0033 dB) on an identical job.
+
+On Intel macOS the tidy3d extra selects 2.11.x to permit patched cryptography.
+See :doc:`dependency_security` for the current platform constraints and audit exceptions.
 
 Standard visualization flow
 ---------------------------

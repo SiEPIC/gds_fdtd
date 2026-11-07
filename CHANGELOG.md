@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-11-06
+
+Maintenance release: consolidate the compatible dependency pull requests and
+refresh the lock and SHA-pinned actions. No API change. BeamZ remains
+`>=0.5.3,<0.6`, locked to 0.5.3.
+
+### Changed
+- Raise dependency floors: pydantic-settings >=2.16.2, pip >=26.2.2,
+  pytest >=9.2.0, coverage >=7.17.0, Ruff >=0.17.4 (including its hook),
+  mypy >=2.4.1, and hypothesis >=6.170.13.
+- Upgrade locked Authlib, FastMCP, MCP, joserfc, OpenTelemetry, Pillow,
+  and Tornado to incorporate the compatible transitive dependency proposals.
+- Update SHA-pinned setup-uv (10.3.2), CodeQL SARIF (4.39.1), package
+  inspection (3.0.2), PyPI publishing (1.14.3), and Scorecard (2.5.0) actions.
+- Retain the compatible Pydantic floor: the unconditional >=2.14.2 proposal
+  cannot resolve with gdsfactory/kfactory on supported Python 3.11.
+
+### Security
+- Require cryptography >=50.0.2 and select Tidy3D >=2.11.2,<2.12 on Intel
+  macOS, with >=2.12.2,<3 elsewhere. This permits current Authlib and removes
+  the three previous cryptography advisory exceptions without an unsatisfiable
+  Tidy3D pin. Offline adapter checks cover both Tidy3D versions.
+- Upgrade locked dnspython to 2.9.2 and certifi to 2026.10.23 across platform
+  variants to address CVE-2026-114605 and PYSEC-2026-4320.
+- Tidy3D still requires filelock <4, while nine current advisories require
+  >=4.2.1. Scope the audit exceptions to those IDs; document affected APIs,
+  private-cache assumptions, and exit criteria in
+  [`docs/dependency_security.md`](docs/dependency_security.md).
+
+### Publishing
+- Signed GitHub packages and the SBOM use the existing tag-driven workflow.
+  PyPI publication still requires the project's owner to register the trusted
+  publisher for `SiEPIC/gds_fdtd`, `release.yml`, environment `pypi`.
+
 ## [0.7.1] - 2026-10-14
 
 Maintenance release: dependency floors and pinned GitHub Actions moved to
